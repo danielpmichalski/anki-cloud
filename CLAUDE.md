@@ -96,7 +96,7 @@ Hono on Bun. Full CRUD API with OpenAPI spec auto-generated from Zod schemas. MC
 │                                                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐ │
 │  │  Sync Server  │  │  REST API    │  │   MCP Server     │ │
-│  │  (Rust)       │  │  (FastAPI)   │  │   (wraps REST)   │ │
+│  │  (Rust)       │  │ (Hono/Bun)   │  │   (wraps REST)   │ │
 │  └──────┬───────┘  └──────┬───────┘  └──────────────────┘ │
 │         │                 │                                  │
 │  ┌──────▼─────────────────▼──────────────────────────────┐ │
@@ -388,12 +388,12 @@ The MCP server exposes these tools to LLMs:
 ### Milestone 2 — Auth + Account Management
 - [ ] Google OAuth2 login flow
 - [ ] GDrive OAuth2 connection flow
-- [ ] SQLite schema + SQLAlchemy models
+- [ ] SQLite schema + Drizzle ORM models
 - [ ] Simple web UI (account page, connect Drive, generate API keys)
 - [ ] Redis for sessions + rate limiting
 
 ### Milestone 3 — REST API
-- [ ] FastAPI app with OpenAPI spec generation
+- [ ] Hono on Bun app with OpenAPI spec generation (Zod schemas)
 - [ ] All deck/note/card endpoints
 - [ ] API key auth middleware
 - [ ] Scalar API docs
@@ -416,6 +416,13 @@ The MCP server exposes these tools to LLMs:
 - [ ] Dropbox adapter
 - [ ] S3-compatible adapter (Cloudflare R2, MinIO, AWS S3)
 - [ ] OneDrive adapter
+
+### Milestone 7 — CLI (`anki-cloud-cli`)
+- [ ] TypeScript CLI wrapping REST API (Bun single-binary build)
+- [ ] Commands: `decks list/create`, `notes add/search/update/delete`, `auth login/logout`
+- [ ] API key auth via `~/.config/anki-cloud/config.json` or env var
+- [ ] npm publish + Homebrew formula
+- [ ] Claude Code usage docs (bash tool integration)
 
 ---
 
