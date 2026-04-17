@@ -178,7 +178,7 @@ All of that lives in the user's GDrive.
 | Sync server | Rust (fork of ankitects sync server) | [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md) |
 | REST API + Auth | TypeScript / Hono on Bun | [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md) |
 | MCP Server | TypeScript / Hono on Bun | [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md) · [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md) |
-| Persistent DB | SQLite (via Drizzle ORM) | — |
+| Persistent DB | SQLite (via Drizzle ORM) | [ADR-0009](docs/decisions/0009-use-sqlite-for-persistent-storage.md) |
 | Cache / Sessions | Redis | — |
 | Storage backends | GDrive API / Dropbox API / S3 SDK | [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md) |
 | Containerization | Docker + Docker Compose | — |
