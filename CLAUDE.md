@@ -62,7 +62,7 @@ Do NOT use "Anki" in the product name. Other apps have already received cease & 
 
 ## 3. Core Design Decisions
 
-### 3.1 Authentication — Google OAuth2 (identity)
+### 3.1 Authentication — Google OAuth2 (identity) — [ADR-0004](docs/decisions/0004-use-oauth2-for-authentication-no-password-storage.md) · [ADR-0006](docs/decisions/0006-use-google-as-the-sole-oauth-provider-mvp.md)
 
 - Users register/login via Google OAuth2 only — no username/password stored
 - Google's `sub` field (permanent unique user ID) is the primary user identifier
@@ -70,7 +70,7 @@ Do NOT use "Anki" in the product name. Other apps have already received cease & 
 
 **Why:** Eliminates password storage liability entirely. Standard, trusted by users.
 
-### 3.2 Storage — User's Own Cloud (GDrive first)
+### 3.2 Storage — User's Own Cloud (GDrive first) — [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0005](docs/decisions/0005-use-google-drive-as-the-primary-storage-backend.md)
 
 - User authorizes the service to access their Google Drive via OAuth2
 - Deck data is written directly to a folder in their Drive (e.g. `AnkiSync/`)
@@ -90,7 +90,7 @@ The pitch is clean: *"Your cards live in your Google Drive. We just sync them."*
 the moment it touches the server. Cache TTL bugs, logs, memory dumps. Not worth it.
 The only safe options are OAuth tokens (scoped, revocable) or nothing.
 
-### 3.3 Sync Protocol — Anki-compatible sync server
+### 3.3 Sync Protocol — Anki-compatible sync server — [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md)
 
 - Fork/extend Anki's own built-in sync server (Rust, open source since v2.1.57)
 - Users change one setting: Tools → Preferences → Syncing → custom sync URL
@@ -110,7 +110,7 @@ The community has been requesting a public Anki API for years. This is it.
 - API keys are revocable and re-generable at any time
 - OpenAPI spec is the single source of truth — everything else generates from it
 
-### 3.5 MCP Server — LLM-native interface
+### 3.5 MCP Server — LLM-native interface — [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md)
 
 - Wraps the REST API as an MCP server
 - Compatible with Claude (native) and any MCP-capable LLM client
@@ -484,7 +484,22 @@ Storage backend credentials are per-user (their own GDrive etc.).
 
 ---
 
-## 11. Open Questions (OSS-scoped)
+## 11. Architecture Decision Records (ADRs)
+
+ADRs live in `docs/decisions/`. Use `adr-tools` to manage them.
+
+### Conventions
+
+- **Create** new ADRs with `adr new "<title>"` — auto-numbers and creates the file
+- **Supersede** outdated ADRs with `adr new` + mark old one `Superseded by [ADR-NNNN]`; never edit accepted ADRs retroactively
+- **Separate principles from implementations** — e.g. "use OAuth2" (principle, never superseded) vs "use Google as OAuth provider" (implementation, superseded when Microsoft added)
+- **Link with markdown**, always: `[ADR-0002](./0002-use-user-owned-cloud-storage-for-deck-data.md)`
+- **No forward references** — an ADR may only reference ADRs with lower numbers
+- **CLAUDE.md section headings** link to their ADR(s) inline; keep those links up to date when ADRs are superseded
+
+---
+
+## 12. Open Questions (OSS-scoped)
 
 - [ ] **Conflict resolution** — what happens when two devices sync simultaneously?
 - [ ] **Media files** — large audio/image files need special handling in GDrive (size limits, latency)
