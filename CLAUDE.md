@@ -13,8 +13,8 @@ enabling seamless LLM-to-Anki workflows. User deck data is stored in their own c
 (Google Drive, Dropbox, etc.) — the service acts as stateless infrastructure, never holding
 user data.
 
-**The hosted version** is a convenience layer on top of the open-source core (open-core model).
-Users who want full control can self-host.
+Self-hosters run everything with `docker compose up`. A separate hosted platform (closed-source,
+open-core model) wraps this for users who want convenience over control.
 
 ### The core workflow this enables
 
@@ -60,13 +60,13 @@ Do NOT use "Anki" in the product name. Other apps have already received cease & 
 
 ---
 
-## 3. Product Decisions
+## 3. Core Design Decisions
 
 ### 3.1 Authentication — Google OAuth2 (identity)
 
 - Users register/login via Google OAuth2 only — no username/password stored
 - Google's `sub` field (permanent unique user ID) is the primary user identifier
-- Your DB stores: `google_id`, `email`, `name` — nothing sensitive
+- DB stores: `google_id`, `email`, `name` — nothing sensitive
 
 **Why:** Eliminates password storage liability entirely. Standard, trusted by users.
 
@@ -116,15 +116,6 @@ The community has been requesting a public Anki API for years. This is it.
 - Compatible with Claude (native) and any MCP-capable LLM client
 - Exposes tools like: `create_flashcard`, `list_decks`, `add_to_deck`, `search_notes`
 - Users configure their LLM with the MCP URL + API key — one-time setup
-
-### 3.6 Business Model — Open Core, Hosted Convenience
-
-- **Core** (sync server + GDrive adapter + REST API + MCP server): fully open source (AGPLv3)
-- **Hosted service**: subscription-based convenience — no setup, managed infrastructure
-- Self-hosters get everything for free; hosted users pay for convenience
-
-This is the Plausible / Supabase / Umami playbook. Open source builds trust and contributors;
-hosted service monetizes convenience.
 
 ---
 
@@ -230,12 +221,9 @@ All of that lives in the user's GDrive.
 | Cache / Sessions | Redis | Fast, TTL-native, standard for session management |
 | Storage backends | GDrive API / Dropbox API / S3 SDK | User-owned storage |
 | Containerization | Docker + Docker Compose | Local dev parity, easy self-hosting |
-| Hosting | Fly.io (MVP) → AWS/Azure (scale) | Fly.io: simple DX, deploys with one command, scales to zero |
 | CI/CD | GitHub Actions | Standard, free for open source |
 | Docs: API reference | Scalar (from OpenAPI spec) | Better UX than Swagger UI |
 | Docs: Narrative | Docusaurus | Open source, versioned, great DX |
-| Error tracking | Sentry | Standard, has generous free tier |
-| Observability | OpenTelemetry + Grafana + Loki | Vendor-neutral, self-hostable |
 
 ### 4.4 OpenAPI as Single Source of Truth
 
@@ -253,7 +241,7 @@ Scalar        SDK clients    Postman   MCP tool
             Rust SDKs
 ```
 
-This means: write the API once, everything else generates. Use Speakeasy or Stainless for
+Write the API once, everything else generates. Use Speakeasy or Stainless for
 polished auto-generated SDK clients.
 
 ### 4.5 Repository Structure
@@ -457,7 +445,6 @@ The MCP server exposes these tools to LLMs:
 - [ ] Self-hosting guide (docker-compose up)
 - [ ] API reference (Scalar, auto-deployed)
 - [ ] Contributing guide
-- [ ] Post on Anki forums + HN
 - [ ] GitHub release automation (release-please)
 
 ### Milestone 6 — Additional Storage Backends
@@ -472,8 +459,8 @@ The MCP server exposes these tools to LLMs:
 The entire stack must be runnable with:
 
 ```bash
-git clone https://github.com/your-org/project
-cd project
+git clone https://github.com/your-org/anki-cloud
+cd anki-cloud
 cp .env.example .env   # fill in Google OAuth credentials
 docker compose up
 ```
@@ -487,7 +474,7 @@ Storage backend credentials are per-user (their own GDrive etc.).
 
 1. **We never store deck data.** User data lives in user-controlled storage. Always.
 2. **We never store passwords.** OAuth tokens only. Always scoped, always revocable.
-3. **Open source core.** The sync server, REST API, and MCP server are AGPLv3.
+3. **Open source core (AGPLv3).** The sync server, REST API, and MCP server are all AGPLv3.
 4. **Self-hostable.** Everything runs with `docker compose up`. No hidden dependencies.
 5. **OpenAPI first.** The spec is the contract. SDKs and docs generate from it.
 6. **Conventional commits.** Enables automated changelog and semantic versioning.
@@ -497,16 +484,12 @@ Storage backend credentials are per-user (their own GDrive etc.).
 
 ---
 
-## 11. Open Questions / Future Decisions
+## 11. Open Questions (OSS-scoped)
 
-- [ ] **Product name** — must not include "Anki". Candidates: Engram, DeckBridge, Mnemosync
 - [ ] **Conflict resolution** — what happens when two devices sync simultaneously?
 - [ ] **Media files** — large audio/image files need special handling in GDrive (size limits, latency)
 - [ ] **GDrive API rate limits** — need to understand quotas for sync-heavy users
 - [ ] **AnkiMobile compatibility** — verify custom sync URL works with the iOS app
-- [ ] **Pricing model** — what does the hosted subscription cost?
-- [ ] **GDPR / data processor** — even with zero deck storage, we hold OAuth tokens; need a privacy policy and DPA
-- [ ] **Anki forums engagement** — when to announce to the community (before or after MVP?)
 
 ---
 
