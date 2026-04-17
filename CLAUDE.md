@@ -62,60 +62,21 @@ Do NOT use "Anki" in the product name. Other apps have already received cease & 
 
 ## 3. Core Design Decisions
 
-### 3.1 Authentication — Google OAuth2 (identity) — [ADR-0004](docs/decisions/0004-use-oauth2-for-authentication-no-password-storage.md) · [ADR-0006](docs/decisions/0005-use-google-as-the-sole-oauth-provider-mvp.md)
+### 3.1 Authentication — [ADR-0004](docs/decisions/0004-use-oauth2-for-authentication-no-password-storage.md) · [ADR-0005](docs/decisions/0005-use-google-as-the-sole-oauth-provider-mvp.md)
 
-- Users register/login via Google OAuth2 only — no username/password stored
-- Google's `sub` field (permanent unique user ID) is the primary user identifier
-- DB stores: `google_id`, `email`, `name` — nothing sensitive
+OAuth2 only, no passwords. Google as sole provider for MVP.
 
-**Why:** Eliminates password storage liability entirely. Standard, trusted by users.
+### 3.2 Storage — [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md)
 
-### 3.2 Storage — User's Own Cloud (GDrive first) — [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0005](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md)
+Deck data lives in user-owned cloud storage. Google Drive for MVP; Dropbox, S3, OneDrive on roadmap.
 
-- User authorizes the service to access their Google Drive via OAuth2
-- Deck data is written directly to a folder in their Drive (e.g. `AnkiSync/`)
-- The service stores **only** the OAuth token for their storage — no deck data ever touches our DB
-- If the service shuts down tomorrow, user's data is intact in their Drive
+### 3.3 Sync Protocol — [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md)
 
-**Supported backends (roadmap):**
-1. Google Drive (MVP)
-2. Dropbox
-3. S3-compatible (power users / self-hosters)
-4. OneDrive
+Fork of the Rust ankitects sync server with a cloud storage adapter layer.
 
-**Why not store data ourselves:** Liability, GDPR complexity, storage costs, user trust.
-The pitch is clean: *"Your cards live in your Google Drive. We just sync them."*
+### 3.4 REST API + MCP Server — [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md) · [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)
 
-**Why not password caching:** Even "temporary" storage of plaintext credentials is a liability
-the moment it touches the server. Cache TTL bugs, logs, memory dumps. Not worth it.
-The only safe options are OAuth tokens (scoped, revocable) or nothing.
-
-### 3.3 Sync Protocol — Anki-compatible sync server — [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md)
-
-- Fork/extend Anki's own built-in sync server (Rust, open source since v2.1.57)
-- Users change one setting: Tools → Preferences → Syncing → custom sync URL
-- Works with Anki Desktop, AnkiDroid, and AnkiMobile unchanged
-- The sync server reads/writes to the user's chosen storage backend (GDrive etc.)
-
-**The sync server is stateless** regarding deck data — it proxies between the Anki client
-protocol and the storage backend. A thin caching layer (Redis) holds data only during an
-active sync session, then flushes to GDrive.
-
-### 3.4 REST API — First-class, community-requested
-
-The community has been requesting a public Anki API for years. This is it.
-
-- Full CRUD on decks, notes, cards, tags
-- Auth via API keys (generated in the web UI, tied to the user's OAuth identity)
-- API keys are revocable and re-generable at any time
-- OpenAPI spec is the single source of truth — everything else generates from it
-
-### 3.5 MCP Server — LLM-native interface — [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md)
-
-- Wraps the REST API as an MCP server
-- Compatible with Claude (native) and any MCP-capable LLM client
-- Exposes tools like: `create_flashcard`, `list_decks`, `add_to_deck`, `search_notes`
-- Users configure their LLM with the MCP URL + API key — one-time setup
+Hono on Bun. Full CRUD API with OpenAPI spec auto-generated from Zod schemas. MCP server wraps the REST API — no direct DB access.
 
 ---
 
@@ -212,23 +173,23 @@ All of that lives in the user's GDrive.
 
 ### 4.3 Tech Stack
 
-| Layer | Technology | Rationale |
+| Layer | Technology | ADR |
 |---|---|---|
-| Sync server | Rust (fork of ankitects sync server) | Battle-tested, correct protocol implementation |
-| REST API + Auth | Python / FastAPI | Fast to build, OpenAPI-native, great ecosystem |
-| MCP Server | Python | Wraps REST API, same language as API layer |
-| Persistent DB | SQLite (via SQLAlchemy) | Zero infrastructure, trivially backed up, sufficient for scale |
-| Cache / Sessions | Redis | Fast, TTL-native, standard for session management |
-| Storage backends | GDrive API / Dropbox API / S3 SDK | User-owned storage |
-| Containerization | Docker + Docker Compose | Local dev parity, easy self-hosting |
-| CI/CD | GitHub Actions | Standard, free for open source |
-| Docs: API reference | Scalar (from OpenAPI spec) | Better UX than Swagger UI |
-| Docs: Narrative | Docusaurus | Open source, versioned, great DX |
+| Sync server | Rust (fork of ankitects sync server) | [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md) |
+| REST API + Auth | TypeScript / Hono on Bun | [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md) |
+| MCP Server | TypeScript / Hono on Bun | [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md) · [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md) |
+| Persistent DB | SQLite (via Drizzle ORM) | — |
+| Cache / Sessions | Redis | — |
+| Storage backends | GDrive API / Dropbox API / S3 SDK | [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md) |
+| Containerization | Docker + Docker Compose | — |
+| CI/CD | GitHub Actions | — |
+| Docs: API reference | Scalar (from OpenAPI spec) | — |
+| Docs: Narrative | Docusaurus | — |
 
 ### 4.4 OpenAPI as Single Source of Truth
 
 ```
-Annotated FastAPI routes
+Hono routes + Zod schemas
         │
         ▼
   OpenAPI spec (auto-generated)
