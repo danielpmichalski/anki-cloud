@@ -224,24 +224,28 @@ polished auto-generated SDK clients.
 │   │       └── s3.rs
 │   └── Cargo.toml
 │
-├── api/                       ← Python / FastAPI
-│   ├── main.py
-│   ├── routers/
-│   │   ├── auth.py            ← OAuth2 flows
-│   │   ├── decks.py
-│   │   ├── notes.py
-│   │   ├── cards.py
-│   │   └── api_keys.py
-│   ├── models/                ← SQLAlchemy models
-│   ├── services/              ← business logic
-│   │   ├── storage/           ← storage backend clients
-│   │   └── sync/
-│   └── requirements.txt
+├── api/                       ← TypeScript / Hono on Bun
+│   ├── src/
+│   │   ├── index.ts
+│   │   ├── routes/
+│   │   │   ├── auth.ts        ← OAuth2 flows
+│   │   │   ├── decks.ts
+│   │   │   ├── notes.ts
+│   │   │   ├── cards.ts
+│   │   │   └── api-keys.ts
+│   │   ├── middleware/        ← API key auth, rate limiting
+│   │   ├── db/                ← Drizzle ORM + SQLite schema
+│   │   └── services/
+│   │       └── storage/       ← storage backend clients
+│   ├── package.json
+│   └── bunfig.toml
 │
-├── mcp/                       ← MCP server (wraps API)
-│   ├── server.py
-│   ├── tools/
-│   └── requirements.txt
+├── mcp/                       ← TypeScript / Hono on Bun (wraps REST API)
+│   ├── src/
+│   │   ├── index.ts
+│   │   └── tools/
+│   ├── package.json
+│   └── bunfig.toml
 │
 ├── web/                       ← Simple account management UI
 │   ├── src/
