@@ -62,7 +62,7 @@ Do NOT use "Anki" in the product name. Other apps have already received cease & 
 
 ## 3. Core Design Decisions
 
-### 3.1 Authentication — Google OAuth2 (identity) — [ADR-0004](docs/decisions/0004-use-oauth2-for-authentication-no-password-storage.md) · [ADR-0006](docs/decisions/0006-use-google-as-the-sole-oauth-provider-mvp.md)
+### 3.1 Authentication — Google OAuth2 (identity) — [ADR-0004](docs/decisions/0004-use-oauth2-for-authentication-no-password-storage.md) · [ADR-0006](docs/decisions/0005-use-google-as-the-sole-oauth-provider-mvp.md)
 
 - Users register/login via Google OAuth2 only — no username/password stored
 - Google's `sub` field (permanent unique user ID) is the primary user identifier
@@ -70,7 +70,7 @@ Do NOT use "Anki" in the product name. Other apps have already received cease & 
 
 **Why:** Eliminates password storage liability entirely. Standard, trusted by users.
 
-### 3.2 Storage — User's Own Cloud (GDrive first) — [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0005](docs/decisions/0005-use-google-drive-as-the-primary-storage-backend.md)
+### 3.2 Storage — User's Own Cloud (GDrive first) — [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0005](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md)
 
 - User authorizes the service to access their Google Drive via OAuth2
 - Deck data is written directly to a folder in their Drive (e.g. `AnkiSync/`)
