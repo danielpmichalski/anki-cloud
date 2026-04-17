@@ -494,7 +494,7 @@ ADRs live in `docs/decisions/`. Use `adr-tools` to manage them.
 - **Supersede** outdated ADRs with `adr new` + mark old one `Superseded by [ADR-NNNN]`; never edit accepted ADRs retroactively
 - **Separate principles from implementations** — e.g. "use OAuth2" (principle, never superseded) vs "use Google as OAuth provider" (implementation, superseded when Microsoft added)
 - **Link with markdown**, always: `[ADR-0002](./0002-use-user-owned-cloud-storage-for-deck-data.md)`
-- **No forward references** — an ADR may only reference ADRs with lower numbers
+- **No forward references** — an ADR may only reference ADRs with lower numbers, neither by link nor semantically (e.g. don't mention a concept that is only decided in a later ADR)
 - **CLAUDE.md section headings** link to their ADR(s) inline; keep those links up to date when ADRs are superseded
 
 ---
