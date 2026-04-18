@@ -1,0 +1,19 @@
+{
+  "name": "@anki-cloud/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test src/tests --timeout 30000"
+  },
+  "dependencies": {
+    "@anki-cloud/db": "workspace:*",
+    "@mongodb-js/zstd": "^1.2.2",
+    "drizzle-orm": "^0.43.1",
+    "jose": "^6.2.2"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.10",
+    "typescript": "^5.8.3"
+  }
+}
