@@ -72,7 +72,7 @@ Run the fork script with the new tag. It replaces `rslib/` and `Cargo.lock`
 while leaving `Cargo.toml` and this `README.md` untouched.
 
 ```bash
-./scripts/fork-anki-sync-server.sh 25.12
+./scripts/fork-anki-sync-server.zsh 25.12
 ```
 
 After upgrading, rebuild and re-run tests to verify compatibility.

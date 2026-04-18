@@ -265,7 +265,7 @@ polished auto-generated SDK clients.
 │       └── release.yml        ← release-please + conventional commits
 │
 └── scripts/
-    ├── fork-anki-sync-server.sh  ← copy rslib/ from ankitects/anki at a given tag
+    ├── fork-anki-sync-server.zsh  ← copy rslib/ from ankitects/anki at a given tag
     └── generate-sdk.sh           ← openapi-generator invocation
 ```
 

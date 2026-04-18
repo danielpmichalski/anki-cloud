@@ -2,7 +2,7 @@
 #
 # This is the only file in anki-sync-server/ that is NOT a verbatim upstream copy.
 # When upgrading to a new anki tag, replace rslib/ and Cargo.lock via:
-#   ./scripts/fork-anki-sync-server.sh <new-tag>
+#   ./scripts/fork-anki-sync-server.zsh <new-tag>
 # This Cargo.toml stays unchanged unless the upstream workspace structure changes.
 #
 # Derived from ankitects/anki/Cargo.toml with two modifications:

@@ -15,7 +15,7 @@ user data.
 Run the setup script once to install all required tools:
 
 ```bash
-./scripts/setup.sh
+./scripts/setup.zsh
 ```
 
 This installs (skipping anything already present):
@@ -76,7 +76,7 @@ Full architecture and design decisions: [CLAUDE.md](CLAUDE.md)
 ## Upgrading the upstream sync server
 
 ```bash
-./scripts/fork-anki-sync-server.sh <new-tag>   # e.g. 25.12
+./scripts/fork-anki-sync-server.zsh <new-tag>   # e.g. 25.12
 cd anki-sync-server && cargo build --bin anki-sync-server
 ```
 

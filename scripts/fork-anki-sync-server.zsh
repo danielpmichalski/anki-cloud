@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # Usage:
-#   ./scripts/fork-anki-sync-server.sh           # forks/upgrades to default tag (25.09)
-#   ./scripts/fork-anki-sync-server.sh 25.12     # forks/upgrades to a specific tag
+#   ./scripts/fork-anki-sync-server.zsh           # forks/upgrades to default tag (25.09)
+#   ./scripts/fork-anki-sync-server.zsh 25.12     # forks/upgrades to a specific tag
 #
 # Copies rslib/ and Cargo.lock from ankitects/anki at the given tag into
 # anki-sync-server/. Safe to re-run for upgrades — only rslib/ and Cargo.lock

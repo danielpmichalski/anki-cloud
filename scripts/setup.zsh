@@ -35,7 +35,7 @@ if command -v rustup &>/dev/null; then
   ok "Rust $(rustc --version)"
 else
   info "Installing Rust via rustup ..."
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
   source "$HOME/.cargo/env"
   ok "Rust $(rustc --version)"
 fi
