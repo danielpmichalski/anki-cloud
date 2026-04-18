@@ -4,15 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run --watch src/index.ts",
-    "start": "bun run src/index.ts",
+    "dev": "bun run --env-file ../../.env --watch src/index.ts",
+    "start": "bun run --env-file ../../.env src/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anki-cloud/db": "workspace:*",
     "@hono/zod-openapi": "^0.19.6",
+    "arctic": "^3.7.0",
     "drizzle-orm": "^0.43.1",
     "hono": "^4.7.7",
+    "jose": "^6.2.2",
     "zod": "^3.24.2"
   },
   "devDependencies": {

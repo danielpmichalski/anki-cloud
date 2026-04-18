@@ -28,7 +28,7 @@ const token = await decrypt(stored);
 
 | Variable               | Required | Description                                                                 |
 |------------------------|----------|-----------------------------------------------------------------------------|
-| `DATABASE_URL`         | No       | SQLite file URI (default: `file:./data/anki-cloud.db`)                      |
+| `DATABASE_URL`         | No       | SQLite file URI (default: `file:../data/anki-cloud.db`)                     |
 | `TOKEN_ENCRYPTION_KEY` | Yes      | 32-byte hex key for token encryption — generate with `openssl rand -hex 32` |
 
 ## Scripts
