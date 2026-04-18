@@ -399,9 +399,10 @@ The MCP server exposes these tools to LLMs:
 
 **Architecture:** Multiple stateless sync-server instances, load-balanced. Each instance queries shared DB on-demand for per-user config. Auto-scale based on load.
 
+- [x] SQLite schema + Drizzle ORM models (`storage_connections`, `users`, `users_sync_state`, `users_api_keys`) — `packages/db` (@anki-cloud/db)
+- [x] Version the Rust sync server to match Anki's release tag (e.g. `25.09`) — it has a hard protocol dependency on a specific Anki version, so the version number is a meaningful compatibility signal. All other packages (REST API, MCP server, DB lib, web UI) use independent semver starting at `0.1.0`. A compatibility table in the README maps Anki versions to sync-server releases.
 - [ ] Google OAuth2 login flow (REST API)
 - [ ] GDrive OAuth2 connection flow (REST API)
-- [x] SQLite schema + Drizzle ORM models (`storage_connections`, `users`, `users_sync_state`, `users_api_keys`) — `packages/db` (@anki-cloud/db)
 - [ ] REST API: multi-user account endpoints (`GET /v1/me`, `POST /v1/me/storage/connect`, etc.)
 - [ ] Sync server: query shared DB for user's `storage_connections` on each request, inject into `StorageBackendFactory`
 - [ ] Simple web UI (account page, connect Drive, generate API keys)
