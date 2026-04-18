@@ -18,6 +18,8 @@ rust-version = "1.80"
 
 [workspace]
 members = [
+  "sync-storage-api",
+  "sync-storage-backends",
   "rslib",
   "rslib/i18n",
   "rslib/io",
