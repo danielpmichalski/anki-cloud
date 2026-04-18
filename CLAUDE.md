@@ -395,6 +395,7 @@ The MCP server exposes these tools to LLMs:
 - [ ] Google OAuth2 login flow
 - [ ] GDrive OAuth2 connection flow
 - [ ] SQLite schema + Drizzle ORM models
+- [ ] Replace sync server static env-var user config with dynamic SQLite lookup (multi-tenant)
 - [ ] Simple web UI (account page, connect Drive, generate API keys)
 - [ ] Redis for sessions + rate limiting
 
