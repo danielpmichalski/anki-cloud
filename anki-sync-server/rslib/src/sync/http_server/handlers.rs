@@ -154,6 +154,10 @@ impl SyncProtocol for Arc<SimpleServer> {
             let _ = req.json()?;
             let now = user.with_sync_state(req.skey()?, |col, _state| server_finish(col))?;
             user.sync_state = None;
+            let col_path = user.folder.join("collection.anki2");
+            user.storage_backend
+                .commit(&user.name, &col_path)
+                .or_internal_err("commit collection to storage")?;
             SyncResponse::try_from_obj(now)
         })
         .await
@@ -172,7 +176,13 @@ impl SyncProtocol for Arc<SimpleServer> {
         self.with_authenticated_user(req, |user, req| {
             user.abort_stateful_sync_if_active();
             user.ensure_col_open()?;
-            handle_received_upload(&mut user.col, req.data).map(SyncResponse::from_upload_response)
+            let resp = handle_received_upload(&mut user.col, req.data)
+                .map(SyncResponse::from_upload_response)?;
+            let col_path = user.folder.join("collection.anki2");
+            user.storage_backend
+                .commit(&user.name, &col_path)
+                .or_internal_err("commit collection to storage")?;
+            Ok(resp)
         })
         .await
     }

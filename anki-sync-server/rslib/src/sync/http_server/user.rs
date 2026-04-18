@@ -3,6 +3,7 @@
 
 use std::path::PathBuf;
 
+use sync_storage_api::StorageBackend;
 use tracing::info;
 
 use crate::collection::Collection;
@@ -20,6 +21,7 @@ pub(in crate::sync) struct User {
     pub sync_state: Option<ServerSyncState>,
     pub media: ServerMediaManager,
     pub folder: PathBuf,
+    pub storage_backend: Box<dyn StorageBackend>,
 }
 
 impl User {
@@ -86,7 +88,11 @@ impl User {
     }
 
     fn open_collection(&mut self) -> HttpResult<Collection> {
-        CollectionBuilder::new(self.folder.join("collection.anki2"))
+        let col_path = self.folder.join("collection.anki2");
+        self.storage_backend
+            .fetch(&self.name, &col_path)
+            .or_internal_err("fetch collection from storage")?;
+        CollectionBuilder::new(col_path)
             .set_server(true)
             .build()
             .or_internal_err("open collection")
