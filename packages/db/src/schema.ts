@@ -9,6 +9,7 @@ export const users = sqliteTable("users", {
     createdAt: integer("created_at", {mode: "timestamp"})
         .notNull()
         .$defaultFn(() => new Date()),
+    syncPasswordHash: text("sync_password_hash"),
 });
 
 export const storageConnections = sqliteTable(

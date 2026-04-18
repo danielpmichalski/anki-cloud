@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./encrypt": "./src/encrypt.ts"
+    "./encrypt": "./src/encrypt.ts",
+    "./schema": "./src/schema.ts"
   },
   "scripts": {
     "db:generate": "drizzle-kit generate",

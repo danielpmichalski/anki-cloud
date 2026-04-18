@@ -4,12 +4,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SYNC_USER1: ${SYNC_USER1}
-      SYNC_STORAGE_PROVIDER: ${SYNC_STORAGE_PROVIDER:-local}
-      SYNC_OAUTH_TOKEN: ${SYNC_OAUTH_TOKEN:-}
       SYNC_BASE: /data
+      DATABASE_URL: file:/data/anki-cloud.db
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     volumes:
-      - sync-data:/data
+      - app-data:/data
 
 volumes:
-  sync-data:
+  app-data:

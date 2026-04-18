@@ -5,6 +5,20 @@
     "": {
       "name": "anki-cloud",
     },
+    "e2e": {
+      "name": "@anki-cloud/e2e",
+      "version": "0.1.0",
+      "dependencies": {
+        "@anki-cloud/db": "workspace:*",
+        "@mongodb-js/zstd": "^1.2.2",
+        "drizzle-orm": "^0.43.1",
+        "jose": "^6.2.2",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.2.10",
+        "typescript": "^5.8.3",
+      },
+    },
     "packages/api": {
       "name": "@anki-cloud/api",
       "version": "0.1.0",
@@ -54,6 +68,8 @@
     "@anki-cloud/api": ["@anki-cloud/api@workspace:packages/api"],
 
     "@anki-cloud/db": ["@anki-cloud/db@workspace:packages/db"],
+
+    "@anki-cloud/e2e": ["@anki-cloud/e2e@workspace:e2e"],
 
     "@anki-cloud/web": ["@anki-cloud/web@workspace:web"],
 
@@ -168,6 +184,22 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.5.5.tgz", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
+
+    "@mongodb-js/zstd": ["@mongodb-js/zstd@1.2.2", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@mongodb-js/zstd/-/zstd-1.2.2.tgz", { "optionalDependencies": { "@mongodb-js/zstd-darwin-arm64": "1.2.2", "@mongodb-js/zstd-darwin-x64": "1.2.2", "@mongodb-js/zstd-linux-arm64-gnu": "1.2.2", "@mongodb-js/zstd-linux-arm64-musl": "1.2.2", "@mongodb-js/zstd-linux-x64-gnu": "1.2.2", "@mongodb-js/zstd-linux-x64-musl": "1.2.2", "@mongodb-js/zstd-win32-x64-msvc": "1.2.2" } }, "sha512-NRXiFhk2Nl8UMuIZ4pviKkGVZY/e5P37Opam1u0OtgXjEE0kO1HLapA9heTcZ1PUomArnKS426XbiRFr5iaWvw=="],
+
+    "@mongodb-js/zstd-darwin-arm64": ["@mongodb-js/zstd-darwin-arm64@1.2.2", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@mongodb-js/zstd-darwin-arm64/-/zstd-darwin-arm64-1.2.2.tgz", { "os": "darwin", "cpu": "arm64" }, "sha512-hjQgub8fhn3itewwRSCSe3sl8rmnbZOFwuBHOZj4j4xu1Hde7xs+ACkfeEvvmNjUuxAzvc1MnDjHX2UwUlA7qA=="],
+
+    "@mongodb-js/zstd-darwin-x64": ["@mongodb-js/zstd-darwin-x64@1.2.2", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@mongodb-js/zstd-darwin-x64/-/zstd-darwin-x64-1.2.2.tgz", { "os": "darwin", "cpu": "x64" }, "sha512-gHSxcWgAdED/bDKyOqLhiwC0VYlhkhSyQuR0Fqcrl1CMpWSJAfu0jxhaEvM4Ncs6yH0+BPVwTp8xtHW2iJ5DuQ=="],
+
+    "@mongodb-js/zstd-linux-arm64-gnu": ["@mongodb-js/zstd-linux-arm64-gnu@1.2.2", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@mongodb-js/zstd-linux-arm64-gnu/-/zstd-linux-arm64-gnu-1.2.2.tgz", { "os": "linux", "cpu": "arm64" }, "sha512-DJVSC5IU/GlY9lY4qpKML/655OstZvueN/WZeuO8hyYJ5115x/usUM1pHpp7dbZWyUUhTlRIU4peR62Tk1H3lQ=="],
+
+    "@mongodb-js/zstd-linux-arm64-musl": ["@mongodb-js/zstd-linux-arm64-musl@1.2.2", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@mongodb-js/zstd-linux-arm64-musl/-/zstd-linux-arm64-musl-1.2.2.tgz", { "os": "linux", "cpu": "arm64" }, "sha512-rxTmMF2NGLLijnw+MZCs0ixiE+NylpDYvUUkJemqjyHstlmYG0Ku6i3+SzViB6L0kkktwYSRpaI4y7OG+SFt3w=="],
+
+    "@mongodb-js/zstd-linux-x64-gnu": ["@mongodb-js/zstd-linux-x64-gnu@1.2.2", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@mongodb-js/zstd-linux-x64-gnu/-/zstd-linux-x64-gnu-1.2.2.tgz", { "os": "linux", "cpu": "x64" }, "sha512-ctz/XY6aX2THxkTjAygOYbyFp2/UYbqZIF3sB1F5Cjcbus9wfD3vPbaDegqRjQhlHBvKia3IjqJDUiC+aZxmww=="],
+
+    "@mongodb-js/zstd-linux-x64-musl": ["@mongodb-js/zstd-linux-x64-musl@1.2.2", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@mongodb-js/zstd-linux-x64-musl/-/zstd-linux-x64-musl-1.2.2.tgz", { "os": "linux", "cpu": "x64" }, "sha512-EqD271yPIRBGbkMtBJSVTLlUrukTsmi7qt1G3dh+Z9RWVXn5MXnlnEn4znfBXoaVqlniUNZhmzDEaATNIktJpw=="],
+
+    "@mongodb-js/zstd-win32-x64-msvc": ["@mongodb-js/zstd-win32-x64-msvc@1.2.2", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@mongodb-js/zstd-win32-x64-msvc/-/zstd-win32-x64-msvc-1.2.2.tgz", { "os": "win32", "cpu": "x64" }, "sha512-h3O9NGOrGtfQ7g+rFqs5Hn+GSmgF2ik+xg0/1crNUXWthcBsxcCK5woawHfDcJxWkaiijJe5PVo6/fo8Jm7qCg=="],
 
     "@oslojs/asn1": ["@oslojs/asn1@1.0.0", "https://cplace.jfrog.io/artifactory/api/npm/cplace-npm/@oslojs/asn1/-/asn1-1.0.0.tgz", { "dependencies": { "@oslojs/binary": "1.0.0" } }, "sha512-zw/wn0sj0j0QKbIXfIlnEcTviaCzYOY3V5rAyjR6YtOByFtJiT574+8p9Wlach0lZH9fddD4yb9laEAIl4vXQA=="],
 

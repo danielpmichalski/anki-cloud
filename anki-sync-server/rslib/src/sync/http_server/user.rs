@@ -20,8 +20,6 @@ pub(in crate::sync) struct User {
     pub sync_state: Option<ServerSyncState>,
     pub media: ServerMediaManager,
     pub folder: PathBuf,
-    pub storage_provider: String,
-    pub storage_oauth_token: String,
 }
 
 impl User {
@@ -90,8 +88,22 @@ impl User {
     fn open_collection(&mut self) -> HttpResult<Collection> {
         use sync_storage_backends::StorageBackendFactory;
 
+        use sync_storage_config as db;
+
+        let (provider, refresh_token) = db::fetch_storage_connection(&self.name)
+            .or_internal_err("lookup storage connection")?;
+        let access_token = if provider == "local" {
+            String::new()
+        } else {
+            tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current()
+                    .block_on(db::exchange_refresh_token(&refresh_token))
+            })
+            .or_internal_err("exchange refresh token")?
+        };
+
         let col_path = self.folder.join("collection.anki2");
-        let backend = StorageBackendFactory::create(&self.storage_provider, &self.storage_oauth_token)
+        let backend = StorageBackendFactory::create(&provider, &access_token)
             .or_internal_err("create storage backend")?;
         backend
             .fetch(&self.name, &col_path)

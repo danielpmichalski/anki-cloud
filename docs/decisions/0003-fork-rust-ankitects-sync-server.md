@@ -11,7 +11,7 @@ Accepted
 Anki clients (Desktop, AnkiDroid, AnkiMobile) use a proprietary sync protocol. To support these clients without modification, the service must speak that protocol correctly. Implementing it from scratch is high-risk —
 the protocol is undocumented and has edge cases only discovered through real-world use.
 
-Ankitects ships an open-source sync server (AGPLv3) written in Rust as part of the Anki Desktop codebase since v2.1.57. It implements the full sync protocol and is battle-tested against all official clients.
+Ankitects ships an open-source sync server (AGPLv3) written in Rust as part of the Anki Desktop codebase since v25.09. It implements the full sync protocol and is battle-tested against all official clients.
 
 ### Protocol overview
 

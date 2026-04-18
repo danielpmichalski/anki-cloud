@@ -59,3 +59,13 @@ export const createApiKey = (label: string) =>
 
 export const revokeApiKey = (id: string) =>
   request<{ ok: boolean }>(`/me/api-keys/${id}`, { method: "DELETE" });
+
+export type SyncCredentials = {
+  username: string | null;
+  password: string | null;
+};
+
+export const getSyncPassword = () => request<SyncCredentials>("/me/sync-password");
+
+export const resetSyncPassword = () =>
+  request<SyncCredentials>("/me/sync-password/reset", { method: "POST" });
