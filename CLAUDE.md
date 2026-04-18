@@ -393,7 +393,7 @@ The MCP server exposes these tools to LLMs:
 - [x] Implement GDrive storage adapter (read/write collection to Drive)
 - [x] Wire GoogleDriveBackend into rslib sync server (hook points: fetch/commit)
 - [x] Verify Anki Desktop can sync to custom server backed by GDrive
-- [ ] Basic Docker Compose setup
+- [x] Basic Docker Compose setup
 
 ### Milestone 2 — M2: Auth + Account Management
 
