@@ -51,6 +51,8 @@ anki_io = { path = "rslib/io" }
 anki_process = { path = "rslib/process" }
 anki_proto = { path = "rslib/proto" }
 anki_proto_gen = { path = "rslib/proto_gen" }
+sync-storage-api = { path = "sync-storage-api" }
+sync-storage-backends = { path = "sync-storage-backends" }
 
 # pinned
 unicase = "=2.6.0" # any changes could invalidate sqlite indexes

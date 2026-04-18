@@ -146,6 +146,8 @@ dependencies = [
  "snafu",
  "strum 0.27.2",
  "syn",
+ "sync-storage-api",
+ "sync-storage-backends",
  "tempfile",
  "tokio",
  "tokio-util",

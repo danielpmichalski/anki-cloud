@@ -20,6 +20,8 @@ pub(in crate::sync) struct User {
     pub sync_state: Option<ServerSyncState>,
     pub media: ServerMediaManager,
     pub folder: PathBuf,
+    pub storage_provider: String,
+    pub storage_oauth_token: String,
 }
 
 impl User {
@@ -86,7 +88,15 @@ impl User {
     }
 
     fn open_collection(&mut self) -> HttpResult<Collection> {
-        CollectionBuilder::new(self.folder.join("collection.anki2"))
+        use sync_storage_backends::StorageBackendFactory;
+
+        let col_path = self.folder.join("collection.anki2");
+        let backend = StorageBackendFactory::create(&self.storage_provider, &self.storage_oauth_token)
+            .or_internal_err("create storage backend")?;
+        backend
+            .fetch(&self.name, &col_path)
+            .or_internal_err("fetch collection from storage")?;
+        CollectionBuilder::new(col_path)
             .set_server(true)
             .build()
             .or_internal_err("open collection")

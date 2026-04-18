@@ -79,12 +79,14 @@ SYNC_USER1=user:password ./target/debug/anki-sync-server
 
 Key environment variables:
 
-| Variable     | Default         | Description                                       |
-|--------------|-----------------|---------------------------------------------------|
-| `SYNC_USER1` | —               | `username:password` (repeat for SYNC_USER2, etc.) |
-| `SYNC_BASE`  | `~/.syncserver` | Directory for user collection files               |
-| `SYNC_HOST`  | `0.0.0.0`       | Bind address                                      |
-| `SYNC_PORT`  | `8080`          | Bind port                                         |
+| Variable                | Default         | Description                                                                  |
+|-------------------------|-----------------|------------------------------------------------------------------------------|
+| `SYNC_USER1`            | —               | `username:password` (repeat for SYNC_USER2, etc.)                            |
+| `SYNC_BASE`             | `~/.syncserver` | Directory for user collection files                                          |
+| `SYNC_HOST`             | `0.0.0.0`       | Bind address                                                                 |
+| `SYNC_PORT`             | `8080`          | Bind port                                                                    |
+| `SYNC_STORAGE_PROVIDER` | `local`         | Storage backend: `local` (filesystem) or `gdrive` (Google Drive)             |
+| `SYNC_OAUTH_TOKEN`      | —               | Google Drive OAuth access token (required if `SYNC_STORAGE_PROVIDER=gdrive`) |
 
 ## Test
 

@@ -151,9 +151,17 @@ impl SyncProtocol for Arc<SimpleServer> {
         req: SyncRequest<EmptyInput>,
     ) -> HttpResult<SyncResponse<TimestampMillis>> {
         self.with_authenticated_user(req, |user, req| {
+            use sync_storage_backends::StorageBackendFactory;
+
             let _ = req.json()?;
             let now = user.with_sync_state(req.skey()?, |col, _state| server_finish(col))?;
             user.sync_state = None;
+            let col_path = user.folder.join("collection.anki2");
+            let backend = StorageBackendFactory::create(&user.storage_provider, &user.storage_oauth_token)
+                .or_internal_err("create storage backend")?;
+            backend
+                .commit(&user.name, &col_path)
+                .or_internal_err("commit collection to storage")?;
             SyncResponse::try_from_obj(now)
         })
         .await
@@ -170,9 +178,19 @@ impl SyncProtocol for Arc<SimpleServer> {
 
     async fn upload(&self, req: SyncRequest<Vec<u8>>) -> HttpResult<SyncResponse<UploadResponse>> {
         self.with_authenticated_user(req, |user, req| {
+            use sync_storage_backends::StorageBackendFactory;
+
             user.abort_stateful_sync_if_active();
             user.ensure_col_open()?;
-            handle_received_upload(&mut user.col, req.data).map(SyncResponse::from_upload_response)
+            let resp = handle_received_upload(&mut user.col, req.data)
+                .map(SyncResponse::from_upload_response)?;
+            let col_path = user.folder.join("collection.anki2");
+            let backend = StorageBackendFactory::create(&user.storage_provider, &user.storage_oauth_token)
+                .or_internal_err("create storage backend")?;
+            backend
+                .commit(&user.name, &col_path)
+                .or_internal_err("commit collection to storage")?;
+            Ok(resp)
         })
         .await
     }

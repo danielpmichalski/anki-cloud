@@ -123,6 +123,10 @@ impl SimpleServerInner {
                     create_dir_all(&folder).whatever_context("creating SYNC_BASE")?;
                     let media =
                         ServerMediaManager::new(&folder).whatever_context("opening media")?;
+                    let storage_provider = std::env::var("SYNC_STORAGE_PROVIDER")
+                        .unwrap_or_else(|_| "local".to_string());
+                    let storage_oauth_token = std::env::var("SYNC_OAUTH_TOKEN")
+                        .unwrap_or_default();
                     users.insert(
                         hkey,
                         User {
@@ -132,6 +136,8 @@ impl SimpleServerInner {
                             sync_state: None,
                             media,
                             folder,
+                            storage_provider,
+                            storage_oauth_token,
                         },
                     );
                     idx += 1;

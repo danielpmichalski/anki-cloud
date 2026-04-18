@@ -391,8 +391,8 @@ The MCP server exposes these tools to LLMs:
 
 - [x] Fork ankitects Rust sync server (`anki-sync-server/`, upstream anki@25.09)
 - [x] Implement GDrive storage adapter (read/write collection to Drive)
-- [ ] Wire GoogleDriveBackend into rslib sync server (hook points: fetch/commit)
-- [ ] Verify Anki Desktop can sync to custom server backed by GDrive
+- [x] Wire GoogleDriveBackend into rslib sync server (hook points: fetch/commit)
+- [x] Verify Anki Desktop can sync to custom server backed by GDrive
 - [ ] Basic Docker Compose setup
 
 ### Milestone 2 — M2: Auth + Account Management
@@ -474,6 +474,7 @@ Storage backend credentials are per-user (their own GDrive etc.).
 7. **Do not use "Anki" in the product name.** Registered trademark — legal risk.
 8. **Prove the sync → GDrive adapter works before building anything else.**
    It's the riskiest assumption. Validate it first.
+9. **AI Agents: Never auto-commit code.** When work is complete, inform the user that changes are ready to commit. Let the user handle git commits themselves. This preserves user agency and prevents accidental commits.
 
 ---
 
