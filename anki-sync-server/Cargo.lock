@@ -5107,6 +5107,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "sync-storage-api"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+]
+
+[[package]]
+name = "sync-storage-backends"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "rand 0.9.2",
+ "reqwest",
+ "serde_json",
+ "sync-storage-api",
+ "tempfile",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
 name = "sync_wrapper"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5360,6 +5382,7 @@ dependencies = [
  "io-uring",
  "libc",
  "mio",
+ "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
  "slab",

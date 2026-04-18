@@ -120,6 +120,10 @@ Hono on Bun. Full CRUD API with OpenAPI spec auto-generated from Zod schemas. MC
               └──────────────────────────────────┘
 ```
 
+**Deployment:** The sync server runs as multiple stateless instances behind a load balancer.
+Each instance queries a shared SQLite database for per-user config (OAuth tokens, storage provider) on every request,
+enabling horizontal scaling via sharding. See [ADR-0011](docs/decisions/0011-use-stateless-horizontally-scalable-sync-server-architecture-with-per-request-db-lookups.md).
+
 ### 4.2 Data the Service Stores
 
 **SQLite (persistent, tiny footprint):**
@@ -392,10 +396,13 @@ The MCP server exposes these tools to LLMs:
 
 ### Milestone 2 — M2: Auth + Account Management
 
-- [ ] Google OAuth2 login flow
-- [ ] GDrive OAuth2 connection flow
-- [ ] SQLite schema + Drizzle ORM models
-- [ ] Replace sync server static env-var user config with dynamic SQLite lookup (multi-tenant)
+**Architecture:** Multiple stateless sync-server instances, load-balanced. Each instance queries shared DB on-demand for per-user config. Auto-scale based on load.
+
+- [ ] Google OAuth2 login flow (REST API)
+- [ ] GDrive OAuth2 connection flow (REST API)
+- [ ] SQLite schema + Drizzle ORM models (`storage_connections`, `users`, `sync_sessions`, `api_keys`)
+- [ ] REST API: multi-user account endpoints (`GET /v1/me`, `POST /v1/me/storage/connect`, etc.)
+- [ ] Sync server: query shared DB for user's `storage_connections` on each request, inject into `StorageBackendFactory`
 - [ ] Simple web UI (account page, connect Drive, generate API keys)
 - [ ] Redis for sessions + rate limiting
 
