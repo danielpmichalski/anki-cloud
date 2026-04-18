@@ -1,0 +1,5 @@
+{
+  "name": "anki-cloud",
+  "private": true,
+  "workspaces": ["packages/*"]
+}
