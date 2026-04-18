@@ -1,0 +1,15 @@
+services:
+  anki-sync-server:
+    build: ./anki-sync-server
+    ports:
+      - "8080:8080"
+    environment:
+      SYNC_USER1: ${SYNC_USER1}
+      SYNC_STORAGE_PROVIDER: ${SYNC_STORAGE_PROVIDER:-local}
+      SYNC_OAUTH_TOKEN: ${SYNC_OAUTH_TOKEN:-}
+      SYNC_BASE: /data
+    volumes:
+      - sync-data:/data
+
+volumes:
+  sync-data:
