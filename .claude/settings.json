@@ -3,5 +3,13 @@
     "allow": [
       "Bash(adr *)"
     ]
+  },
+  "lspServers": {
+    "rust": {
+      "command": "rust-analyzer",
+      "languages": [
+        "rust"
+      ]
+    }
   }
 }
