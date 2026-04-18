@@ -96,7 +96,7 @@ VALUES (lower(hex(randomblob(16))), '<your-user-id>', 'local', '', NULL, '/AnkiS
 
 ### 5. Anki Desktop
 
-- Version 2.1.57 or newer
+- Version 25.09 or newer
 - Any profile is fine (even empty)
 
 ---

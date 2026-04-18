@@ -45,7 +45,7 @@ Anki open or doing anything manually.
 |-----------------------|-------------|---------------------------------------|
 | Anki Desktop          | ✅ AGPLv3    | `ankitects/anki` on GitHub            |
 | AnkiDroid (Android)   | ✅ AGPLv3    | Separate community project            |
-| anki-sync-server      | ✅ AGPLv3    | Built into Anki Desktop since v2.1.57 |
+| anki-sync-server      | ✅ AGPLv3    | Built into Anki Desktop since v25.09 |
 | AnkiWeb (hosted sync) | ❌ Closed    | Proprietary, run by Ankitects Pty Ltd |
 | AnkiMobile (iOS)      | ❌ Closed    | Paid app, funds Anki development      |
 

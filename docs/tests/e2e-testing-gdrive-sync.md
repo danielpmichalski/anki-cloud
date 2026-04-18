@@ -42,7 +42,7 @@ You need a valid Google Drive API access token. Options:
 
 ### 2. Anki Desktop
 
-- [Download and install Anki](https://apps.ankiweb.net/) (2.1.57+)
+- [Download and install Anki](https://apps.ankiweb.net/) (25.09+)
 - Create or import a test deck (optional; you can sync an empty profile)
 
 ### 3. Rust Toolchain
