@@ -404,7 +404,7 @@ The MCP server exposes these tools to LLMs:
 - [x] Google OAuth2 login flow (REST API)
 - [x] GDrive OAuth2 connection flow (REST API)
 - [x] REST API: multi-user account endpoints (`GET /v1/me`, `POST /v1/me/storage/connect`, etc.)
-- [ ] Simple web UI (account page, connect Drive, generate API keys)
+- [x] Simple web UI (account page, connect Drive, generate API keys)
 - [ ] Sync server: query shared DB for user's `storage_connections` on each request, inject into `StorageBackendFactory`
 - [ ] Redis for sessions + rate limiting
 - [ ] Extract anki-sync-server to a separate repository (after the storage adapter interface is stabilized)
