@@ -406,6 +406,7 @@ The MCP server exposes these tools to LLMs:
 - [ ] Sync server: query shared DB for user's `storage_connections` on each request, inject into `StorageBackendFactory`
 - [ ] Simple web UI (account page, connect Drive, generate API keys)
 - [ ] Redis for sessions + rate limiting
+- [ ] Extract anki-sync-server to a separate repository (after the storage adapter interface is stabilized)
 
 ### Milestone 3 — M3: REST API
 
