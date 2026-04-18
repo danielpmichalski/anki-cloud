@@ -5,7 +5,7 @@ import {
   generateCodeVerifier,
   generateState,
 } from "arctic";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { db, storageConnections } from "@anki-cloud/db";
@@ -23,9 +23,11 @@ const OAUTH_STATE_MAX_AGE = 600;
 
 const ErrorSchema = z.object({ error: z.string(), code: z.string() });
 
+const ProviderSchema = z.enum(["gdrive", "dropbox", "s3"]);
+
 const StorageConnectionSchema = z.object({
   id: z.string().uuid(),
-  provider: z.enum(["gdrive", "dropbox", "s3"]),
+  provider: ProviderSchema,
   folderPath: z.string(),
   connectedAt: z.string().datetime(),
 });
@@ -34,7 +36,111 @@ const StorageListResponseSchema = z.object({
   connections: z.array(StorageConnectionSchema),
 });
 
+const StorageConnectRequestSchema = z.object({
+  provider: ProviderSchema,
+});
+
+const StorageConnectResponseSchema = z.object({
+  redirectUrl: z.string().url(),
+});
+
 export const storageRouter = new OpenAPIHono<Env>();
+
+const storageConnectRoute = createRoute({
+  method: "post",
+  path: "/me/storage/connect",
+  middleware: [authMiddleware] as const,
+  request: {
+    body: {
+      content: { "application/json": { schema: StorageConnectRequestSchema } },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: StorageConnectResponseSchema } },
+      description: "OAuth redirect URL to initiate storage connection",
+    },
+    400: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Unsupported provider",
+    },
+    401: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Unauthenticated",
+    },
+  },
+});
+
+storageRouter.openapi(storageConnectRoute, async (c) => {
+  const { provider } = c.req.valid("json");
+
+  if (provider !== "gdrive") {
+    return c.json({ error: "Provider not yet supported", code: "UNSUPPORTED_PROVIDER" }, 400);
+  }
+
+  const state = generateState();
+  const codeVerifier = generateCodeVerifier();
+  const url = googleDrive.createAuthorizationURL(state, codeVerifier, [
+    "https://www.googleapis.com/auth/drive.file",
+  ]);
+  url.searchParams.set("access_type", "offline");
+  url.searchParams.set("prompt", "consent");
+
+  setCookie(c, "gdrive_oauth_state", state, {
+    httpOnly: true,
+    sameSite: "Lax",
+    path: "/",
+    maxAge: OAUTH_STATE_MAX_AGE,
+  });
+  setCookie(c, "gdrive_code_verifier", codeVerifier, {
+    httpOnly: true,
+    sameSite: "Lax",
+    path: "/",
+    maxAge: OAUTH_STATE_MAX_AGE,
+  });
+
+  return c.json({ redirectUrl: url.toString() }, 200);
+});
+
+const storageDisconnectRoute = createRoute({
+  method: "delete",
+  path: "/me/storage/{provider}",
+  middleware: [authMiddleware] as const,
+  request: {
+    params: z.object({ provider: ProviderSchema }),
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: z.object({ ok: z.boolean() }) } },
+      description: "Storage disconnected",
+    },
+    404: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Storage connection not found",
+    },
+    401: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Unauthenticated",
+    },
+  },
+});
+
+storageRouter.openapi(storageDisconnectRoute, async (c) => {
+  const { id: userId } = c.get("user");
+  const { provider } = c.req.valid("param");
+
+  const deleted = await db
+    .delete(storageConnections)
+    .where(and(eq(storageConnections.userId, userId), eq(storageConnections.provider, provider)))
+    .returning({ id: storageConnections.id });
+
+  if (deleted.length === 0) {
+    return c.json({ error: "Storage connection not found", code: "NOT_FOUND" }, 404);
+  }
+
+  return c.json({ ok: true }, 200);
+});
 
 storageRouter.get("/me/storage/connect/gdrive", authMiddleware, async (c) => {
   const state = generateState();
