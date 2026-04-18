@@ -120,6 +120,10 @@ Hono on Bun. Full CRUD API with OpenAPI spec auto-generated from Zod schemas. MC
               └──────────────────────────────────┘
 ```
 
+**Deployment:** The sync server runs as multiple stateless instances behind a load balancer.
+Each instance queries a shared SQLite database for per-user config (OAuth tokens, storage provider) on every request,
+enabling horizontal scaling via sharding. See [ADR-0011](docs/decisions/0011-use-stateless-horizontally-scalable-sync-server-architecture-with-per-request-db-lookups.md).
+
 ### 4.2 Data the Service Stores
 
 **SQLite (persistent, tiny footprint):**
