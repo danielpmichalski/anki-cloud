@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(adr *)"
+      "Bash(adr *)",
+      "Bash(cargo build *)",
+      "Bash(cargo check *)",
+      "Bash(cargo test *)"
     ]
   },
   "lspServers": {
