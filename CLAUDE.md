@@ -417,64 +417,61 @@ The MCP server exposes these tools to LLMs:
 - [x] Sync server: DB-backed multi-user auth (`users.sync_password_hash`); no more `SYNC_USER*` env vars
 - [x] Sync server: stateless re-hydration — hkey stored in `users_sync_state.sync_key`, re-hydrated from DB after restart/failover
 - [x] Sync password web UI (generate, copy, reset in account page)
-- [ ] Extract anki-sync-server to a separate repository (after the storage adapter interface is stabilized)
+- [ ] #39 Extract anki-sync-server to a separate repository (after the storage adapter interface is stabilized)
 
 ### Milestone 3 — M3: REST API
 
-- [ ] Hono on Bun app with OpenAPI spec generation (Zod schemas)
-- [ ] All deck/note/card endpoints
-- [ ] API key auth middleware
-- [ ] Scalar API docs
-- [ ] openapi-generator SDK output (Python + JS)
+- [ ] #14 Hono on Bun app with OpenAPI spec generation (Zod schemas)
+- [ ] #15 All deck/note/card endpoints
+- [ ] #16 API key auth middleware
+- [ ] #18 openapi-generator SDK output (Python + JS)
 
 ### Milestone 4 — M4: MCP Server
 
-- [ ] MCP server wrapping REST API
-- [ ] All tools implemented
-- [ ] Test with Claude Desktop
-- [ ] MCP integration docs
+- [ ] #19 MCP server wrapping REST API
+- [ ] #20 All tools implemented
+- [ ] #21 Test with Claude Desktop
+- [ ] #22 MCP integration docs
 
 ### Milestone 5 — M5: Docs + Open Source Launch
 
-- [ ] Docusaurus docs site
-- [ ] Self-hosting guide (docker-compose up)
-- [ ] API reference (Scalar, auto-deployed)
-- [ ] Contributing guide
-- [ ] GitHub release automation (release-please)
+- [ ] #23 Docusaurus docs site
+- [ ] #24 Self-hosting guide (docker-compose up)
+- [ ] #25 Contributing guide
 
 ### Milestone 6 — M6: Additional Storage Backends
 
-- [ ] Dropbox adapter
-- [ ] S3-compatible adapter (Cloudflare R2, MinIO, AWS S3)
-- [ ] OneDrive adapter
+- [ ] #27 Dropbox adapter
+- [ ] #28 S3-compatible adapter (Cloudflare R2, MinIO, AWS S3)
+- [ ] #29 OneDrive adapter
 
 ### Milestone 7 — M7: CLI (`anki-cloud-cli`)
 
-- [ ] TypeScript CLI wrapping REST API (Bun single-binary build)
-- [ ] Commands: `decks list/create`, `notes add/search/update/delete`, `auth login/logout`
-- [ ] API key auth via `~/.config/anki-cloud/config.json` or env var
-- [ ] npm publish + Homebrew formula
-- [ ] Claude Code usage docs (bash tool integration)
+- [ ] #30 TypeScript CLI wrapping REST API (Bun single-binary build)
+- [ ] #31 Commands: `decks list/create`, `notes add/search/update/delete`, `auth login/logout`
+- [ ] #32 npm publish + Homebrew formula
+- [ ] #33 Claude Code usage docs (bash tool integration)
 
 ### Milestone 8 — M8: Additional Auth Providers
 
 Migrate to **Better Auth** (TS-native, self-hostable, Drizzle-compatible) to replace hand-rolled OAuth2. Replaces `routes/auth.ts` + session middleware. Manages `users` + sessions; app tables (`sync_password_hash`, `storage_connections`, `api_keys`) unchanged.
 
-- [ ] Migrate Google OAuth2 to Better Auth
-- [ ] Add GitHub OAuth2 (high-overlap audience)
-- [ ] Add Microsoft OAuth2
-- [ ] Add Facebook OAuth2
-- [ ] Add GitLab OAuth2
+- [ ] #48 Migrate Google OAuth2 to Better Auth
+- [ ] #49 Add GitHub OAuth2 (high-overlap audience)
+- [ ] #50 Add Microsoft OAuth2
+- [ ] #51 Add Facebook OAuth2
+- [ ] #52 Add GitLab OAuth2
 
 ### Milestone 9 — M9: DevOps
 
-- [ ] CI/CD with GitHub Actions
-- [ ] Docker image publishing
-- [ ] GitHub release automation (release-please)
+- [ ] #53 CI/CD with GitHub Actions
+- [ ] #54 Docker image publishing
+- [ ] #26 GitHub release automation (release-please)
+- [ ] #17 Scalar API docs deployment
 
 ### Milestone 10 — M10: Miscellaneous
 
-- [ ] Redis for sessions + rate limiting
+- [ ] #9 Redis for sessions + rate limiting
 
 ---
 
