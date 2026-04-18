@@ -30,10 +30,23 @@ cd packages/api && bun run dev
 # Terminal 2 — Rust sync server
 cd anki-sync-server
 cargo build --bin anki-sync-server   # first time only
-SYNC_PORT=27701 SYNC_BASE=~/.anki-cloud-sync DATABASE_URL=file:../data/anki-cloud.db \
+SYNC_PORT=27701 SYNC_BASE=~/.anki-cloud-sync \
+  DATABASE_URL=file:$(realpath ../packages/data/anki-cloud.db) \
   TOKEN_ENCRYPTION_KEY=<your-32-byte-hex> \
+  GOOGLE_CLIENT_ID=<your-google-client-id> \
+  GOOGLE_CLIENT_SECRET=<your-google-client-secret> \
   ./target/debug/anki-sync-server
 # Expected: listening addr=0.0.0.0:27701
+
+# Tip: DATABASE_URL must be an absolute path — the relative form ../data/... breaks
+# depending on the working directory. Use $(realpath ...) or $(pwd) to be safe.
+
+# Shortcut: source .env from the repo root (contains all vars except SYNC_PORT/SYNC_BASE):
+#   cd anki-sync-server
+#   set -a && source ../.env && set +a
+#   SYNC_PORT=27701 SYNC_BASE=~/.anki-cloud-sync \
+#     DATABASE_URL=file:$(realpath ../data/anki-cloud.db) \
+#     ./target/debug/anki-sync-server
 
 # Terminal 3 — Web UI
 cd web && bun run dev
@@ -44,6 +57,14 @@ cd web && bun run dev
 > port or adjust the custom URL in Anki preferences accordingly.
 
 ### 2. DB migrated and user exists
+
+Run migrations if you haven't already:
+
+```bash
+cd packages/db && bun run db:migrate
+```
+
+Expected: migration SQL files applied, `data/anki-cloud.db` created with all tables.
 
 If you have not logged in yet, complete the Google OAuth flow first
 (see [e2e-testing-auth-and-gdrive-connect.md](./e2e-testing-auth-and-gdrive-connect.md)).
@@ -329,6 +350,15 @@ sqlite3 data/anki-cloud.db \
 ```
 
 Empty `sync_key` means the `hostKey` call didn't complete — check sync server logs for errors.
+
+### `403` on `/sync/hostKey` — "unable to open database file"
+
+`DATABASE_URL` is a relative path that doesn't resolve from the binary's working directory.
+Use an absolute path:
+
+```bash
+DATABASE_URL=file:$(realpath ../data/anki-cloud.db)
+```
 
 ### `403` on `/sync/hostKey` with correct password
 
