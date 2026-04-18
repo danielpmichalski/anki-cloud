@@ -214,15 +214,14 @@ polished auto-generated SDK clients.
 ├── docker-compose.yml         ← full local stack
 ├── docker-compose.dev.yml     ← dev overrides
 │
-├── sync-server/               ← Rust, fork of ankitects sync server
-│   ├── src/
-│   │   ├── main.rs
-│   │   ├── protocol/          ← Anki sync protocol implementation
-│   │   └── storage/           ← storage backend adapters
-│   │       ├── gdrive.rs
-│   │       ├── dropbox.rs
-│   │       └── s3.rs
-│   └── Cargo.toml
+├── anki-sync-server/          ← Rust workspace, upstream anki@25.09 rslib/
+│   ├── Cargo.toml             ← workspace root (our only custom file)
+│   ├── Cargo.lock             ← copied from upstream
+│   ├── README.md
+│   └── rslib/                 ← verbatim copy of ankitects/anki rslib/
+│       ├── src/sync/          ← sync protocol implementation
+│       │   └── http_server/   ← ADR-0003 hook points (fetch/commit) go here
+│       └── sync/              ← anki-sync-server binary (main.rs)
 │
 ├── api/                       ← TypeScript / Hono on Bun
 │   ├── src/
@@ -266,7 +265,8 @@ polished auto-generated SDK clients.
 │       └── release.yml        ← release-please + conventional commits
 │
 └── scripts/
-    └── generate-sdk.sh        ← openapi-generator invocation
+    ├── fork-anki-sync-server.sh  ← copy rslib/ from ankitects/anki at a given tag
+    └── generate-sdk.sh           ← openapi-generator invocation
 ```
 
 ---
@@ -380,7 +380,7 @@ The MCP server exposes these tools to LLMs:
 ## 8. Build Order / Milestones
 
 ### Milestone 1 — Proof of Concept (de-risk the hard part)
-- [ ] Fork ankitects Rust sync server
+- [x] Fork ankitects Rust sync server (`anki-sync-server/`, upstream anki@25.09)
 - [ ] Implement GDrive storage adapter (read/write collection to Drive)
 - [ ] Verify Anki Desktop can sync to custom server backed by GDrive
 - [ ] Basic Docker Compose setup
