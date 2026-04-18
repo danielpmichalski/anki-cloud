@@ -195,18 +195,37 @@ impl GoogleDriveBackend {
         // Initiate resumable upload session
         let mut headers = self.auth_header();
         headers.insert(
-            "X-Goog-Upload-Protocol",
-            "resumable".parse().expect("valid header"),
+            "X-Upload-Content-Type",
+            "application/octet-stream".parse().expect("valid header"),
+        );
+        headers.insert(
+            "X-Upload-Content-Length",
+            file_data.len().to_string().parse().expect("valid header"),
         );
 
-        let session_response = client
-            .post(&url)
-            .headers(headers)
-            .query(&[("uploadType", "resumable")])
-            .json(&metadata)
-            .send()
-            .await?;
+        let session_response = if file_id.is_some() {
+            client
+                .patch(&url)
+                .headers(headers)
+                .query(&[("uploadType", "resumable")])
+                .json(&metadata)
+                .send()
+                .await?
+        } else {
+            client
+                .post(&url)
+                .headers(headers)
+                .query(&[("uploadType", "resumable")])
+                .json(&metadata)
+                .send()
+                .await?
+        };
 
+        let session_status = session_response.status();
+        if !session_status.is_success() {
+            let body: Value = session_response.json().await.unwrap_or(Value::Null);
+            return Err(anyhow!("Drive upload initiation error {}: {}", session_status, body));
+        }
         let session_uri = session_response
             .headers()
             .get("location")
