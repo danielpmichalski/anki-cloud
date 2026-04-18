@@ -474,6 +474,7 @@ Storage backend credentials are per-user (their own GDrive etc.).
 7. **Do not use "Anki" in the product name.** Registered trademark — legal risk.
 8. **Prove the sync → GDrive adapter works before building anything else.**
    It's the riskiest assumption. Validate it first.
+9. **AI Agents: Never auto-commit code.** When work is complete, inform the user that changes are ready to commit. Let the user handle git commits themselves. This preserves user agency and prevents accidental commits.
 
 ---
 
