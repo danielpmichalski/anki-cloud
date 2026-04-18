@@ -35,6 +35,9 @@ echo "==> Replacing anki-sync-server/proto/ ..."
 rm -rf "$TARGET_DIR/proto"
 cp -r "$TMP_DIR/anki/proto" "$TARGET_DIR/proto"
 
+echo "==> Copying anki-sync-server/.version ..."
+cp "$TMP_DIR/anki/.version" "$TARGET_DIR/.version"
+
 echo "==> Replacing anki-sync-server/Cargo.lock ..."
 cp "$TMP_DIR/anki/Cargo.lock" "$TARGET_DIR/Cargo.lock"
 
