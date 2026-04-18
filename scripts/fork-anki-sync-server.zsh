@@ -24,6 +24,10 @@ echo "==> Replacing anki-sync-server/rslib/ ..."
 rm -rf "$TARGET_DIR/rslib"
 cp -r "$TMP_DIR/anki/rslib" "$TARGET_DIR/rslib"
 
+echo "==> Replacing anki-sync-server/ftl/ ..."
+rm -rf "$TARGET_DIR/ftl"
+cp -r "$TMP_DIR/anki/ftl" "$TARGET_DIR/ftl"
+
 echo "==> Replacing anki-sync-server/Cargo.lock ..."
 cp "$TMP_DIR/anki/Cargo.lock" "$TARGET_DIR/Cargo.lock"
 
