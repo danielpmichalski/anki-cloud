@@ -45,7 +45,7 @@ Anki open or doing anything manually.
 |-----------------------|-------------|---------------------------------------|
 | Anki Desktop          | ✅ AGPLv3    | `ankitects/anki` on GitHub            |
 | AnkiDroid (Android)   | ✅ AGPLv3    | Separate community project            |
-| anki-sync-server      | ✅ AGPLv3    | Built into Anki Desktop since v25.09 |
+| anki-sync-server      | ✅ AGPLv3    | Built into Anki Desktop since v25.09  |
 | AnkiWeb (hosted sync) | ❌ Closed    | Proprietary, run by Ankitects Pty Ltd |
 | AnkiMobile (iOS)      | ❌ Closed    | Paid app, funds Anki development      |
 
@@ -213,45 +213,33 @@ polished auto-generated SDK clients.
 
 ### 4.5 Repository Structure
 
+The sync server lives in a separate repository:
+**[github.com/danielpmichalski/anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync)**
+— consumed here as a Docker image (`ghcr.io/danielpmichalski/anki-cloud-sync:<version>`).
+
 ```
 /
 ├── CLAUDE.md                  ← this file
 ├── README.md
-├── docker-compose.yml         ← full local stack
+├── docker-compose.yml         ← full local stack (pulls anki-cloud-sync image)
 ├── docker-compose.dev.yml     ← dev overrides
 │
-├── anki-sync-server/          ← Rust workspace, upstream anki@25.09 rslib/
-│   ├── Cargo.toml             ← workspace root (our only non-upstream file)
-│   ├── Cargo.lock             ← copied from upstream
-│   ├── README.md
-│   ├── sync-storage-config/   ← our crate: DB lookups, token decrypt, bcrypt auth
-│   │   └── src/lib.rs         ← fetch_storage_connection, verify_sync_credentials, store/lookup sync_key
-│   ├── sync-storage-backends/ ← our crate: StorageBackend trait + GDrive/local impls
-│   ├── sync-storage-api/      ← our crate: shared types
-│   ├── ftl/                   ← verbatim copy of ankitects/anki ftl/ + submodules (anki_i18n build)
-│   ├── proto/                 ← verbatim copy of ankitects/anki proto/ (anki_proto build)
-│   └── rslib/                 ← verbatim copy of ankitects/anki rslib/
-│       ├── src/sync/          ← sync protocol implementation
-│       │   └── http_server/   ← ADR-0003 hook points (fetch/commit) go here
-│       └── sync/              ← anki-sync-server binary (main.rs)
+├── api/                       ← TypeScript / Hono on Bun (REST API + auth)
+│   ├── src/
+│   │   ├── index.ts
+│   │   ├── routes/
+│   │   │   ├── auth.ts               ← OAuth2 flows
+│   │   │   ├── api-keys.ts
+│   │   │   └── sync-credentials.ts   ← GET/POST /v1/me/sync-password
+│   │   └── middleware/               ← JWT session auth
+│   └── package.json
 │
-├── packages/
-│   ├── api/                   ← TypeScript / Hono on Bun (REST API + auth)
-│   │   ├── src/
-│   │   │   ├── index.ts
-│   │   │   ├── routes/
-│   │   │   │   ├── auth.ts           ← OAuth2 flows
-│   │   │   │   ├── api-keys.ts
-│   │   │   │   └── sync-credentials.ts ← GET/POST /v1/me/sync-password
-│   │   │   └── middleware/           ← JWT session auth
-│   │   └── package.json
-│   ├── db/                    ← Drizzle ORM + SQLite schema (@anki-cloud/db)
-│   │   ├── src/
-│   │   │   ├── schema.ts             ← users, storage_connections, api_keys, users_sync_state
-│   │   │   ├── migrations/           ← auto-generated SQL migrations
-│   │   │   └── encrypt.ts            ← AES-256-GCM token encryption (matches sync-storage-config)
-│   │   └── package.json
-│   └── data/                  ← shared data types
+├── db/                        ← Drizzle ORM + SQLite schema (@anki-cloud/db)
+│   ├── src/
+│   │   ├── schema.ts                 ← users, storage_connections, api_keys, users_sync_state
+│   │   ├── migrations/               ← auto-generated SQL migrations
+│   │   └── encrypt.ts                ← AES-256-GCM token encryption (matches sync-storage-config)
+│   └── package.json
 │
 ├── web/                       ← Simple account management UI (Vite + React)
 │   ├── src/
@@ -274,8 +262,7 @@ polished auto-generated SDK clients.
 │       └── release.yml        ← release-please + conventional commits
 │
 └── scripts/
-    ├── fork-anki-sync-server.zsh  ← copy rslib/ from ankitects/anki at a given tag
-    └── generate-sdk.sh           ← openapi-generator invocation
+    └── generate-sdk.sh        ← openapi-generator invocation
 ```
 
 ---
@@ -393,69 +380,12 @@ The MCP server exposes these tools to LLMs:
 
 ---
 
-## 8. Build Order / Milestones
+## 8. Milestones
 
-### Milestone 1 — M1: Proof of Concept
+Milestones and issue tracking live entirely on GitHub — that is the single source of truth.
 
-- [x] Fork ankitects Rust sync server (`anki-sync-server/`, upstream anki@25.09)
-- [x] Implement GDrive storage adapter (read/write collection to Drive)
-- [x] Wire GoogleDriveBackend into rslib sync server (hook points: fetch/commit)
-- [x] Verify Anki Desktop can sync to custom server backed by GDrive
-- [x] Basic Docker Compose setup
-
-### Milestone 2 — M2: Auth + Account Management
-
-**Architecture:** Multiple stateless sync-server instances, load-balanced. Each instance queries shared DB on-demand for per-user config. Auto-scale based on load.
-
-- [x] SQLite schema + Drizzle ORM models (`storage_connections`, `users`, `users_sync_state`, `users_api_keys`) — `packages/db` (@anki-cloud/db)
-- [x] Version the Rust sync server to match Anki's release tag (e.g. `25.09`) — it has a hard protocol dependency on a specific Anki version, so the version number is a meaningful compatibility signal. All other packages (REST API, MCP server, DB lib, web UI) use independent semver starting at `0.1.0`. A compatibility table in the README maps Anki versions to sync-server releases.
-- [x] Google OAuth2 login flow (REST API)
-- [x] GDrive OAuth2 connection flow (REST API)
-- [x] REST API: multi-user account endpoints (`GET /v1/me`, `POST /v1/me/storage/connect`, etc.)
-- [x] Simple web UI (account page, connect Drive, generate API keys)
-- [x] Sync server: query shared DB for user's `storage_connections` on each request, inject into `StorageBackendFactory`
-- [x] Sync server: DB-backed multi-user auth (`users.sync_password_hash`); no more `SYNC_USER*` env vars
-- [x] Sync server: stateless re-hydration — hkey stored in `users_sync_state.sync_key`, re-hydrated from DB after restart/failover
-- [x] Sync password web UI (generate, copy, reset in account page)
-- [ ] Redis for sessions + rate limiting
-- [ ] Extract anki-sync-server to a separate repository (after the storage adapter interface is stabilized)
-
-### Milestone 3 — M3: REST API
-
-- [ ] Hono on Bun app with OpenAPI spec generation (Zod schemas)
-- [ ] All deck/note/card endpoints
-- [ ] API key auth middleware
-- [ ] Scalar API docs
-- [ ] openapi-generator SDK output (Python + JS)
-
-### Milestone 4 — M4: MCP Server
-
-- [ ] MCP server wrapping REST API
-- [ ] All tools implemented
-- [ ] Test with Claude Desktop
-- [ ] MCP integration docs
-
-### Milestone 5 — M5: Docs + Open Source Launch
-
-- [ ] Docusaurus docs site
-- [ ] Self-hosting guide (docker-compose up)
-- [ ] API reference (Scalar, auto-deployed)
-- [ ] Contributing guide
-- [ ] GitHub release automation (release-please)
-
-### Milestone 6 — M6: Additional Storage Backends
-
-- [ ] Dropbox adapter
-- [ ] S3-compatible adapter (Cloudflare R2, MinIO, AWS S3)
-- [ ] OneDrive adapter
-
-### Milestone 7 — M7: CLI (`anki-cloud-cli`)
-
-- [ ] TypeScript CLI wrapping REST API (Bun single-binary build)
-- [ ] Commands: `decks list/create`, `notes add/search/update/delete`, `auth login/logout`
-- [ ] API key auth via `~/.config/anki-cloud/config.json` or env var
-- [ ] npm publish + Homebrew formula
-- [ ] Claude Code usage docs (bash tool integration)
+- **Milestones:** https://github.com/danielpmichalski/anki-cloud/milestones
+- **Issues:** https://github.com/danielpmichalski/anki-cloud/issues
 
 ---
 
@@ -478,7 +408,8 @@ Storage backend credentials are per-user (their own GDrive etc.).
 ## 10. Key Principles & Non-Negotiables
 
 1. **We never store deck data.** User data lives in user-controlled storage. Always.
-2. **We never store passwords for OAuth-authenticated users.** OAuth tokens only. Always scoped, always revocable. Exception: Anki sync uses a dedicated per-user sync password (bcrypt hash only, plaintext never persisted) because the Anki sync protocol does not support OAuth.
+2. **We never store passwords for OAuth-authenticated users.** OAuth tokens only. Always scoped, always revocable. Exception: Anki sync uses a dedicated per-user sync password (bcrypt hash only, plaintext never
+   persisted) because the Anki sync protocol does not support OAuth.
 3. **Open source core (AGPLv3).** The sync server, REST API, and MCP server are all AGPLv3.
 4. **Self-hostable.** Everything runs with `docker compose up`. No hidden dependencies.
 5. **OpenAPI first.** The spec is the contract. SDKs and docs generate from it.

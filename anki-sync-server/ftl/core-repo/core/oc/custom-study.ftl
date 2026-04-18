@@ -1,1 +1,0 @@
-custom-study-cards = cartas

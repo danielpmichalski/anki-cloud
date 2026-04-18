@@ -1,6 +1,6 @@
 services:
   anki-sync-server:
-    build: ./anki-sync-server
+    image: ghcr.io/danielpmichalski/anki-cloud-sync:25.09
     ports:
       - "8080:8080"
     environment:
