@@ -35,8 +35,14 @@ if command -v rustup &>/dev/null; then
   ok "Rust $(rustc --version)"
 else
   info "Installing Rust via rustup ..."
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  # --no-modify-path: avoid touching shell profiles we don't own (e.g. .tcshrc)
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
   source "$HOME/.cargo/env"
+  # Persist cargo to zsh PATH explicitly
+  if ! grep -q 'cargo/env' "$HOME/.zshrc" 2>/dev/null; then
+    echo '\n# Rust (added by anki-cloud setup.zsh)\n. "$HOME/.cargo/env"' >> "$HOME/.zshrc"
+    info "Added cargo to ~/.zshrc"
+  fi
   ok "Rust $(rustc --version)"
 fi
 
