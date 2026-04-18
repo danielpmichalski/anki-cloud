@@ -1,6 +1,6 @@
 mod backends;
 
-pub use backends::gdrive::GDriveBackend;
+pub use backends::google_drive::GoogleDriveBackend;
 pub use backends::local::LocalBackend;
 use anyhow::{anyhow, Result};
 use sync_storage_api::StorageBackend;
@@ -12,7 +12,7 @@ impl StorageBackendFactory {
     /// `provider` matches `storage_connections.provider` in SQLite.
     pub fn create(provider: &str, oauth_token: &str) -> Result<Box<dyn StorageBackend>> {
         match provider {
-            "gdrive" => Ok(Box::new(GDriveBackend::new(oauth_token))),
+            "gdrive" => Ok(Box::new(GoogleDriveBackend::new(oauth_token))),
             "local" => Ok(Box::new(LocalBackend)),
             _ => Err(anyhow!("unknown storage provider: {provider}")),
         }
