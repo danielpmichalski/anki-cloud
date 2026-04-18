@@ -35,7 +35,7 @@ anki-sync-server/
     ├── build.rs             ← generates Rust code from .proto files (requires protoc)
     ├── src/
     │   └── sync/
-    │       └── http_server/ ← ADR-0003 hook points; db.rs added here (per-request DB + token lookup)
+    │       └── http_server/ ← ADR-0003 hook points (minimal changes — upstream diff kept small)
     ├── sync/
     │   ├── Cargo.toml       ← `anki-sync-server` binary crate
     │   └── main.rs
@@ -76,8 +76,7 @@ The binary lands at `target/debug/anki-sync-server`.
 ## Run
 
 ```bash
-SYNC_USER1=user@example.com:password \
-  DATABASE_URL=file:/path/to/anki-cloud.db \
+DATABASE_URL=file:/path/to/anki-cloud.db \
   TOKEN_ENCRYPTION_KEY=<64-hex-chars> \
   GOOGLE_CLIENT_ID=<client-id> \
   GOOGLE_CLIENT_SECRET=<client-secret> \
@@ -85,11 +84,13 @@ SYNC_USER1=user@example.com:password \
 # Listens on 0.0.0.0:8080 by default. See https://docs.ankiweb.net/sync-server.html
 ```
 
+Users authenticate with their email address and a per-user sync password set via the web UI
+(`GET /v1/me/sync-password`). No `SYNC_USER*` env vars are needed.
+
 Key environment variables:
 
 | Variable               | Default         | Description                                                                         |
 |------------------------|-----------------|-------------------------------------------------------------------------------------|
-| `SYNC_USER1`           | —               | `email:password` — email must match the `users.email` column in the shared SQLite DB. Repeat for `SYNC_USER2`, etc. |
 | `SYNC_BASE`            | `~/.syncserver` | Directory for temporary user collection files during sync                           |
 | `SYNC_HOST`            | `0.0.0.0`       | Bind address                                                                        |
 | `SYNC_PORT`            | `8080`          | Bind port                                                                           |
@@ -98,16 +99,29 @@ Key environment variables:
 | `GOOGLE_CLIENT_ID`     | —               | Google OAuth2 client ID — used to exchange refresh tokens for fresh access tokens   |
 | `GOOGLE_CLIENT_SECRET` | —               | Google OAuth2 client secret                                                         |
 
+### Authentication
+
+On `/sync/hostKey` (Anki login):
+
+1. Verifies `email` + `password` against `users.sync_password_hash` (bcrypt, timing-safe)
+2. Derives `hkey = SHA1(email:password)` and upserts it into `users_sync_state.sync_key`
+3. Returns `hkey` to Anki client as session token
+
+On subsequent sync requests (hkey in `anki-sync` header):
+
+1. Looks up hkey in in-memory session map
+2. If not found (server restart or different instance): queries `users_sync_state` by hkey to re-hydrate
+
 ### How per-request storage lookup works
 
 On each sync operation that requires storage access (open, finish, upload), the sync server:
 
-1. Looks up `storage_connections` in the shared SQLite DB, joining on `users.email = <sync username>`
-2. Decrypts the stored `oauth_refresh_token` (AES-256-GCM)
+1. Looks up `storage_connections` in the shared SQLite DB, joining on `users.email`
+2. Decrypts the stored `oauth_refresh_token` (AES-256-GCM) — skipped for `provider = "local"`
 3. Exchanges the refresh token for a fresh Google access token via `https://oauth2.googleapis.com/token`
 4. Passes the access token to `StorageBackendFactory` to create the appropriate backend
 
-This makes each sync server instance stateless — no per-user storage config in memory, safe to run behind a load balancer.
+This makes each sync server instance stateless — no per-user config in memory, safe to run behind a load balancer.
 
 ## Test
 
@@ -115,10 +129,10 @@ This makes each sync server instance stateless — no per-user storage config in
 cargo test -p anki-sync-server
 ```
 
-To run only the DB module tests:
+To run only the sync-storage-config tests:
 
 ```bash
-cargo test -p anki sync::http_server::db
+cargo test -p sync-storage-config
 ```
 
 ## Upgrading to a new Anki release

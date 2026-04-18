@@ -70,7 +70,7 @@ pub fn fetch_storage_connection(username: &str) -> Result<(String, String)> {
     )
     .with_context(|| format!("open SQLite at {path}"))?;
 
-    let (provider, encrypted_refresh): (String, String) = conn
+    let (provider, encrypted_refresh): (String, Option<String>) = conn
         .query_row(
             "SELECT sc.provider, sc.oauth_refresh_token \
              FROM storage_connections sc \
@@ -82,7 +82,14 @@ pub fn fetch_storage_connection(username: &str) -> Result<(String, String)> {
         )
         .with_context(|| format!("no storage connection found for user '{username}'"))?;
 
-    let refresh_token = decrypt_token(&encrypted_refresh, &enc_key)?;
+    if provider == "local" {
+        return Ok((provider, String::new()));
+    }
+
+    let refresh_token = decrypt_token(
+        &encrypted_refresh.ok_or_else(|| anyhow!("missing oauth_refresh_token"))?,
+        &enc_key,
+    )?;
     Ok((provider, refresh_token))
 }
 

@@ -92,11 +92,15 @@ impl User {
 
         let (provider, refresh_token) = db::fetch_storage_connection(&self.name)
             .or_internal_err("lookup storage connection")?;
-        let access_token = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current()
-                .block_on(db::exchange_refresh_token(&refresh_token))
-        })
-        .or_internal_err("exchange refresh token")?;
+        let access_token = if provider == "local" {
+            String::new()
+        } else {
+            tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current()
+                    .block_on(db::exchange_refresh_token(&refresh_token))
+            })
+            .or_internal_err("exchange refresh token")?
+        };
 
         let col_path = self.folder.join("collection.anki2");
         let backend = StorageBackendFactory::create(&provider, &access_token)

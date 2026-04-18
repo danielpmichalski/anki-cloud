@@ -49,9 +49,15 @@ Then build and run:
 cd anki-sync-server
 cargo build --bin anki-sync-server
 
-SYNC_USER1=user:password ./target/debug/anki-sync-server
+DATABASE_URL=file:/path/to/anki-cloud.db \
+  TOKEN_ENCRYPTION_KEY=<64-hex-chars> \
+  GOOGLE_CLIENT_ID=<client-id> \
+  GOOGLE_CLIENT_SECRET=<client-secret> \
+  ./target/debug/anki-sync-server
 # Listening on 0.0.0.0:8080
 ```
+
+Users are authenticated via sync passwords set in the web UI — no `SYNC_USER*` env vars needed.
 
 ---
 
@@ -86,9 +92,9 @@ Run the setup script to install all required tools (skips anything already prese
 
 ```
 anki-sync-server/   Rust workspace — fork of ankitects/anki rslib@25.09
-api/                REST API — TypeScript / Hono on Bun
-mcp/                MCP server — wraps REST API
-web/                Account management UI
+packages/api/       REST API — TypeScript / Hono on Bun
+packages/db/        Drizzle ORM + SQLite schema (@anki-cloud/db)
+web/                Account management UI (Vite + React)
 docs/               Architecture decisions (ADRs) + narrative docs
 scripts/            Dev tooling (setup, SDK generation, sync-server fork)
 ```
