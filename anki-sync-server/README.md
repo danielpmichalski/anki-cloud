@@ -38,6 +38,7 @@ as a separate layer once the fork is validated. See [ADR-0003](../docs/decisions
 ## Build
 
 ```bash
+source ~/.cargo/env   # if cargo isn't on PATH yet
 cd anki-sync-server
 cargo build --bin anki-sync-server
 ```
