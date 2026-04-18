@@ -393,85 +393,12 @@ The MCP server exposes these tools to LLMs:
 
 ---
 
-## 8. Build Order / Milestones
+## 8. Milestones
 
-### Milestone 1 — M01: Proof of Concept
+Milestones and issue tracking live entirely on GitHub — that is the single source of truth.
 
-- [x] Fork ankitects Rust sync server (`anki-sync-server/`, upstream anki@25.09)
-- [x] Implement GDrive storage adapter (read/write collection to Drive)
-- [x] Wire GoogleDriveBackend into rslib sync server (hook points: fetch/commit)
-- [x] Verify Anki Desktop can sync to custom server backed by GDrive
-- [x] Basic Docker Compose setup
-
-### Milestone 2 — M02: Auth + Account Management
-
-**Architecture:** Multiple stateless sync-server instances, load-balanced. Each instance queries shared DB on-demand for per-user config. Auto-scale based on load.
-
-- [x] SQLite schema + Drizzle ORM models (`storage_connections`, `users`, `users_sync_state`, `users_api_keys`) — `packages/db` (@anki-cloud/db)
-- [x] Version the Rust sync server to match Anki's release tag (e.g. `25.09`) — it has a hard protocol dependency on a specific Anki version, so the version number is a meaningful compatibility signal. All other packages (REST API, MCP server, DB lib, web UI) use independent semver starting at `0.1.0`. A compatibility table in the README maps Anki versions to sync-server releases.
-- [x] Google OAuth2 login flow (REST API)
-- [x] GDrive OAuth2 connection flow (REST API)
-- [x] REST API: multi-user account endpoints (`GET /v1/me`, `POST /v1/me/storage/connect`, etc.)
-- [x] Simple web UI (account page, connect Drive, generate API keys)
-- [x] Sync server: query shared DB for user's `storage_connections` on each request, inject into `StorageBackendFactory`
-- [x] Sync server: DB-backed multi-user auth (`users.sync_password_hash`); no more `SYNC_USER*` env vars
-- [x] Sync server: stateless re-hydration — hkey stored in `users_sync_state.sync_key`, re-hydrated from DB after restart/failover
-- [x] Sync password web UI (generate, copy, reset in account page)
-- [ ] #39 Extract anki-sync-server to a separate repository (after the storage adapter interface is stabilized)
-
-### Milestone 3 — M03: REST API
-
-- [ ] #14 Hono on Bun app with OpenAPI spec generation (Zod schemas)
-- [ ] #15 All deck/note/card endpoints
-- [ ] #16 API key auth middleware
-- [ ] #18 openapi-generator SDK output (Python + JS)
-
-### Milestone 4 — M04: MCP Server
-
-- [ ] #19 MCP server wrapping REST API
-- [ ] #20 All tools implemented
-- [ ] #21 Test with Claude Desktop
-- [ ] #22 MCP integration docs
-
-### Milestone 5 — M05: Docs + Open Source Launch
-
-- [ ] #23 Docusaurus docs site
-- [ ] #24 Self-hosting guide (docker-compose up)
-- [ ] #25 Contributing guide
-
-### Milestone 6 — M06: Additional Storage Backends
-
-- [ ] #27 Dropbox adapter
-- [ ] #28 S3-compatible adapter (Cloudflare R2, MinIO, AWS S3)
-- [ ] #29 OneDrive adapter
-
-### Milestone 7 — M07: CLI (`anki-cloud-cli`)
-
-- [ ] #30 TypeScript CLI wrapping REST API (Bun single-binary build)
-- [ ] #31 Commands: `decks list/create`, `notes add/search/update/delete`, `auth login/logout`
-- [ ] #32 npm publish + Homebrew formula
-- [ ] #33 Claude Code usage docs (bash tool integration)
-
-### Milestone 8 — M08: Additional Auth Providers
-
-Migrate to **Better Auth** (TS-native, self-hostable, Drizzle-compatible) to replace hand-rolled OAuth2. Replaces `routes/auth.ts` + session middleware. Manages `users` + sessions; app tables (`sync_password_hash`, `storage_connections`, `api_keys`) unchanged.
-
-- [ ] #48 Migrate Google OAuth2 to Better Auth
-- [ ] #49 Add GitHub OAuth2 (high-overlap audience)
-- [ ] #50 Add Microsoft OAuth2
-- [ ] #51 Add Facebook OAuth2
-- [ ] #52 Add GitLab OAuth2
-
-### Milestone 9 — M09: DevOps
-
-- [ ] #53 CI/CD with GitHub Actions
-- [ ] #54 Docker image publishing
-- [ ] #26 GitHub release automation (release-please)
-- [ ] #17 Scalar API docs deployment
-
-### Milestone 10 — M10: Miscellaneous
-
-- [ ] #9 Redis for sessions + rate limiting
+- **Milestones:** https://github.com/danielpmichalski/anki-cloud/milestones
+- **Issues:** https://github.com/danielpmichalski/anki-cloud/issues
 
 ---
 
