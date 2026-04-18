@@ -34,7 +34,14 @@ const MeResponseSchema = z.object({
   createdAt: z.string().datetime(),
 });
 
+const FRONTEND_URL = process.env.FRONTEND_URL ?? "/";
+
 export const authRouter = new OpenAPIHono<Env>();
+
+authRouter.get("/auth/logout", (c) => {
+  deleteCookie(c, "session", { path: "/" });
+  return c.redirect(FRONTEND_URL, 302);
+});
 
 authRouter.get("/auth/google", async (c) => {
   const state = generateState();
@@ -109,7 +116,7 @@ authRouter.get("/auth/google/callback", async (c) => {
     secure: process.env.NODE_ENV === "production",
   });
 
-  return c.json({ ok: true });
+  return c.redirect(FRONTEND_URL, 302);
 });
 
 const meRoute = createRoute({

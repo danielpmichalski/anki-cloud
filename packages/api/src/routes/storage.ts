@@ -20,6 +20,7 @@ const googleDrive = new Google(
 );
 
 const OAUTH_STATE_MAX_AGE = 600;
+const FRONTEND_URL = process.env.FRONTEND_URL ?? "/";
 
 const ErrorSchema = z.object({ error: z.string(), code: z.string() });
 
@@ -176,7 +177,7 @@ storageRouter.get("/me/storage/connect/gdrive/callback", authMiddleware, async (
   deleteCookie(c, "gdrive_code_verifier");
 
   if (!code || !state || !storedState || !codeVerifier || state !== storedState) {
-    return c.json({ error: "Invalid state", code: "INVALID_OAUTH_STATE" }, 400);
+    return c.redirect(`${FRONTEND_URL}?storage=error`, 302);
   }
 
   const { id: userId } = c.get("user");
@@ -185,11 +186,8 @@ storageRouter.get("/me/storage/connect/gdrive/callback", authMiddleware, async (
   try {
     tokens = await googleDrive.validateAuthorizationCode(code, codeVerifier);
   } catch (e) {
-    if (e instanceof OAuth2RequestError) {
-      return c.json({ error: e.message, code: "OAUTH_ERROR" }, 400);
-    }
-    if (e instanceof ArcticFetchError) {
-      return c.json({ error: "OAuth provider unreachable", code: "OAUTH_FETCH_ERROR" }, 502);
+    if (e instanceof OAuth2RequestError || e instanceof ArcticFetchError) {
+      return c.redirect(`${FRONTEND_URL}?storage=error`, 302);
     }
     throw e;
   }
@@ -219,7 +217,7 @@ storageRouter.get("/me/storage/connect/gdrive/callback", authMiddleware, async (
       },
     });
 
-  return c.json({ ok: true });
+  return c.redirect(`${FRONTEND_URL}?storage=connected`, 302);
 });
 
 const storageListRoute = createRoute({
