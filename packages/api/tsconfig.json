@@ -10,7 +10,9 @@
     "types": ["bun"],
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@anki-cloud/db": ["../db/src/index.ts"],
+      "@anki-cloud/db/*": ["../db/src/*.ts"]
     }
   },
   "include": ["src/**/*"],
