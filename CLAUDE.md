@@ -224,23 +224,22 @@ The sync server lives in a separate repository:
 ├── docker-compose.yml         ← full local stack (pulls anki-cloud-sync image)
 ├── docker-compose.dev.yml     ← dev overrides
 │
-├── packages/
-│   ├── api/                   ← TypeScript / Hono on Bun (REST API + auth)
-│   │   ├── src/
-│   │   │   ├── index.ts
-│   │   │   ├── routes/
-│   │   │   │   ├── auth.ts           ← OAuth2 flows
-│   │   │   │   ├── api-keys.ts
-│   │   │   │   └── sync-credentials.ts ← GET/POST /v1/me/sync-password
-│   │   │   └── middleware/           ← JWT session auth
-│   │   └── package.json
-│   ├── db/                    ← Drizzle ORM + SQLite schema (@anki-cloud/db)
-│   │   ├── src/
-│   │   │   ├── schema.ts             ← users, storage_connections, api_keys, users_sync_state
-│   │   │   ├── migrations/           ← auto-generated SQL migrations
-│   │   │   └── encrypt.ts            ← AES-256-GCM token encryption (matches sync-storage-config)
-│   │   └── package.json
-│   └── data/                  ← shared data types
+├── api/                       ← TypeScript / Hono on Bun (REST API + auth)
+│   ├── src/
+│   │   ├── index.ts
+│   │   ├── routes/
+│   │   │   ├── auth.ts               ← OAuth2 flows
+│   │   │   ├── api-keys.ts
+│   │   │   └── sync-credentials.ts   ← GET/POST /v1/me/sync-password
+│   │   └── middleware/               ← JWT session auth
+│   └── package.json
+│
+├── db/                        ← Drizzle ORM + SQLite schema (@anki-cloud/db)
+│   ├── src/
+│   │   ├── schema.ts                 ← users, storage_connections, api_keys, users_sync_state
+│   │   ├── migrations/               ← auto-generated SQL migrations
+│   │   └── encrypt.ts                ← AES-256-GCM token encryption (matches sync-storage-config)
+│   └── package.json
 │
 ├── web/                       ← Simple account management UI (Vite + React)
 │   ├── src/

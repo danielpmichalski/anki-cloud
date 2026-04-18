@@ -5,7 +5,7 @@ export default defineConfig({
   schema: "./src/schema.ts",
   out: "./src/migrations",
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "file:../data/anki-cloud.db",
+    url: process.env.DATABASE_URL ?? "file:./data/anki-cloud.db",
   },
   verbose: true,
   strict: true,

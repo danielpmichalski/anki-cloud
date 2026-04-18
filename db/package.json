@@ -10,7 +10,7 @@
   },
   "scripts": {
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "mkdir -p ../data && bun run --env-file ../../.env src/migrate.ts",
+    "db:migrate": "mkdir -p ./data && bun run --env-file ../.env src/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit"
   },
