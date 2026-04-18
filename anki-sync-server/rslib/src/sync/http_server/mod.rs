@@ -184,17 +184,17 @@ impl SimpleServer {
     where
         F: FnOnce(&mut User, SyncRequest<I>) -> HttpResult<O>,
     {
+        use sync_storage_config as ssc;
+        // Always validate hkey against DB — catches invalidated keys (e.g. password reset).
+        // Also handles re-hydration after restart. Cost: one indexed read per request.
+        let email = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current()
+                .block_on(async { ssc::lookup_user_by_sync_key(&req.sync_key) })
+        })
+        .or_forbidden("invalid hkey")?;
+
         let mut state = self.state.lock().unwrap();
-        if !state.users.contains_key(&req.sync_key) {
-            // Not in memory — re-hydrate from DB (post-restart or different instance)
-            use sync_storage_config as ssc;
-            let email = tokio::task::block_in_place(|| {
-                tokio::runtime::Handle::current()
-                    .block_on(async { ssc::lookup_user_by_sync_key(&req.sync_key) })
-            })
-            .or_forbidden("invalid hkey")?;
-            state.ensure_user(&req.sync_key, &email, &self.base_folder)?;
-        }
+        state.ensure_user(&req.sync_key, &email, &self.base_folder)?;
         let user = state
             .users
             .get_mut(&req.sync_key)

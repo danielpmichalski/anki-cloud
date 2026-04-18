@@ -1,6 +1,6 @@
 import {eq} from "drizzle-orm";
 import {OpenAPIHono, createRoute, z} from "@hono/zod-openapi";
-import {db, users} from "@anki-cloud/db";
+import {db, users, usersSyncState} from "@anki-cloud/db";
 import {authMiddleware} from "@/middleware/auth";
 import type {Env} from "@/types";
 
@@ -77,6 +77,8 @@ syncCredentialsRouter.openapi(resetSyncPasswordRoute, async (c) => {
     const password = generatePassword();
     const hash = await Bun.password.hash(password, {algorithm: "bcrypt", cost: 10});
     await db.update(users).set({syncPasswordHash: hash}).where(eq(users.id, id));
+    // Invalidate any existing hkey so the sync server rejects the old session.
+    await db.update(usersSyncState).set({syncKey: null}).where(eq(usersSyncState.userId, id));
 
     return c.json({username: user.email, password}, 200);
 });
