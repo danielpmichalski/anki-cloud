@@ -21,7 +21,6 @@ members = [
   "rslib",
   "rslib/i18n",
   "rslib/io",
-  "rslib/linkchecker",
   "rslib/process",
   "rslib/proto",
   "rslib/sync",
