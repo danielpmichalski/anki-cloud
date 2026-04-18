@@ -12,8 +12,16 @@ user data.
 
 ## Running the sync server
 
-There are two ways to run the sync server: with Docker (recommended, no toolchain required)
-or by building from source (for development).
+There are two ways to run the sync server:
+
+- with Docker (recommended, no toolchain required), or
+- by building from source (for development).
+
+See also [`anki-sync-server/README.md`](anki-sync-server/README.md) for all configuration options
+(storage backend, OAuth token, port, etc.).
+
+To use the Google Drive backend, you'll need a
+GDrive OAuth access token — see [Getting a GDrive OAuth token](docs/e2e-testing-gdrive-sync.md#1-google-drive-oauth-access-token).
 
 ### Option A — Docker (recommended)
 
@@ -44,9 +52,6 @@ cargo build --bin anki-sync-server
 SYNC_USER1=user:password ./target/debug/anki-sync-server
 # Listening on 0.0.0.0:8080
 ```
-
-See [`anki-sync-server/README.md`](anki-sync-server/README.md) for all configuration options
-(storage backend, OAuth token, port, etc.).
 
 ---
 
