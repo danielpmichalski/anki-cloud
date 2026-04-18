@@ -403,7 +403,7 @@ The MCP server exposes these tools to LLMs:
 - [x] Version the Rust sync server to match Anki's release tag (e.g. `25.09`) — it has a hard protocol dependency on a specific Anki version, so the version number is a meaningful compatibility signal. All other packages (REST API, MCP server, DB lib, web UI) use independent semver starting at `0.1.0`. A compatibility table in the README maps Anki versions to sync-server releases.
 - [x] Google OAuth2 login flow (REST API)
 - [x] GDrive OAuth2 connection flow (REST API)
-- [ ] REST API: multi-user account endpoints (`GET /v1/me`, `POST /v1/me/storage/connect`, etc.)
+- [x] REST API: multi-user account endpoints (`GET /v1/me`, `POST /v1/me/storage/connect`, etc.)
 - [ ] Sync server: query shared DB for user's `storage_connections` on each request, inject into `StorageBackendFactory`
 - [ ] Simple web UI (account page, connect Drive, generate API keys)
 - [ ] Redis for sessions + rate limiting
