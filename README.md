@@ -52,7 +52,7 @@ See [`anki-sync-server/README.md`](anki-sync-server/README.md) for all configura
 ### Full stack (Docker)
 
 ```bash
-cp .env.example .env   # fill in Google OAuth credentials
+cp .env.example .env   # fill in sync credentials
 docker compose up
 ```
 
