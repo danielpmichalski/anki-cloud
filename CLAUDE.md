@@ -383,14 +383,14 @@ The MCP server exposes these tools to LLMs:
 
 ## 8. Build Order / Milestones
 
-### Milestone 1 — Proof of Concept (de-risk the hard part)
+### Milestone 1 — M1: Proof of Concept
 
 - [x] Fork ankitects Rust sync server (`anki-sync-server/`, upstream anki@25.09)
 - [ ] Implement GDrive storage adapter (read/write collection to Drive)
 - [ ] Verify Anki Desktop can sync to custom server backed by GDrive
 - [ ] Basic Docker Compose setup
 
-### Milestone 2 — Auth + Account Management
+### Milestone 2 — M2: Auth + Account Management
 
 - [ ] Google OAuth2 login flow
 - [ ] GDrive OAuth2 connection flow
@@ -399,7 +399,7 @@ The MCP server exposes these tools to LLMs:
 - [ ] Simple web UI (account page, connect Drive, generate API keys)
 - [ ] Redis for sessions + rate limiting
 
-### Milestone 3 — REST API
+### Milestone 3 — M3: REST API
 
 - [ ] Hono on Bun app with OpenAPI spec generation (Zod schemas)
 - [ ] All deck/note/card endpoints
@@ -407,14 +407,14 @@ The MCP server exposes these tools to LLMs:
 - [ ] Scalar API docs
 - [ ] openapi-generator SDK output (Python + JS)
 
-### Milestone 4 — MCP Server
+### Milestone 4 — M4: MCP Server
 
 - [ ] MCP server wrapping REST API
 - [ ] All tools implemented
 - [ ] Test with Claude Desktop
 - [ ] MCP integration docs
 
-### Milestone 5 — Docs + Open Source Launch
+### Milestone 5 — M5: Docs + Open Source Launch
 
 - [ ] Docusaurus docs site
 - [ ] Self-hosting guide (docker-compose up)
@@ -422,13 +422,13 @@ The MCP server exposes these tools to LLMs:
 - [ ] Contributing guide
 - [ ] GitHub release automation (release-please)
 
-### Milestone 6 — Additional Storage Backends
+### Milestone 6 — M6: Additional Storage Backends
 
 - [ ] Dropbox adapter
 - [ ] S3-compatible adapter (Cloudflare R2, MinIO, AWS S3)
 - [ ] OneDrive adapter
 
-### Milestone 7 — CLI (`anki-cloud-cli`)
+### Milestone 7 — M7: CLI (`anki-cloud-cli`)
 
 - [ ] TypeScript CLI wrapping REST API (Bun single-binary build)
 - [ ] Commands: `decks list/create`, `notes add/search/update/delete`, `auth login/logout`
