@@ -53,6 +53,7 @@ use crate::sync::response::SyncResponse;
 
 pub struct SimpleServer {
     state: Mutex<SimpleServerInner>,
+    base_folder: PathBuf,
 }
 
 pub struct SimpleServerInner {
@@ -123,10 +124,6 @@ impl SimpleServerInner {
                     create_dir_all(&folder).whatever_context("creating SYNC_BASE")?;
                     let media =
                         ServerMediaManager::new(&folder).whatever_context("opening media")?;
-                    let storage_provider = std::env::var("SYNC_STORAGE_PROVIDER")
-                        .unwrap_or_else(|_| "local".to_string());
-                    let storage_oauth_token = std::env::var("SYNC_OAUTH_TOKEN")
-                        .unwrap_or_default();
                     users.insert(
                         hkey,
                         User {
@@ -136,17 +133,12 @@ impl SimpleServerInner {
                             sync_state: None,
                             media,
                             folder,
-                            storage_provider,
-                            storage_oauth_token,
                         },
                     );
                     idx += 1;
                 }
                 Err(_) => break,
             }
-        }
-        if users.is_empty() {
-            whatever!("No users defined; SYNC_USER1 env var should be set.");
         }
         Ok(Self { users })
     }
@@ -155,6 +147,29 @@ impl SimpleServerInner {
 // This is not what AnkiWeb does, but should suffice for this use case.
 fn derive_hkey(user_and_pass: &str) -> String {
     hex::encode(sha1_of_data(user_and_pass.as_bytes()))
+}
+
+impl SimpleServerInner {
+    fn ensure_user(&mut self, hkey: &str, email: &str, base_folder: &Path) -> HttpResult<()> {
+        if self.users.contains_key(hkey) {
+            return Ok(());
+        }
+        let folder = base_folder.join(email);
+        create_dir_all(&folder).or_internal_err("create user folder")?;
+        let media = ServerMediaManager::new(&folder).or_internal_err("open media")?;
+        self.users.insert(
+            hkey.to_string(),
+            User {
+                name: email.to_string(),
+                password_hash: String::new(),
+                col: None,
+                sync_state: None,
+                media,
+                folder,
+            },
+        );
+        Ok(())
+    }
 }
 
 impl SimpleServer {
@@ -167,6 +182,16 @@ impl SimpleServer {
         F: FnOnce(&mut User, SyncRequest<I>) -> HttpResult<O>,
     {
         let mut state = self.state.lock().unwrap();
+        if !state.users.contains_key(&req.sync_key) {
+            // Not in memory — re-hydrate from DB (post-restart or different instance)
+            use sync_storage_config as ssc;
+            let email = tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current()
+                    .block_on(async { ssc::lookup_user_by_sync_key(&req.sync_key) })
+            })
+            .or_forbidden("invalid hkey")?;
+            state.ensure_user(&req.sync_key, &email, &self.base_folder)?;
+        }
         let user = state
             .users
             .get_mut(&req.sync_key)
@@ -181,49 +206,29 @@ impl SimpleServer {
         &self,
         request: HostKeyRequest,
     ) -> HttpResult<SyncResponse<HostKeyResponse>> {
-        let state = self.state.lock().unwrap();
+        use sync_storage_config as ssc;
 
-        // This control structure might seem a bit crude,
-        // its goal is to prevent a timing attack from gaining
-        // information about whether a specific user exists.
-        let user = {
-            // This inner block returns Ok(hkey,user) if a user with corresponding
-            // name is found and Err(user) with a random user if it isn't found.
-            // The user is needed to verify against a random hash,
-            // before returning an Error.
-            let mut result: Result<(String, &User), &User> =
-                Err(state.users.iter().next().unwrap().1);
-            for (hkey, user) in state.users.iter() {
-                if user.name == request.username {
-                    result = Ok((hkey.to_string(), user));
-                }
-            }
-            result
-        };
+        // Verify credentials against DB (bcrypt; timing-safe even for unknown users)
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current()
+                .block_on(async { ssc::verify_sync_credentials(&request.username, &request.password) })
+        })
+        .or_forbidden("invalid user/pass")?;
 
-        match user {
-            Ok((key, user)) => {
-                // Verify password
-                let pwhash =
-                    &PasswordHash::new(&user.password_hash).expect("couldn't parse password hash");
-                if Pbkdf2
-                    .verify_password(request.password.as_bytes(), pwhash)
-                    .is_ok()
-                {
-                    SyncResponse::try_from_obj(HostKeyResponse { key })
-                } else {
-                    None.or_forbidden("invalid user/pass in get_host_key")
-                }
-            }
-            Err(user) => {
-                // Verify random password, in order to ensure constant-timedness,
-                // then return an error
-                let pwhash =
-                    &PasswordHash::new(&user.password_hash).expect("couldn't parse password hash");
-                let _ = Pbkdf2.verify_password(request.password.as_bytes(), pwhash);
-                None.or_forbidden("invalid user/pass in get_host_key")
-            }
-        }
+        let hkey = derive_hkey(&format!("{}:{}", request.username, request.password));
+
+        // Persist hkey → user mapping for cross-instance re-hydration
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current()
+                .block_on(async { ssc::store_sync_key(&request.username, &hkey) })
+        })
+        .or_internal_err("store sync key")?;
+
+        // Ensure an in-memory session entry exists for this user
+        let mut state = self.state.lock().unwrap();
+        state.ensure_user(&hkey, &request.username, &self.base_folder)?;
+
+        SyncResponse::try_from_obj(HostKeyResponse { key: hkey })
     }
     pub fn is_running() -> bool {
         let config = envy::prefixed("SYNC_")
@@ -235,6 +240,7 @@ impl SimpleServer {
         let inner = SimpleServerInner::new_from_env(base_folder)?;
         Ok(SimpleServer {
             state: Mutex::new(inner),
+            base_folder: base_folder.to_path_buf(),
         })
     }
 

@@ -93,6 +93,7 @@ serde_json.workspace = true
 serde_repr.workspace = true
 sync-storage-api.workspace = true
 sync-storage-backends.workspace = true
+sync-storage-config.workspace = true
 serde_tuple.workspace = true
 sha1.workspace = true
 snafu.workspace = true

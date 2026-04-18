@@ -20,6 +20,7 @@ rust-version = "1.80"
 members = [
   "sync-storage-api",
   "sync-storage-backends",
+  "sync-storage-config",
   "rslib",
   "rslib/i18n",
   "rslib/io",
@@ -53,12 +54,15 @@ anki_proto = { path = "rslib/proto" }
 anki_proto_gen = { path = "rslib/proto_gen" }
 sync-storage-api = { path = "sync-storage-api" }
 sync-storage-backends = { path = "sync-storage-backends" }
+sync-storage-config = { path = "sync-storage-config" }
 
 # pinned
 unicase = "=2.6.0" # any changes could invalidate sqlite indexes
 
 # normal
+aes-gcm = "0.10"
 ammonia = "4.1.0"
+bcrypt = "0.15"
 anyhow = "1.0.98"
 async-compression = { version = "0.4.24", features = ["zstd", "tokio"] }
 async-stream = "0.3.6"

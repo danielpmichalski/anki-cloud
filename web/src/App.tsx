@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import * as api from "./api";
-import type { User, StorageConnection, ApiKey, NewApiKey } from "./api";
+import type { User, StorageConnection, ApiKey, NewApiKey, SyncCredentials } from "./api";
 
 // ── App ──────────────────────────────────────────────────────────────────────
 
@@ -12,6 +12,7 @@ export default function App() {
   const [storage, setStorage] = useState<StorageConnection[]>([]);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [newKey, setNewKey] = useState<NewApiKey | null>(null);
+  const [syncCreds, setSyncCreds] = useState<SyncCredentials | null>(null);
   const [notice, setNotice] = useState<{ msg: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
@@ -37,9 +38,10 @@ export default function App() {
   }, []);
 
   const reloadDashboard = () =>
-    Promise.all([api.getStorage(), api.getApiKeys()]).then(([s, k]) => {
+    Promise.all([api.getStorage(), api.getApiKeys(), api.getSyncPassword()]).then(([s, k, sc]) => {
       setStorage(s.connections);
       setApiKeys(k.apiKeys);
+      setSyncCreds(sc);
     });
 
   useEffect(() => {
@@ -68,6 +70,13 @@ export default function App() {
             await api.disconnectStorage(provider);
             const s = await api.getStorage();
             setStorage(s.connections);
+          }}
+        />
+        <SyncPasswordSection
+          creds={syncCreds}
+          onReset={async () => {
+            const sc = await api.resetSyncPassword();
+            setSyncCreds(sc);
           }}
         />
         <ApiKeysSection
@@ -327,6 +336,85 @@ function ApiKeysSection({
         </div>
         {formError && <p className="form-error">{formError}</p>}
       </form>
+    </section>
+  );
+}
+
+// ── Sync Password Section ─────────────────────────────────────────────────────
+
+function SyncPasswordSection({
+  creds,
+  onReset,
+}: {
+  creds: SyncCredentials | null;
+  onReset: () => Promise<void>;
+}) {
+  const [copied, setCopied] = useState<"username" | "password" | null>(null);
+  const [resetting, setResetting] = useState(false);
+
+  const copy = async (text: string, field: "username" | "password") => {
+    await navigator.clipboard.writeText(text);
+    setCopied(field);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const handleReset = async () => {
+    if (!confirm("Generate a new sync password? Your current password will stop working immediately."))
+      return;
+    setResetting(true);
+    try {
+      await onReset();
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  return (
+    <section className="card">
+      <h2 className="card-title">Anki Sync</h2>
+      <p className="muted" style={{marginBottom: "16px"}}>
+        Use these credentials in Anki → Preferences → Syncing → Self-hosted sync server.
+      </p>
+
+      <div className="form-row" style={{marginBottom: "12px"}}>
+        <label className="form-label" style={{minWidth: "90px", margin: 0}}>Username</label>
+        <code className="key-value" style={{flex: 1}}>{creds?.username ?? "—"}</code>
+        {creds?.username && (
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={() => copy(creds.username!, "username")}
+          >
+            {copied === "username" ? "Copied!" : "Copy"}
+          </button>
+        )}
+      </div>
+
+      <div className="form-row" style={{marginBottom: "16px"}}>
+        <label className="form-label" style={{minWidth: "90px", margin: 0}}>Password</label>
+        {creds?.password ? (
+          <>
+            <code className="key-value" style={{flex: 1}}>{creds.password}</code>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => copy(creds.password!, "password")}
+            >
+              {copied === "password" ? "Copied!" : "Copy"}
+            </button>
+          </>
+        ) : (
+          <span className="muted" style={{flex: 1}}>••••••••••••  (set — not shown)</span>
+        )}
+      </div>
+
+      {creds?.password && (
+        <p className="new-key-warning" style={{marginBottom: "16px"}}>
+          Copy this password now — it will not be shown again.
+        </p>
+      )}
+
+      <button className="btn btn-danger btn-sm" onClick={handleReset} disabled={resetting}>
+        {resetting ? "Resetting…" : "Reset sync password"}
+      </button>
     </section>
   );
 }

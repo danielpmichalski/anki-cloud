@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `sync_password_hash` text;
