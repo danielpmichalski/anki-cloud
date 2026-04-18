@@ -6,11 +6,11 @@ Depends on `@anki-cloud/db` for data access.
 
 ## Environment variables
 
-| Variable | Required | Description |
-|---|---|---|
-| `PORT` | No | HTTP port (default: `3000`) |
-| `DATABASE_URL` | No | SQLite file URI (default: `file:./data/anki-cloud.db`) |
-| `TOKEN_ENCRYPTION_KEY` | Yes | 32-byte hex key — must match the value used by `@anki-cloud/db` |
+| Variable               | Required | Description                                                     |
+|------------------------|----------|-----------------------------------------------------------------|
+| `PORT`                 | No       | HTTP port (default: `3000`)                                     |
+| `DATABASE_URL`         | No       | SQLite file URI (default: `file:./data/anki-cloud.db`)          |
+| `TOKEN_ENCRYPTION_KEY` | Yes      | 32-byte hex key — must match the value used by `@anki-cloud/db` |
 
 ## Scripts
 

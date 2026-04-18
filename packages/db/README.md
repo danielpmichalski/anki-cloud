@@ -12,24 +12,24 @@ Database layer for anki-cloud. Provides the SQLite schema, migrations, typed Dri
 ## Usage
 
 ```ts
-import { db, users, storageConnections } from "@anki-cloud/db";
+import {db, users, storageConnections} from "@anki-cloud/db";
 
 const user = await db.select().from(users).where(eq(users.googleSub, sub));
 ```
 
 ```ts
-import { encrypt, decrypt } from "@anki-cloud/db/encrypt";
+import {encrypt, decrypt} from "@anki-cloud/db/encrypt";
 
 const stored = await encrypt(accessToken);
-const token  = await decrypt(stored);
+const token = await decrypt(stored);
 ```
 
 ## Environment variables
 
-| Variable | Required | Description |
-|---|---|---|
-| `DATABASE_URL` | No | SQLite file URI (default: `file:./data/anki-cloud.db`) |
-| `TOKEN_ENCRYPTION_KEY` | Yes | 32-byte hex key for token encryption — generate with `openssl rand -hex 32` |
+| Variable               | Required | Description                                                                 |
+|------------------------|----------|-----------------------------------------------------------------------------|
+| `DATABASE_URL`         | No       | SQLite file URI (default: `file:./data/anki-cloud.db`)                      |
+| `TOKEN_ENCRYPTION_KEY` | Yes      | 32-byte hex key for token encryption — generate with `openssl rand -hex 32` |
 
 ## Scripts
 
