@@ -45,7 +45,7 @@ Anki open or doing anything manually.
 |-----------------------|-------------|---------------------------------------|
 | Anki Desktop          | ✅ AGPLv3    | `ankitects/anki` on GitHub            |
 | AnkiDroid (Android)   | ✅ AGPLv3    | Separate community project            |
-| anki-sync-server      | ✅ AGPLv3    | Built into Anki Desktop since v25.09 |
+| anki-sync-server      | ✅ AGPLv3    | Built into Anki Desktop since v25.09  |
 | AnkiWeb (hosted sync) | ❌ Closed    | Proprietary, run by Ankitects Pty Ltd |
 | AnkiMobile (iOS)      | ❌ Closed    | Paid app, funds Anki development      |
 
@@ -417,7 +417,6 @@ The MCP server exposes these tools to LLMs:
 - [x] Sync server: DB-backed multi-user auth (`users.sync_password_hash`); no more `SYNC_USER*` env vars
 - [x] Sync server: stateless re-hydration — hkey stored in `users_sync_state.sync_key`, re-hydrated from DB after restart/failover
 - [x] Sync password web UI (generate, copy, reset in account page)
-- [ ] Redis for sessions + rate limiting
 - [ ] Extract anki-sync-server to a separate repository (after the storage adapter interface is stabilized)
 
 ### Milestone 3 — M3: REST API
@@ -457,6 +456,26 @@ The MCP server exposes these tools to LLMs:
 - [ ] npm publish + Homebrew formula
 - [ ] Claude Code usage docs (bash tool integration)
 
+### Milestone 8 — M8: Additional Auth Providers
+
+Migrate to **Better Auth** (TS-native, self-hostable, Drizzle-compatible) to replace hand-rolled OAuth2. Replaces `routes/auth.ts` + session middleware. Manages `users` + sessions; app tables (`sync_password_hash`, `storage_connections`, `api_keys`) unchanged.
+
+- [ ] Migrate Google OAuth2 to Better Auth
+- [ ] Add GitHub OAuth2 (high-overlap audience)
+- [ ] Add Microsoft OAuth2
+- [ ] Add Facebook OAuth2
+- [ ] Add GitLab OAuth2
+
+### Milestone 9 — M9: DevOps
+
+- [ ] CI/CD with GitHub Actions
+- [ ] Docker image publishing
+- [ ] GitHub release automation (release-please)
+
+### Milestone 10 — M10: Miscellaneous
+
+- [ ] Redis for sessions + rate limiting
+
 ---
 
 ## 9. Self-Hosting
@@ -478,7 +497,8 @@ Storage backend credentials are per-user (their own GDrive etc.).
 ## 10. Key Principles & Non-Negotiables
 
 1. **We never store deck data.** User data lives in user-controlled storage. Always.
-2. **We never store passwords for OAuth-authenticated users.** OAuth tokens only. Always scoped, always revocable. Exception: Anki sync uses a dedicated per-user sync password (bcrypt hash only, plaintext never persisted) because the Anki sync protocol does not support OAuth.
+2. **We never store passwords for OAuth-authenticated users.** OAuth tokens only. Always scoped, always revocable. Exception: Anki sync uses a dedicated per-user sync password (bcrypt hash only, plaintext never
+   persisted) because the Anki sync protocol does not support OAuth.
 3. **Open source core (AGPLv3).** The sync server, REST API, and MCP server are all AGPLv3.
 4. **Self-hostable.** Everything runs with `docker compose up`. No hidden dependencies.
 5. **OpenAPI first.** The spec is the contract. SDKs and docs generate from it.
