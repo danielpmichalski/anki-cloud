@@ -3,7 +3,6 @@
 
 use std::path::PathBuf;
 
-use sync_storage_api::StorageBackend;
 use tracing::info;
 
 use crate::collection::Collection;
@@ -21,7 +20,8 @@ pub(in crate::sync) struct User {
     pub sync_state: Option<ServerSyncState>,
     pub media: ServerMediaManager,
     pub folder: PathBuf,
-    pub storage_backend: Box<dyn StorageBackend>,
+    pub storage_provider: String,
+    pub storage_oauth_token: String,
 }
 
 impl User {
@@ -88,8 +88,12 @@ impl User {
     }
 
     fn open_collection(&mut self) -> HttpResult<Collection> {
+        use sync_storage_backends::StorageBackendFactory;
+
         let col_path = self.folder.join("collection.anki2");
-        self.storage_backend
+        let backend = StorageBackendFactory::create(&self.storage_provider, &self.storage_oauth_token)
+            .or_internal_err("create storage backend")?;
+        backend
             .fetch(&self.name, &col_path)
             .or_internal_err("fetch collection from storage")?;
         CollectionBuilder::new(col_path)

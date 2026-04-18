@@ -50,7 +50,6 @@ use crate::sync::login::HostKeyResponse;
 use crate::sync::request::SyncRequest;
 use crate::sync::request::MAXIMUM_SYNC_PAYLOAD_BYTES;
 use crate::sync::response::SyncResponse;
-use sync_storage_backends::StorageBackendFactory;
 
 pub struct SimpleServer {
     state: Mutex<SimpleServerInner>,
@@ -124,12 +123,10 @@ impl SimpleServerInner {
                     create_dir_all(&folder).whatever_context("creating SYNC_BASE")?;
                     let media =
                         ServerMediaManager::new(&folder).whatever_context("opening media")?;
-                    let provider = std::env::var("SYNC_STORAGE_PROVIDER")
+                    let storage_provider = std::env::var("SYNC_STORAGE_PROVIDER")
                         .unwrap_or_else(|_| "local".to_string());
-                    let oauth_token = std::env::var("SYNC_OAUTH_TOKEN")
+                    let storage_oauth_token = std::env::var("SYNC_OAUTH_TOKEN")
                         .unwrap_or_default();
-                    let storage_backend = StorageBackendFactory::create(&provider, &oauth_token)
-                        .whatever_context("creating storage backend")?;
                     users.insert(
                         hkey,
                         User {
@@ -139,7 +136,8 @@ impl SimpleServerInner {
                             sync_state: None,
                             media,
                             folder,
-                            storage_backend,
+                            storage_provider,
+                            storage_oauth_token,
                         },
                     );
                     idx += 1;
