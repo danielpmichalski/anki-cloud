@@ -1,2 +1,0 @@
-
-filtering-is-due = Obrigadas

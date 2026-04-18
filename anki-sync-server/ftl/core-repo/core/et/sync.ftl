@@ -1,3 +1,0 @@
-sync-cancel-button = Loobu
-sync-password-label = Salasõna:
-sync-connecting = Ühendan...
