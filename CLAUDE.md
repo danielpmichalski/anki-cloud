@@ -41,13 +41,13 @@ Anki open or doing anything manually.
 
 ### What is and isn't open source in the Anki ecosystem
 
-| Component | Open Source | Notes |
-|---|---|---|
-| Anki Desktop | ✅ AGPLv3 | `ankitects/anki` on GitHub |
-| AnkiDroid (Android) | ✅ AGPLv3 | Separate community project |
-| anki-sync-server | ✅ AGPLv3 | Built into Anki Desktop since v2.1.57 |
-| AnkiWeb (hosted sync) | ❌ Closed | Proprietary, run by Ankitects Pty Ltd |
-| AnkiMobile (iOS) | ❌ Closed | Paid app, funds Anki development |
+| Component             | Open Source | Notes                                 |
+|-----------------------|-------------|---------------------------------------|
+| Anki Desktop          | ✅ AGPLv3    | `ankitects/anki` on GitHub            |
+| AnkiDroid (Android)   | ✅ AGPLv3    | Separate community project            |
+| anki-sync-server      | ✅ AGPLv3    | Built into Anki Desktop since v2.1.57 |
+| AnkiWeb (hosted sync) | ❌ Closed    | Proprietary, run by Ankitects Pty Ltd |
+| AnkiMobile (iOS)      | ❌ Closed    | Paid app, funds Anki development      |
 
 **Key insight:** The sync *protocol* and *server implementation* are open source. Only the
 *hosted service* at ankiweb.net is closed. We run our own sync server — no dependency on
@@ -86,38 +86,38 @@ Hono on Bun. Full CRUD API with OpenAPI spec auto-generated from Zod schemas. MC
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        User Devices                          │
-│  Anki Desktop / AnkiDroid / AnkiMobile / LLM UI            │
+│                        User Devices                         │
+│  Anki Desktop / AnkiDroid / AnkiMobile / LLM UI             │
 └────────────┬────────────────────────────┬───────────────────┘
              │ Anki Sync Protocol          │ MCP Protocol
              ▼                            ▼
 ┌────────────────────────────────────────────────────────────┐
-│                     Your Service                            │
-│                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐ │
-│  │  Sync Server  │  │  REST API    │  │   MCP Server     │ │
-│  │  (Rust)       │  │ (Hono/Bun)   │  │   (wraps REST)   │ │
-│  └──────┬───────┘  └──────┬───────┘  └──────────────────┘ │
-│         │                 │                                  │
+│                     Your Service                           │
+│                                                            │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │  Sync Server │  │  REST API    │  │   MCP Server     │  │
+│  │  (Rust)      │  │ (Hono/Bun)   │  │   (wraps REST)   │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────────────────┘  │
+│         │                 │                                │
 │  ┌──────▼─────────────────▼──────────────────────────────┐ │
-│  │              Auth & Storage Adapter Layer               │ │
-│  │  Google OAuth (identity) + GDrive OAuth (storage)      │ │
+│  │              Auth & Storage Adapter Layer             │ │
+│  │  Google OAuth (identity) + GDrive OAuth (storage)     │ │
 │  └──────────────────────────┬────────────────────────────┘ │
-│                              │                               │
-│  ┌───────────────┐  ┌────────▼──────┐                      │
-│  │  SQLite        │  │  Redis        │                      │
-│  │  (user table,  │  │  (sessions,   │                      │
-│  │   api keys,    │  │   cache,      │                      │
-│  │   oauth tokens)│  │   rate limit) │                      │
-│  └───────────────┘  └───────────────┘                      │
+│                             │                              │
+│  ┌────────────────┐  ┌────────▼──────┐                     │
+│  │  SQLite        │  │  Redis        │                     │
+│  │  (user table,  │  │  (sessions,   │                     │
+│  │   api keys,    │  │   cache,      │                     │
+│  │   oauth tokens)│  │   rate limit) │                     │
+│  └────────────────┘  └───────────────┘                     │
 └──────────────────────────────┬─────────────────────────────┘
                                │ OAuth2 + Storage API
                                ▼
-              ┌─────────────────────────────────┐
+              ┌──────────────────────────────────┐
               │     User's Own Cloud Storage     │
               │  Google Drive / Dropbox / S3     │
               │  (deck data lives HERE, not us)  │
-              └─────────────────────────────────┘
+              └──────────────────────────────────┘
 ```
 
 ### 4.2 Data the Service Stores
@@ -125,7 +125,8 @@ Hono on Bun. Full CRUD API with OpenAPI spec auto-generated from Zod schemas. MC
 **SQLite (persistent, tiny footprint):**
 
 ```sql
-users (
+users
+(
   id,
   google_sub,          -- Google's permanent user ID
   email,
@@ -166,6 +167,7 @@ sync_sessions (
 All of that lives in the user's GDrive.
 
 **Redis (ephemeral):**
+
 - Active sync session state (flushed to GDrive on completion)
 - OAuth flow state (PKCE codes, state params — TTL: 10 minutes)
 - Rate limiting counters
@@ -173,18 +175,18 @@ All of that lives in the user's GDrive.
 
 ### 4.3 Tech Stack
 
-| Layer | Technology | ADR |
-|---|---|---|
-| Sync server | Rust (fork of ankitects sync server) | [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md) |
-| REST API + Auth | TypeScript / Hono on Bun | [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md) |
-| MCP Server | TypeScript / Hono on Bun | [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md) · [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md) |
-| Persistent DB | SQLite (via Drizzle ORM) | [ADR-0009](docs/decisions/0009-use-sqlite-for-persistent-storage.md) |
-| Cache / Sessions | Redis | — |
-| Storage backends | GDrive API / Dropbox API / S3 SDK | [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md) |
-| Containerization | Docker + Docker Compose | — |
-| CI/CD | GitHub Actions | — |
-| Docs: API reference | Scalar (from OpenAPI spec) | — |
-| Docs: Narrative | Docusaurus | — |
+| Layer               | Technology                           | ADR                                                                                                                                                                |
+|---------------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Sync server         | Rust (fork of ankitects sync server) | [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md)                                                                                                 |
+| REST API + Auth     | TypeScript / Hono on Bun             | [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)                                                                                     |
+| MCP Server          | TypeScript / Hono on Bun             | [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md) · [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)        |
+| Persistent DB       | SQLite (via Drizzle ORM)             | [ADR-0009](docs/decisions/0009-use-sqlite-for-persistent-storage.md)                                                                                               |
+| Cache / Sessions    | Redis                                | —                                                                                                                                                                  |
+| Storage backends    | GDrive API / Dropbox API / S3 SDK    | [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md) |
+| Containerization    | Docker + Docker Compose              | —                                                                                                                                                                  |
+| CI/CD               | GitHub Actions                       | —                                                                                                                                                                  |
+| Docs: API reference | Scalar (from OpenAPI spec)           | —                                                                                                                                                                  |
+| Docs: Narrative     | Docusaurus                           | —                                                                                                                                                                  |
 
 ### 4.4 OpenAPI as Single Source of Truth
 
@@ -214,15 +216,16 @@ polished auto-generated SDK clients.
 ├── docker-compose.yml         ← full local stack
 ├── docker-compose.dev.yml     ← dev overrides
 │
-├── sync-server/               ← Rust, fork of ankitects sync server
-│   ├── src/
-│   │   ├── main.rs
-│   │   ├── protocol/          ← Anki sync protocol implementation
-│   │   └── storage/           ← storage backend adapters
-│   │       ├── gdrive.rs
-│   │       ├── dropbox.rs
-│   │       └── s3.rs
-│   └── Cargo.toml
+├── anki-sync-server/          ← Rust workspace, upstream anki@25.09 rslib/
+│   ├── Cargo.toml             ← workspace root (our only custom file)
+│   ├── Cargo.lock             ← copied from upstream
+│   ├── README.md
+│   ├── ftl/                   ← verbatim copy of ankitects/anki ftl/ + submodules (anki_i18n build)
+│   ├── proto/                 ← verbatim copy of ankitects/anki proto/ (anki_proto build)
+│   └── rslib/                 ← verbatim copy of ankitects/anki rslib/
+│       ├── src/sync/          ← sync protocol implementation
+│       │   └── http_server/   ← ADR-0003 hook points (fetch/commit) go here
+│       └── sync/              ← anki-sync-server binary (main.rs)
 │
 ├── api/                       ← TypeScript / Hono on Bun
 │   ├── src/
@@ -266,7 +269,8 @@ polished auto-generated SDK clients.
 │       └── release.yml        ← release-please + conventional commits
 │
 └── scripts/
-    └── generate-sdk.sh        ← openapi-generator invocation
+    ├── fork-anki-sync-server.zsh  ← copy rslib/ from ankitects/anki at a given tag
+    └── generate-sdk.sh           ← openapi-generator invocation
 ```
 
 ---
@@ -363,29 +367,31 @@ DELETE /v1/me/api-keys/{id}
 
 The MCP server exposes these tools to LLMs:
 
-| Tool | Description |
-|---|---|
-| `list_decks` | List all decks with card counts |
-| `get_deck` | Get deck details by name or ID |
-| `create_deck` | Create a new deck |
-| `create_note` | Add a flashcard to a deck |
-| `create_notes_bulk` | Add multiple flashcards at once |
-| `search_notes` | Search notes by query (Anki search syntax) |
-| `update_note` | Edit an existing note |
-| `delete_note` | Delete a note |
-| `get_stats` | Get study statistics for a deck |
+| Tool                | Description                                |
+|---------------------|--------------------------------------------|
+| `list_decks`        | List all decks with card counts            |
+| `get_deck`          | Get deck details by name or ID             |
+| `create_deck`       | Create a new deck                          |
+| `create_note`       | Add a flashcard to a deck                  |
+| `create_notes_bulk` | Add multiple flashcards at once            |
+| `search_notes`      | Search notes by query (Anki search syntax) |
+| `update_note`       | Edit an existing note                      |
+| `delete_note`       | Delete a note                              |
+| `get_stats`         | Get study statistics for a deck            |
 
 ---
 
 ## 8. Build Order / Milestones
 
 ### Milestone 1 — Proof of Concept (de-risk the hard part)
-- [ ] Fork ankitects Rust sync server
+
+- [x] Fork ankitects Rust sync server (`anki-sync-server/`, upstream anki@25.09)
 - [ ] Implement GDrive storage adapter (read/write collection to Drive)
 - [ ] Verify Anki Desktop can sync to custom server backed by GDrive
 - [ ] Basic Docker Compose setup
 
 ### Milestone 2 — Auth + Account Management
+
 - [ ] Google OAuth2 login flow
 - [ ] GDrive OAuth2 connection flow
 - [ ] SQLite schema + Drizzle ORM models
@@ -393,6 +399,7 @@ The MCP server exposes these tools to LLMs:
 - [ ] Redis for sessions + rate limiting
 
 ### Milestone 3 — REST API
+
 - [ ] Hono on Bun app with OpenAPI spec generation (Zod schemas)
 - [ ] All deck/note/card endpoints
 - [ ] API key auth middleware
@@ -400,12 +407,14 @@ The MCP server exposes these tools to LLMs:
 - [ ] openapi-generator SDK output (Python + JS)
 
 ### Milestone 4 — MCP Server
+
 - [ ] MCP server wrapping REST API
 - [ ] All tools implemented
 - [ ] Test with Claude Desktop
 - [ ] MCP integration docs
 
 ### Milestone 5 — Docs + Open Source Launch
+
 - [ ] Docusaurus docs site
 - [ ] Self-hosting guide (docker-compose up)
 - [ ] API reference (Scalar, auto-deployed)
@@ -413,11 +422,13 @@ The MCP server exposes these tools to LLMs:
 - [ ] GitHub release automation (release-please)
 
 ### Milestone 6 — Additional Storage Backends
+
 - [ ] Dropbox adapter
 - [ ] S3-compatible adapter (Cloudflare R2, MinIO, AWS S3)
 - [ ] OneDrive adapter
 
 ### Milestone 7 — CLI (`anki-cloud-cli`)
+
 - [ ] TypeScript CLI wrapping REST API (Bun single-binary build)
 - [ ] Commands: `decks list/create`, `notes add/search/update/delete`, `auth login/logout`
 - [ ] API key auth via `~/.config/anki-cloud/config.json` or env var
