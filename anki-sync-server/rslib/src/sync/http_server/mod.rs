@@ -154,6 +154,9 @@ impl SimpleServerInner {
         if self.users.contains_key(hkey) {
             return Ok(());
         }
+        // Evict any stale entry for the same user (e.g., after password reset with a new hkey).
+        // This releases the media DB lock so we can re-open it under the new hkey.
+        self.users.retain(|_, u| u.name != email);
         let folder = base_folder.join(email);
         create_dir_all(&folder).or_internal_err("create user folder")?;
         let media = ServerMediaManager::new(&folder).or_internal_err("open media")?;
