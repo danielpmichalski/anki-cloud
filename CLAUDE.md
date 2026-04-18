@@ -213,27 +213,16 @@ polished auto-generated SDK clients.
 
 ### 4.5 Repository Structure
 
+The sync server lives in a separate repository:
+**[github.com/danielpmichalski/anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync)**
+— consumed here as a Docker image (`ghcr.io/danielpmichalski/anki-cloud-sync:<version>`).
+
 ```
 /
 ├── CLAUDE.md                  ← this file
 ├── README.md
-├── docker-compose.yml         ← full local stack
+├── docker-compose.yml         ← full local stack (pulls anki-cloud-sync image)
 ├── docker-compose.dev.yml     ← dev overrides
-│
-├── anki-sync-server/          ← Rust workspace, upstream anki@25.09 rslib/
-│   ├── Cargo.toml             ← workspace root (our only non-upstream file)
-│   ├── Cargo.lock             ← copied from upstream
-│   ├── README.md
-│   ├── sync-storage-config/   ← our crate: DB lookups, token decrypt, bcrypt auth
-│   │   └── src/lib.rs         ← fetch_storage_connection, verify_sync_credentials, store/lookup sync_key
-│   ├── sync-storage-backends/ ← our crate: StorageBackend trait + GDrive/local impls
-│   ├── sync-storage-api/      ← our crate: shared types
-│   ├── ftl/                   ← verbatim copy of ankitects/anki ftl/ + submodules (anki_i18n build)
-│   ├── proto/                 ← verbatim copy of ankitects/anki proto/ (anki_proto build)
-│   └── rslib/                 ← verbatim copy of ankitects/anki rslib/
-│       ├── src/sync/          ← sync protocol implementation
-│       │   └── http_server/   ← ADR-0003 hook points (fetch/commit) go here
-│       └── sync/              ← anki-sync-server binary (main.rs)
 │
 ├── packages/
 │   ├── api/                   ← TypeScript / Hono on Bun (REST API + auth)
@@ -274,8 +263,7 @@ polished auto-generated SDK clients.
 │       └── release.yml        ← release-please + conventional commits
 │
 └── scripts/
-    ├── fork-anki-sync-server.zsh  ← copy rslib/ from ankitects/anki at a given tag
-    └── generate-sdk.sh           ← openapi-generator invocation
+    └── generate-sdk.sh        ← openapi-generator invocation
 ```
 
 ---
