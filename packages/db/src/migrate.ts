@@ -2,7 +2,7 @@ import {Database} from "bun:sqlite";
 import {drizzle} from "drizzle-orm/bun-sqlite";
 import {migrate} from "drizzle-orm/bun-sqlite/migrator";
 
-const url = process.env.DATABASE_URL ?? "file:./data/anki-cloud.db";
+const url = process.env.DATABASE_URL ?? "file:../data/anki-cloud.db";
 const dbPath = url.startsWith("file:") ? url.slice(5) : url;
 
 console.log(`Running migrations on: ${dbPath}`);
