@@ -73,7 +73,11 @@ impl GoogleDriveBackend {
             .send()
             .await?;
 
+        let status = response.status();
         let body: Value = response.json().await?;
+        if !status.is_success() {
+            return Err(anyhow!("Drive API error {}: {}", status, body));
+        }
         let files = body
             .get("files")
             .and_then(|f| f.as_array())
@@ -120,7 +124,11 @@ impl GoogleDriveBackend {
             .send()
             .await?;
 
+        let status = response.status();
         let body: Value = response.json().await?;
+        if !status.is_success() {
+            return Err(anyhow!("Drive API error {}: {}", status, body));
+        }
         let files = body
             .get("files")
             .and_then(|f| f.as_array())
