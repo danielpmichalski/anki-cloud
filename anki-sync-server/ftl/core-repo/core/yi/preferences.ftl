@@ -1,0 +1,100 @@
+preferences-automatically-sync-on-profile-openclose = סינכראָנירן אויטאָמאַטיש בעתן עפֿענען/פֿאַרמאַכן פּראָפֿיל
+preferences-backups = רעזערוו-קאָפּיעס
+preferences-change-deck-depending-on-note-type = בײַטן טעשל לויט נאָטיצגרופּע
+preferences-changes-will-take-effect-when-you = טוישונגען וועלן ווערן גילטיק בײַם צולאָדן ANKI אויף ס׳נײַ
+preferences-hours-past-midnight = שעהען נאָך האַלבע נאַכט
+preferences-language = שפּראַך
+preferences-interrupt-current-audio-when-answering = איבעררײַסן גייי‎ִקע קלאַנג בעתן ענטפֿערן
+preferences-learn-ahead-limit = גרענעץ פון זיך לערנען אין פֿאָראויס
+preferences-mins = מינוטן
+preferences-network = סיכראָניזירן
+preferences-next-day-starts-at = דער אַנדער טאָג הייבט זיך אָן
+preferences-media-is-not-backed-up = מ׳האָט קיין רעזערוו-קאָפּיע פון מעדיע נישט געמאַכט. מאַך פּעריאָדיש אַ רעזערוו-קאָפּיע פון די ANKI פּאַפּקע אויף יעדן פֿאַל.
+preferences-on-next-sync-force-changes-in = אויפֿן קומעדיקן סינכראָניזירן, צווינגן טוישונגען אין איין ריכטונג
+preferences-paste-clipboard-images-as-png = אַרײַנקלעפּן בילדער פון קליפּבאָורד ווי PNG
+preferences-paste-without-shift-key-strips-formatting = קלעפּ אָן ״שיפֿט״ קנעפּל נעמט צו די צורה
+preferences-generate-latex-images-automatically = אַרויסגעבן LaTeX בילדער (זיכערהייט סכּנה)
+preferences-latex-generation-disabled = אַרויסגעבן LaTeX בילדער איז נישט-געניצט געהאַכט אין די אויסוואַלן
+preferences-periodically-sync-media = סינכראָניזירן מעדיע פֿון צײַט צו צײַט
+preferences-please-restart-anki-to-complete-language = כּדי צו באַווירן שפּראַכבײַט, לאָד צו ANKI אויף ס׳נײַ.
+preferences-preferences = אויסוואַלן
+preferences-scheduling = פּלאַנירונג
+preferences-show-learning-cards-with-larger-steps = באַווײַזן לערנ-קאַרטלעך מיט גרעסערע שטאַפּלען פֿאַר חזר-קאַרטלעך.
+preferences-show-next-review-time-above-answer = אַרויסווײַזן קומעדיקע איבער׳חזר-צײַט אויבן פון ענטפֿער-קנעפּלעך
+preferences-spacebar-rates-card = שפּײַצער (אָדער אַרײַנ-קלאַוויש) ענטפֿערט אויך דאָס קאַרטל
+preferences-show-play-buttons-on-cards-with = אַרויסווײַזן ׳שפּילן׳ קנעפּלעך אויף קאַרטלעך וואָס מיט אוידיאָ
+preferences-show-remaining-card-count = ווײַזן חשבון פון געבליבענע קאַרטלעך
+preferences-some-settings-will-take-effect-after = טייל פֿיקסירונגען וועלן ווערן גילטיק בײַם צולאָדן ANKI אויף ס׳נײַ.
+preferences-tab-synchronisation = סינכראָניזאַציע
+preferences-synchronize-audio-and-images-too = סינכראָניזירן אוידיאָ און אויך בילדער
+preferences-login-successful-sync-now = דאָס אַרײַנלאָגירן איז מצליח געווען. אויפֿהיטן אויסוואַלן און סינכראָניזירן שוין?
+preferences-timebox-time-limit = צײַט-גרענעץ פון צײַטקעסטל
+preferences-user-interface-size = גרייס פון ניצער-צווישנבינד
+preferences-when-adding-default-to-current-deck = צושטעלן אין יעצטיקן טעשל דורך פֿעליקייט
+preferences-you-can-restore-backups-via-fileswitch = מע קען אויפֿריכטן רעזערוו-קאָפּיעס בײַ טעקע ('File') > איבערבײַטן פּראָפֿיל
+preferences-legacy-timezone-handling = ירושהדיקע צײַטזאָנע-אָנפֿיר (פון מיט פֿעלערן, אָבער מע דאַרף אים ניצן אויף AnkiDroid פֿאַרן ווערסיע 2.14)
+preferences-default-search-text = זוכטעקסט דורך פֿעליקייט
+preferences-default-search-text-example = למשל, 'deck:current' ("טעשל: גײיִק")
+preferences-theme = פֿאַרב-צורה
+preferences-theme-follow-system = לויט דער סיסטעם
+preferences-theme-light = ליכטיק
+preferences-theme-dark = טונקל
+preferences-v3-scheduler = V3 פּלאַנירער
+preferences-check-for-updates = זע צי ס׳איז דאָ אַ נײַע דערהײַנטיקונג
+preferences-ignore-accents-in-search = פֿאַרקוקן דיאַקריטלעך בײַם זוכן (פּאַמעלעכער)
+preferences-backup-explanation = פּעריאָדיש מאַכט ANKI אַ רעזערוו-קאָפּיע פון דײַן זאַמלונג. נאָך רעזערוו-קאָפּיעס ווערן אַלט מער פון 2 טעג, ANKI וועט אָנהייבן צוצונעמען טייל כּדי אָפּפֿרײַען אָרט אויפֿן דיסק.
+preferences-daily-backups = טעגלעכע רעזערוו-קאָפּיעס וועס צו האַלטן:
+preferences-weekly-backups = וואָכיקע רעזערוו-קאָפּיעס וועס צו האַלטן:
+preferences-monthly-backups = חודשלעכע רעזערוו-קאָפּיעס וועס צו האַלטן:
+preferences-minutes-between-backups = מינוטן צווישן אויטאָמאַטישע רעזערוו-קאָפּיעס
+preferences-reduce-motion = פֿאַרקלענערן באַוועג
+preferences-reduce-motion-tooltip = מאַכן אומניצלעך עטלעכע אַנימאַציעס און איבערגאַנגען פֿונעם ניצער-צווישנבינד.
+preferences-custom-sync-url = זעלב-אָנגעפֿירטער סינך-צושטעלער
+preferences-custom-sync-url-disclaimer = פֿאַר אַוואַנסירטע באַניצערס - זע ביטע דאָס האַנטביכל
+preferences-hide-top-bar-during-review = באַהאַלטן אויבנ-באַקסל בעתן איבער׳חזר׳ן
+preferences-hide-bottom-bar-during-review = באַהאַלטן אונטנ-באַקסל בעתן איבער׳חזר׳ן
+preferences-always = תּמיד
+preferences-full-screen-only = נאָר פֿולער-עקראַן
+preferences-appearance = אויסזען
+preferences-general = אַלגעמיין
+preferences-style = שטייגער
+preferences-review = איבער׳חזר׳ן
+preferences-answer-keys = ענטפֿער-קנעפּלעך
+preferences-distractions = אָפּציִונגען
+preferences-minimalist-mode = מינימאַליסטישער-מאָדוס
+preferences-minimalist-mode-tooltip = פֿאַרדריקן און פֿאַרפּשוטערן דעם ניצער-צווישנבינד
+preferences-editing = צופּאַסן
+preferences-browsing = בלעטערן
+preferences-default-deck = טעשל דורך פֿעליקייט
+preferences-account = AnkiWeb קאָנטע
+preferences-note = נאָטיץ
+preferences-scheduler = פּלאַנירער
+preferences-user-interface = ניצער-צווישנבינד
+preferences-import-export = פֿירן אַרײַן/אַרויס
+preferences-network-timeout = נעץ איז אויס
+preferences-reset-window-sizes = אײַנשטעלן פֿענצטער גרײסן אויף ס׳נײַ
+preferences-reset-window-sizes-complete = פֿענצטער גרייסן און פּלעצער זענען אײַנגעשטעלט געוואָרן אויף ס׳נײַ.
+preferences-shortcut-placeholder = אַרײַנשרײַבן אַ נישט-געניצט גיך-קנעפּל, אָדער לאָז ליידיק כּדי צו מאַכן אומניצלעך.
+preferences-third-party-services = זײַטיקע דינסטן
+preferences-ankihub-not-logged-in = יעצט נישט אַרײַנלאָגירט אין AnkiHub.
+preferences-ankiweb-intro = דורך AnkiWeb קען מען בחינם סינכראָניזירן דאַטן לענגויס פֿאַרשידענע מכשירים. קען מען אויך צוריקבאַקומען אַזעלכע דאַטן דערפֿון אַז די מכשירים ווערן (חלילה) צעבראָכן אָדער פֿאַרלוירן.
+preferences-ankihub-intro = AnkiHub דערלויבן, מע זאָל קענען מיטאַרבעטן אויף טעשלעך און שטעלט צו נאָך אַנדער לערן-מכשירים. מע מוז באַצאָלן אויף אַן אַבאָנעמענט כּדי צו קענען ניצן געוויסע שטריכן.
+preferences-third-party-description = זײַטיקע („דריטער-צד״) דינסטן האָבן נישט קיין שײַכות מיט אַנקי. קען זײַן, אַז מע מוז באַצאָלן כּדי צו ניצן דערפֿון.
+
+## URL scheme related
+
+preferences-url-schemes = URL (יו-אַר-על) סכעמעס
+preferences-url-scheme-prompt = דערלויבענע URL סכעמעס (צעטיילט פֿון בלויזן):
+preferences-url-scheme-warning =
+    בלאָקירט אַ פּרוּוו צו עפֿענען ׳{ $link }׳, וואָס קען זײַן אַ זיכערהייט פּראָבלעם. 
+    
+    אויב דו געטרויסט דעם מחבר הטעשל און ווילסט ממשיך זײַן, קענסט צולייגן ׳{ $scheme }׳ אַרײַן אין די ערלויבענע סכעמעס.
+preferences-url-scheme-allow-once = דערלויבן איין מאָל
+preferences-url-scheme-always-allow = דערלויבן תּמיד
+
+## NO NEED TO TRANSLATE. This text is no longer used by Anki, and will be removed in the future.
+
+preferences-basic = עיקרדיק
+preferences-reviewer = רעצענזענט
+preferences-media = מעדיע
+preferences-not-logged-in = יעצט נישט אַרײַנלאָגירט אין AnkiWeb.
