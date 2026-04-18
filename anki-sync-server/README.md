@@ -10,7 +10,12 @@ anki-sync-server/
 ├── Cargo.toml          ← workspace root — the only file NOT from upstream
 ├── Cargo.lock          ← copied from upstream for reproducible builds
 ├── README.md           ← this file
-├── ftl/                ← verbatim copy of ankitects/anki ftl/ (Fluent translations, required by anki_i18n build script)
+├── ftl/                ← verbatim copy of ankitects/anki ftl/ + submodules (required by anki_i18n build)
+│   ├── core/           ← English core templates
+│   ├── core-repo/      ← git submodule: core translations
+│   ├── qt/             ← English Qt templates
+│   └── qt-repo/        ← git submodule: Qt translations
+├── proto/              ← verbatim copy of ankitects/anki proto/ (required by anki_proto build)
 └── rslib/              ← verbatim copy of ankitects/anki rslib/ at 25.09
     ├── Cargo.toml      ← the `anki` library crate
     ├── build.rs        ← generates Rust code from .proto files (requires protoc)

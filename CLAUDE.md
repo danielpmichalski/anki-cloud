@@ -218,7 +218,8 @@ polished auto-generated SDK clients.
 │   ├── Cargo.toml             ← workspace root (our only custom file)
 │   ├── Cargo.lock             ← copied from upstream
 │   ├── README.md
-│   ├── ftl/                   ← verbatim copy of ankitects/anki ftl/ (i18n, required by build)
+│   ├── ftl/                   ← verbatim copy of ankitects/anki ftl/ + submodules (anki_i18n build)
+│   ├── proto/                 ← verbatim copy of ankitects/anki proto/ (anki_proto build)
 │   └── rslib/                 ← verbatim copy of ankitects/anki rslib/
 │       ├── src/sync/          ← sync protocol implementation
 │       │   └── http_server/   ← ADR-0003 hook points (fetch/commit) go here

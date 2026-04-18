@@ -20,6 +20,9 @@ echo "==> Cloning ankitects/anki@$ANKI_TAG ..."
 git clone --depth=1 --branch "$ANKI_TAG" \
   https://github.com/ankitects/anki.git "$TMP_DIR/anki"
 
+echo "==> Initialising ftl submodules (translations required by anki_i18n build) ..."
+git -C "$TMP_DIR/anki" submodule update --init --depth=1 ftl/core-repo ftl/qt-repo
+
 echo "==> Replacing anki-sync-server/rslib/ ..."
 rm -rf "$TARGET_DIR/rslib"
 cp -r "$TMP_DIR/anki/rslib" "$TARGET_DIR/rslib"
@@ -27,6 +30,10 @@ cp -r "$TMP_DIR/anki/rslib" "$TARGET_DIR/rslib"
 echo "==> Replacing anki-sync-server/ftl/ ..."
 rm -rf "$TARGET_DIR/ftl"
 cp -r "$TMP_DIR/anki/ftl" "$TARGET_DIR/ftl"
+
+echo "==> Replacing anki-sync-server/proto/ ..."
+rm -rf "$TARGET_DIR/proto"
+cp -r "$TMP_DIR/anki/proto" "$TARGET_DIR/proto"
 
 echo "==> Replacing anki-sync-server/Cargo.lock ..."
 cp "$TMP_DIR/anki/Cargo.lock" "$TARGET_DIR/Cargo.lock"
