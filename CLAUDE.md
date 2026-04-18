@@ -390,7 +390,8 @@ The MCP server exposes these tools to LLMs:
 ### Milestone 1 — M1: Proof of Concept
 
 - [x] Fork ankitects Rust sync server (`anki-sync-server/`, upstream anki@25.09)
-- [ ] Implement GDrive storage adapter (read/write collection to Drive)
+- [x] Implement GDrive storage adapter (read/write collection to Drive)
+- [ ] Wire GoogleDriveBackend into rslib sync server (hook points: fetch/commit)
 - [ ] Verify Anki Desktop can sync to custom server backed by GDrive
 - [ ] Basic Docker Compose setup
 
