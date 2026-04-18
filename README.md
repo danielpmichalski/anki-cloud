@@ -10,34 +10,32 @@ user data.
 
 ---
 
-## Local dev setup (macOS)
+## Running the sync server
 
-Run the setup script once to install all required tools:
+There are two ways to run the sync server: with Docker (recommended, no toolchain required)
+or by building from source (for development).
+
+### Option A — Docker (recommended)
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+```bash
+cp .env.example .env   # fill in sync credentials
+docker compose up
+```
+
+The first run builds the image (~2–3 min). Subsequent starts are instant.
+
+### Option B — Build from source
+
+Requires Rust ≥ 1.80 and `protoc`. Run the setup script once to install both:
 
 ```bash
 ./scripts/setup.zsh
-```
-
-This installs (skipping anything already present):
-
-| Tool                                                                 | Purpose                                                          |
-|----------------------------------------------------------------------|------------------------------------------------------------------|
-| [Rust](https://rustup.rs) ≥ 1.80 + Cargo                            | Sync server (`anki-sync-server/`)                                |
-| [protoc](https://protobuf.dev)                                       | Compiles `.proto` files during Rust build                        |
-| [Bun](https://bun.sh)                                                | TypeScript runtime for REST API, MCP server, web UI              |
-| [Docker Desktop](https://www.docker.com/products/docker-desktop/)   | Full stack via `docker compose up` (install separately)          |
-
-After running the script, reload your shell:
-
-```bash
 source ~/.zshrc
 ```
 
----
-
-## Build & run
-
-### Sync server (Rust)
+Then build and run:
 
 ```bash
 cd anki-sync-server
@@ -47,14 +45,35 @@ SYNC_USER1=user:password ./target/debug/anki-sync-server
 # Listening on 0.0.0.0:8080
 ```
 
-See [`anki-sync-server/README.md`](anki-sync-server/README.md) for all configuration options.
+See [`anki-sync-server/README.md`](anki-sync-server/README.md) for all configuration options
+(storage backend, OAuth token, port, etc.).
 
-### Full stack (Docker)
+---
+
+## Connecting Anki Desktop
+
+In Anki: **Preferences → Syncing → Self-hosted sync server**, set the URL to:
+
+```
+http://localhost:8080
+```
+
+---
+
+## Local dev setup
+
+Run the setup script to install all required tools (skips anything already present):
 
 ```bash
-cp .env.example .env   # fill in sync credentials
-docker compose up
+./scripts/setup.zsh
 ```
+
+| Tool                                                              | Purpose                                                 |
+|-------------------------------------------------------------------|---------------------------------------------------------|
+| [Rust](https://rustup.rs) ≥ 1.80 + Cargo                          | Sync server (`anki-sync-server/`)                       |
+| [protoc](https://protobuf.dev)                                    | Compiles `.proto` files during Rust build               |
+| [Bun](https://bun.sh)                                             | TypeScript runtime for REST API, MCP server, web UI     |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Full stack via `docker compose up` (install separately) |
 
 ---
 
