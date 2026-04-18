@@ -6,4 +6,14 @@ license = "AGPL-3.0-or-later"
 
 [dependencies]
 sync-storage-api = { path = "../sync-storage-api" }
-anyhow = "1"
+anyhow = { workspace = true }
+reqwest = { workspace = true, features = ["json", "stream"] }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["fs", "rt", "time"] }
+bytes = { workspace = true }
+rand = { workspace = true }
+
+[dev-dependencies]
+wiremock = { workspace = true }
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["full"] }

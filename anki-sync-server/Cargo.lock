@@ -5118,7 +5118,14 @@ name = "sync-storage-backends"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bytes",
+ "rand 0.9.2",
+ "reqwest",
+ "serde_json",
  "sync-storage-api",
+ "tempfile",
+ "tokio",
+ "wiremock",
 ]
 
 [[package]]
@@ -5375,6 +5382,7 @@ dependencies = [
  "io-uring",
  "libc",
  "mio",
+ "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
  "slab",

@@ -1,8 +1,8 @@
 mod backends;
 
+use anyhow::{anyhow, Result};
 pub use backends::google_drive::GoogleDriveBackend;
 pub use backends::local::LocalBackend;
-use anyhow::{anyhow, Result};
 use sync_storage_api::StorageBackend;
 
 pub struct StorageBackendFactory;
