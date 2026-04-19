@@ -107,6 +107,12 @@ export const sidecar = {
       method: "DELETE",
     }),
 
+  listNoteTypes: (email: string) =>
+    sidecarRequest<{ noteTypes: NoteType[] }>(email, "/internal/v1/note-types"),
+
+  getNoteType: (email: string, id: string) =>
+    sidecarRequest<NoteType>(email, `/internal/v1/note-types/${id}`),
+
   searchNotes: async (email: string, q: string, pagination?: { limit?: number | undefined; cursor?: string | undefined }) => {
     const params = new URLSearchParams({ q });
     if (pagination?.limit !== undefined) params.set("limit", pagination.limit.toString());
@@ -117,6 +123,12 @@ export const sidecar = {
     ).then((d) => ({ ...d, nextCursor: d.nextCursor ?? null }));
   },
 };
+
+export interface NoteType {
+  id: string;
+  name: string;
+  fields: string[];
+}
 
 export interface Note {
   id: string;

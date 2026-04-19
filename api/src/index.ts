@@ -7,6 +7,7 @@ import { apiKeysRouter } from "@/routes/api-keys";
 import { syncCredentialsRouter } from "@/routes/sync-credentials";
 import { decksRouter } from "@/routes/decks";
 import { notesRouter } from "@/routes/notes";
+import { noteTypesRouter } from "@/routes/note-types";
 import { cardsRouter } from "@/routes/cards";
 import type { Env } from "@/types";
 
@@ -14,6 +15,7 @@ import type { Env } from "@/types";
 const publicApi = new OpenAPIHono<Env>();
 publicApi.route("/v1", decksRouter);
 publicApi.route("/v1", notesRouter);
+publicApi.route("/v1", noteTypesRouter);
 publicApi.route("/v1", cardsRouter);
 
 publicApi.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {
