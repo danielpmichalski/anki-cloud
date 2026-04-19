@@ -52,6 +52,27 @@ of `../anki-cloud-sync`. First build takes ~2–3 min; subsequent starts are ins
 
 ---
 
+## API reference
+
+Once the stack is running, two endpoints are available:
+
+| URL | Purpose |
+|-----|---------|
+| `http://localhost:3000/openapi.json` | OpenAPI 3.1 spec — import into Postman via **Import → Link** |
+| `http://localhost:3000/docs` | Scalar interactive UI |
+
+All data endpoints (`/v1/decks/*`, `/v1/notes/*`, `/v1/cards/*`) require an API key:
+
+```
+Authorization: Bearer ak_<your-key>
+```
+
+Generate a key in the web UI under **Account → API Keys**, or via `POST /v1/me/api-keys`.
+
+Account management endpoints (`/v1/me/*`) use the session cookie set by Google OAuth login.
+
+---
+
 ## Connecting Anki Desktop
 
 In Anki: **Preferences → Syncing → Self-hosted sync server**, set the URL to:
