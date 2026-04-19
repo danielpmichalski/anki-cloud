@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import { useState, useEffect } from "react";
 import * as api from "./api";
 import type { User, StorageConnection, ApiKey, NewApiKey, SyncCredentials } from "./api";

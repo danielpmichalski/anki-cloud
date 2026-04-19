@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import {relations} from "drizzle-orm";
 import {index, integer, sqliteTable, text, unique} from "drizzle-orm/sqlite-core";
 

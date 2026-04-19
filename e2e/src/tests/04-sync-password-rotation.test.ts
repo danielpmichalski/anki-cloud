@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 /**
  * Tests that resetting a sync password invalidates the old hkey.
  * Old Anki clients must re-authenticate to get a new hkey.

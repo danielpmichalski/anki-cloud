@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { authMiddleware } from "@/middleware/auth";
 import { sidecar } from "@/lib/sidecar";

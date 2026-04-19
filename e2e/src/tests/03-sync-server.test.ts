@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 /**
  * Tests for the Rust sync server: authentication (hostKey), health check,
  * and basic sync flow using the Anki sync protocol v11.

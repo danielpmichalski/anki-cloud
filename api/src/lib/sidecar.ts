@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 const SIDECAR_URL = process.env.SIDECAR_URL ?? "http://localhost:8081";
 const SIDECAR_TOKEN = process.env.SIDECAR_TOKEN ?? "";
 
