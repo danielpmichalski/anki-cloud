@@ -19,6 +19,16 @@ publicApi.route("/v1", cardsRouter);
 publicApi.doc("/openapi.json", {
   openapi: "3.1.0",
   info: { title: "anki-cloud API", version: "0.1.0" },
+  components: {
+    securitySchemes: {
+      ApiKeyAuth: {
+        type: "http",
+        scheme: "bearer",
+        description: "API key generated via POST /v1/me/api-keys (format: ak_...)",
+      },
+    },
+  },
+  security: [{ ApiKeyAuth: [] }],
 });
 
 publicApi.get("/docs", (c) =>
