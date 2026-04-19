@@ -14,6 +14,11 @@ const NoteSchema = z.object({
   fields: z.record(z.string()),
 });
 
+const PaginationQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(100),
+  cursor: z.string().optional(),
+});
+
 export const notesRouter = new OpenAPIHono<Env>();
 
 // GET /notes/search?q=
@@ -23,11 +28,15 @@ notesRouter.openapi(
     path: "/notes/search",
     middleware: [authMiddleware] as const,
     request: {
-      query: z.object({ q: z.string().min(1) }),
+      query: z.object({ q: z.string().min(1) }).merge(PaginationQuery),
     },
     responses: {
       200: {
-        content: { "application/json": { schema: z.object({ notes: z.array(NoteSchema) }) } },
+        content: {
+          "application/json": {
+            schema: z.object({ notes: z.array(NoteSchema), nextCursor: z.string().nullable() }),
+          },
+        },
         description: "Search results",
       },
       401: { content: { "application/json": { schema: ErrorSchema } }, description: "Unauthenticated" },
@@ -36,9 +45,8 @@ notesRouter.openapi(
   async (c) => {
     const { email: rawEmail } = c.get("user");
     if (!rawEmail) return c.json({ error: "no email on account" }, 401 as never);
-    const email = rawEmail;
-    const { q } = c.req.valid("query");
-    const data = await sidecar.searchNotes(email, q);
+    const { q, limit, cursor } = c.req.valid("query");
+    const data = await sidecar.searchNotes(rawEmail, q, { limit, cursor });
     return c.json(data, 200);
   }
 );
@@ -62,9 +70,8 @@ notesRouter.openapi(
   async (c) => {
     const { email: rawEmail } = c.get("user");
     if (!rawEmail) return c.json({ error: "no email on account" }, 401 as never);
-    const email = rawEmail;
     const { id } = c.req.valid("param");
-    const note = await sidecar.getNote(email, id);
+    const note = await sidecar.getNote(rawEmail, id);
     return c.json(note, 200);
   }
 );
@@ -101,10 +108,9 @@ notesRouter.openapi(
   async (c) => {
     const { email: rawEmail } = c.get("user");
     if (!rawEmail) return c.json({ error: "no email on account" }, 401 as never);
-    const email = rawEmail;
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
-    const result = await sidecar.updateNote(email, id, body);
+    const result = await sidecar.updateNote(rawEmail, id, body);
     return c.json(result, 200);
   }
 );
@@ -127,9 +133,8 @@ notesRouter.openapi(
   async (c) => {
     const { email: rawEmail } = c.get("user");
     if (!rawEmail) return c.json({ error: "no email on account" }, 401 as never);
-    const email = rawEmail;
     const { id } = c.req.valid("param");
-    const result = await sidecar.deleteNote(email, id);
+    const result = await sidecar.deleteNote(rawEmail, id);
     return c.json(result, 200);
   }
 );

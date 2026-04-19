@@ -19,6 +19,15 @@ const NoteSchema = z.object({
   fields: z.record(z.string()),
 });
 
+const PaginationQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(100),
+  cursor: z.string().optional(),
+});
+
+const IdempotencyHeader = z.object({
+  "idempotency-key": z.string().optional(),
+});
+
 export const decksRouter = new OpenAPIHono<Env>();
 
 // GET /decks
@@ -27,9 +36,14 @@ decksRouter.openapi(
     method: "get",
     path: "/decks",
     middleware: [authMiddleware] as const,
+    request: { query: PaginationQuery },
     responses: {
       200: {
-        content: { "application/json": { schema: z.object({ decks: z.array(DeckSchema) }) } },
+        content: {
+          "application/json": {
+            schema: z.object({ decks: z.array(DeckSchema), nextCursor: z.string().nullable() }),
+          },
+        },
         description: "List of decks",
       },
       401: { content: { "application/json": { schema: ErrorSchema } }, description: "Unauthenticated" },
@@ -38,8 +52,8 @@ decksRouter.openapi(
   async (c) => {
     const { email: rawEmail } = c.get("user");
     if (!rawEmail) return c.json({ error: "no email on account" }, 401 as never);
-    const email = rawEmail;
-    const data = await sidecar.listDecks(email);
+    const { limit, cursor } = c.req.valid("query");
+    const data = await sidecar.listDecks(rawEmail, { limit, cursor });
     return c.json(data, 200);
   }
 );
@@ -51,6 +65,7 @@ decksRouter.openapi(
     path: "/decks",
     middleware: [authMiddleware] as const,
     request: {
+      headers: IdempotencyHeader,
       body: {
         content: { "application/json": { schema: z.object({ name: z.string().min(1) }) } },
         required: true,
@@ -67,9 +82,8 @@ decksRouter.openapi(
   async (c) => {
     const { email: rawEmail } = c.get("user");
     if (!rawEmail) return c.json({ error: "no email on account" }, 401 as never);
-    const email = rawEmail;
     const { name } = c.req.valid("json");
-    const deck = await sidecar.createDeck(email, name);
+    const deck = await sidecar.createDeck(rawEmail, name);
     return c.json(deck, 201);
   }
 );
@@ -93,9 +107,8 @@ decksRouter.openapi(
   async (c) => {
     const { email: rawEmail } = c.get("user");
     if (!rawEmail) return c.json({ error: "no email on account" }, 401 as never);
-    const email = rawEmail;
     const { id } = c.req.valid("param");
-    const deck = await sidecar.getDeck(email, id);
+    const deck = await sidecar.getDeck(rawEmail, id);
     return c.json(deck, 200);
   }
 );
@@ -118,9 +131,8 @@ decksRouter.openapi(
   async (c) => {
     const { email: rawEmail } = c.get("user");
     if (!rawEmail) return c.json({ error: "no email on account" }, 401 as never);
-    const email = rawEmail;
     const { id } = c.req.valid("param");
-    const result = await sidecar.deleteDeck(email, id);
+    const result = await sidecar.deleteDeck(rawEmail, id);
     return c.json(result, 200);
   }
 );
@@ -131,10 +143,17 @@ decksRouter.openapi(
     method: "get",
     path: "/decks/{id}/notes",
     middleware: [authMiddleware] as const,
-    request: { params: z.object({ id: z.string() }) },
+    request: {
+      params: z.object({ id: z.string() }),
+      query: PaginationQuery,
+    },
     responses: {
       200: {
-        content: { "application/json": { schema: z.object({ notes: z.array(NoteSchema) }) } },
+        content: {
+          "application/json": {
+            schema: z.object({ notes: z.array(NoteSchema), nextCursor: z.string().nullable() }),
+          },
+        },
         description: "Notes in deck",
       },
       401: { content: { "application/json": { schema: ErrorSchema } }, description: "Unauthenticated" },
@@ -143,9 +162,9 @@ decksRouter.openapi(
   async (c) => {
     const { email: rawEmail } = c.get("user");
     if (!rawEmail) return c.json({ error: "no email on account" }, 401 as never);
-    const email = rawEmail;
     const { id } = c.req.valid("param");
-    const data = await sidecar.listNotes(email, id);
+    const { limit, cursor } = c.req.valid("query");
+    const data = await sidecar.listNotes(rawEmail, id, { limit, cursor });
     return c.json(data, 200);
   }
 );
@@ -158,6 +177,7 @@ decksRouter.openapi(
     middleware: [authMiddleware] as const,
     request: {
       params: z.object({ id: z.string() }),
+      headers: IdempotencyHeader,
       body: {
         content: {
           "application/json": {
@@ -182,10 +202,9 @@ decksRouter.openapi(
   async (c) => {
     const { email: rawEmail } = c.get("user");
     if (!rawEmail) return c.json({ error: "no email on account" }, 401 as never);
-    const email = rawEmail;
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
-    const note = await sidecar.createNote(email, id, body);
+    const note = await sidecar.createNote(rawEmail, id, body);
     return c.json(note, 201);
   }
 );

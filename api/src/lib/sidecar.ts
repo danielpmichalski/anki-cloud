@@ -28,12 +28,21 @@ async function sidecarRequest<T>(
   return res.json() as Promise<T>;
 }
 
+function paginationQs(p?: { limit?: number | undefined; cursor?: string | undefined }): string {
+  if (!p) return "";
+  const params = new URLSearchParams();
+  if (p.limit !== undefined) params.set("limit", p.limit.toString());
+  if (p.cursor !== undefined) params.set("cursor", p.cursor);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export const sidecar = {
-  listDecks: (email: string) =>
-    sidecarRequest<{ decks: { id: string; name: string }[] }>(
+  listDecks: (email: string, pagination?: { limit?: number | undefined; cursor?: string | undefined }) =>
+    sidecarRequest<{ decks: { id: string; name: string }[]; nextCursor: string | null }>(
       email,
-      "/internal/v1/decks"
-    ),
+      `/internal/v1/decks${paginationQs(pagination)}`
+    ).then((d) => ({ ...d, nextCursor: d.nextCursor ?? null })),
 
   createDeck: (email: string, name: string) =>
     sidecarRequest<{ id: string; name: string }>(email, "/internal/v1/decks", {
@@ -52,11 +61,11 @@ export const sidecar = {
       method: "DELETE",
     }),
 
-  listNotes: (email: string, deckId: string) =>
-    sidecarRequest<{ notes: Note[] }>(
+  listNotes: (email: string, deckId: string, pagination?: { limit?: number | undefined; cursor?: string | undefined }) =>
+    sidecarRequest<{ notes: Note[]; nextCursor: string | null }>(
       email,
-      `/internal/v1/decks/${deckId}/notes`
-    ),
+      `/internal/v1/decks/${deckId}/notes${paginationQs(pagination)}`
+    ).then((d) => ({ ...d, nextCursor: d.nextCursor ?? null })),
 
   createNote: (
     email: string,
@@ -67,6 +76,17 @@ export const sidecar = {
       email,
       `/internal/v1/decks/${deckId}/notes`,
       { method: "POST", body: JSON.stringify(body) }
+    ),
+
+  createNotesBulk: (
+    email: string,
+    deckId: string,
+    notes: { fields: Record<string, string>; tags?: string[] | undefined; noteTypeId?: string | undefined }[]
+  ) =>
+    sidecarRequest<{ ids: string[] }>(
+      email,
+      `/internal/v1/decks/${deckId}/notes/bulk`,
+      { method: "POST", body: JSON.stringify({ notes }) }
     ),
 
   getNote: (email: string, id: string) =>
@@ -87,11 +107,15 @@ export const sidecar = {
       method: "DELETE",
     }),
 
-  searchNotes: (email: string, q: string) =>
-    sidecarRequest<{ notes: Note[] }>(
+  searchNotes: async (email: string, q: string, pagination?: { limit?: number | undefined; cursor?: string | undefined }) => {
+    const params = new URLSearchParams({ q });
+    if (pagination?.limit !== undefined) params.set("limit", pagination.limit.toString());
+    if (pagination?.cursor !== undefined) params.set("cursor", pagination.cursor);
+    return sidecarRequest<{ notes: Note[]; nextCursor: string | null }>(
       email,
-      `/internal/v1/notes/search?q=${encodeURIComponent(q)}`
-    ),
+      `/internal/v1/notes/search?${params}`
+    ).then((d) => ({ ...d, nextCursor: d.nextCursor ?? null }));
+  },
 };
 
 export interface Note {
