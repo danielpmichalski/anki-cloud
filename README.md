@@ -15,14 +15,21 @@ user data.
 The sync server ([anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync)) is a
 separate Rust service consumed here as a Docker image or local build. Two run modes are supported:
 
+Two independent axes: **mode** (standalone vs cloud) and **image source** (published vs local build).
+
 ### Standalone mode
 
-No database or cloud storage required. Users are defined via `SYNC_USER1` in `.env`.
+No database or cloud storage required. Users defined via `SYNC_USER1` in `.env`.
 Good for local development and testing the REST API without GDrive setup.
 
 ```bash
 cp .env.example .env   # set SIDECAR_TOKEN, JWT_SECRET, SYNC_USER1 at minimum
+
+# published image (fast)
 docker compose -f docker-compose.yml -f docker-compose.standalone.yml up
+
+# local build of anki-cloud-sync (when hacking on the sync server)
+docker compose -f docker-compose.yml -f docker-compose.standalone.yml -f docker-compose.dev.yml up
 ```
 
 ### Cloud mode
@@ -32,10 +39,16 @@ Google Drive. Requires all OAuth credentials in `.env`.
 
 ```bash
 cp .env.example .env   # fill in all credentials
+
+# published image
 docker compose -f docker-compose.yml -f docker-compose.cloud.yml up
+
+# local build of anki-cloud-sync
+docker compose -f docker-compose.yml -f docker-compose.cloud.yml -f docker-compose.dev.yml up
 ```
 
-The first run builds the sync server image (~2–3 min). Subsequent starts are instant.
+`docker-compose.dev.yml` switches `anki-sync-server` from the published image to a local build
+of `../anki-cloud-sync`. First build takes ~2–3 min; subsequent starts are instant.
 
 ---
 
