@@ -290,6 +290,7 @@ function StorageSection({
                             {folderPathError && <p className="form-error">{folderPathError}</p>}
                             <p className="muted" style={{marginTop: "4px", fontSize: "12px"}}>
                                 Note: moving your existing files in Google Drive to the new path is your responsibility.
+                                After changing the folder, trigger a full sync from your Anki client — until then the REST API will not see data from the new location.
                             </p>
                         </div>
                     ) : (
