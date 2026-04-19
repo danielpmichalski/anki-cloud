@@ -13,6 +13,23 @@ import type { Env } from "@/types";
 const app = new OpenAPIHono<Env>();
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+app.doc("/openapi.json", {
+  openapi: "3.1.0",
+  info: { title: "anki-cloud API", version: "0.1.0" },
+});
+
+app.get("/docs", (c) =>
+  c.html(`<!doctype html>
+<html>
+<head><title>anki-cloud API Reference</title></head>
+<body>
+<script id="api-reference" data-url="/openapi.json"></script>
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
+</html>`)
+);
+
 app.route("/v1", authRouter);
 app.route("/v1", storageRouter);
 app.route("/v1", apiKeysRouter);
