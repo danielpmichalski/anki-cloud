@@ -8,7 +8,7 @@
 
 ## 1. Project Vision
 
-A **privacy-first, open-source Anki sync server** with a first-class REST API and MCP server,
+A **privacy-first Anki sync server** with a first-class REST API and MCP server,
 enabling seamless LLM-to-Anki workflows. User deck data is stored in their own cloud storage
 (Google Drive, Dropbox, etc.) — the service acts as stateless infrastructure, never holding
 user data.
@@ -410,7 +410,7 @@ Storage backend credentials are per-user (their own GDrive etc.).
 1. **We never store deck data.** User data lives in user-controlled storage. Always.
 2. **We never store passwords for OAuth-authenticated users.** OAuth tokens only. Always scoped, always revocable. Exception: Anki sync uses a dedicated per-user sync password (bcrypt hash only, plaintext never
    persisted) because the Anki sync protocol does not support OAuth.
-3. **Open source core (AGPLv3).** The sync server, REST API, and MCP server are all AGPLv3.
+3. **Dual-license strategy.** `anki-cloud-sync` (Rust sync server fork) is AGPLv3 — required by upstream Ankitects license. `anki-cloud` (REST API, MCP server, web UI) is **Elastic License 2.0 (ELv2)**: source-available, self-hosting permitted, offering it as a managed service requires a commercial license.
 4. **Self-hostable.** Everything runs with `docker compose up`. No hidden dependencies.
 5. **OpenAPI first.** The spec is the contract. SDKs and docs generate from it.
 6. **Conventional commits.** Enables automated changelog and semantic versioning.
