@@ -5,12 +5,13 @@ The `sub` claim must match a real `users.id` row in SQLite.
 
 ---
 
-## Option A: Docker Compose (full stack)
+## Option A: Docker Compose + Google OAuth (cloud mode)
 
 ```bash
 cd ~/Projects/anki-cloud
-cp .env.example .env          # fill in GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET, TOKEN_ENCRYPTION_KEY, SIDECAR_TOKEN
-docker compose up
+cp .env.example .env   # fill in GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET, TOKEN_ENCRYPTION_KEY, SIDECAR_TOKEN
+
+docker compose -f docker-compose.yml -f docker-compose.cloud.yml up
 ```
 
 Open http://localhost:5173 → sign in with Google → DevTools → Application → Cookies → copy `session` value.
@@ -21,7 +22,41 @@ SESSION=<paste-cookie-value>
 
 ---
 
-## Option B: Local binaries (faster iteration)
+## Option B: Docker Compose standalone (no Google OAuth)
+
+Fastest for REST API testing — no GDrive or OAuth setup needed.
+
+```bash
+cd ~/Projects/anki-cloud
+cp .env.example .env   # set SIDECAR_TOKEN, JWT_SECRET, SYNC_USER1 at minimum
+
+docker compose -f docker-compose.yml -f docker-compose.standalone.yml up
+```
+
+Then mint a session manually (standalone has no web UI login):
+
+```bash
+# Insert test user into SQLite (path from DATABASE_URL in .env)
+sqlite3 "$(grep DATABASE_URL .env | cut -d= -f2- | sed 's/file://')" \
+  "INSERT OR IGNORE INTO users (id, google_sub, email, name) VALUES ('test-user-1', 'gsub-test', 'test@example.com', 'Test');"
+
+# Mint JWT
+SESSION=$(bun --env-file .env -e "
+const { SignJWT } = await import('jose');
+const secret = new Uint8Array(Buffer.from(process.env.JWT_SECRET, 'hex'));
+const token = await new SignJWT({ sub: 'test-user-1', email: 'test@example.com' })
+  .setProtectedHeader({ alg: 'HS256' })
+  .setIssuedAt()
+  .setExpirationTime('1d')
+  .sign(secret);
+process.stdout.write(token);
+")
+echo "SESSION=$SESSION"
+```
+
+---
+
+## Option C: Local binaries (fastest iteration)
 
 ### 1. Build sync server (one-time, ~2 min)
 
@@ -36,6 +71,7 @@ cargo build --bin anki-sync-server
 cd ~/Projects/anki-cloud-sync
 SYNC_USER1=test@example.com:testpassword \
 SYNC_INTERNAL_PORT=8081 \
+SYNC_INTERNAL_HOST=0.0.0.0 \
 SYNC_INTERNAL_TOKEN=test-token \
 ./target/debug/anki-sync-server
 # :8080 → Anki sync protocol   :8081 → sidecar
@@ -45,7 +81,7 @@ SYNC_INTERNAL_TOKEN=test-token \
 
 ```bash
 cd ~/Projects/anki-cloud
-bun run db:migrate           # creates /tmp/test.db with schema (adjust DB path in .env)
+bun run db/src/migrate.ts
 ```
 
 ### 4. Insert test user + mint session cookie
@@ -53,11 +89,9 @@ bun run db:migrate           # creates /tmp/test.db with schema (adjust DB path 
 ```bash
 cd ~/Projects/anki-cloud
 
-# insert test user into SQLite
 sqlite3 "$(grep DATABASE_URL .env | cut -d= -f2- | sed 's/file://')" \
   "INSERT OR IGNORE INTO users (id, google_sub, email, name) VALUES ('test-user-1', 'gsub-test', 'test@example.com', 'Test');"
 
-# mint JWT (sub must match the id above)
 SESSION=$(bun --env-file .env -e "
 const { SignJWT } = await import('jose');
 const secret = new Uint8Array(Buffer.from(process.env.JWT_SECRET, 'hex'));
@@ -74,15 +108,15 @@ echo "SESSION=$SESSION"
 ### 5. Start REST API
 
 ```bash
-cd ~/Projects/anki-cloud/api
-SIDECAR_URL=http://localhost:8081 SIDECAR_TOKEN=test-token bun run dev
+cd ~/Projects/anki-cloud
+SIDECAR_URL=http://localhost:8081 SIDECAR_TOKEN=test-token bun run --hot api/src/index.ts
 ```
 
 ---
 
 ## Curl test suite
 
-Set `SESSION` via Option A or B above, then:
+Set `SESSION` via any option above, then:
 
 ```bash
 BASE=http://localhost:3000/v1
@@ -169,8 +203,9 @@ curl "$BASE/decks"
 - [x] `POST /v1/decks`, `POST /v1/decks/:id/notes`, `POST /v1/cards/bulk` accept `Idempotency-Key` header
 - [x] All routes covered by OpenAPI spec (check http://localhost:3000/doc)
 
-## After sidecar sync (Anki Desktop)
+## After Anki Desktop sync
 
-1. Open Anki Desktop → Preferences → Sync → set server URL to http://localhost:8080
-2. Sync
-3. Verify deck "Test Deck" and notes created above appear in Anki
+1. Open Anki Desktop → Preferences → Sync → set server URL to `http://localhost:8080`
+2. In standalone mode, use `SYNC_USER1` credentials (email:password) when prompted
+3. Sync
+4. Verify decks and notes created above appear in Anki
