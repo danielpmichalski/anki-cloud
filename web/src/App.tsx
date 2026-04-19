@@ -73,6 +73,11 @@ export default function App() {
                         const s = await api.getStorage();
                         setStorage(s.connections);
                     }}
+                    onUpdateFolderPath={async (provider, folderPath) => {
+                        await api.updateStorageFolderPath(provider, folderPath);
+                        const s = await api.getStorage();
+                        setStorage(s.connections);
+                    }}
                 />
                 <SyncPasswordSection
                     creds={syncCreds}
@@ -192,11 +197,17 @@ function NewKeyBanner({keyData, onDismiss}: { keyData: NewApiKey; onDismiss: () 
 function StorageSection({
                             connections,
                             onDisconnect,
+                            onUpdateFolderPath,
                         }: {
     connections: StorageConnection[];
     onDisconnect: (provider: string) => Promise<void>;
+    onUpdateFolderPath: (provider: string, folderPath: string) => Promise<void>;
 }) {
     const [busy, setBusy] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [folderPathInput, setFolderPathInput] = useState("");
+    const [folderPathError, setFolderPathError] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
     const gdrive = connections.find((c) => c.provider === "gdrive");
 
     const handleDisconnect = async () => {
@@ -209,6 +220,28 @@ function StorageSection({
         }
     };
 
+    const startEdit = () => {
+        setFolderPathInput(gdrive?.folderPath ?? "/AnkiCloudSync");
+        setFolderPathError(null);
+        setEditing(true);
+    };
+
+    const handleSaveFolderPath = async () => {
+        if (!folderPathInput.startsWith("/")) {
+            setFolderPathError("Path must start with /");
+            return;
+        }
+        setSaving(true);
+        try {
+            await onUpdateFolderPath("gdrive", folderPathInput);
+            setEditing(false);
+        } catch (err) {
+            setFolderPathError(err instanceof Error ? err.message : "Failed to update.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     return (
         <section className="card">
             <h2 className="card-title">Storage</h2>
@@ -217,7 +250,7 @@ function StorageSection({
                     <p className="storage-name">Google Drive</p>
                     {gdrive ? (
                         <p className="storage-status connected">
-                            Connected · {gdrive.folderPath} · since{" "}
+                            Connected · since{" "}
                             {new Date(gdrive.connectedAt).toLocaleDateString()}
                         </p>
                     ) : (
@@ -234,6 +267,40 @@ function StorageSection({
                     </a>
                 )}
             </div>
+            {gdrive && (
+                <div style={{marginTop: "12px"}}>
+                    <p className="form-label" style={{marginBottom: "6px"}}>Sync folder</p>
+                    {editing ? (
+                        <div>
+                            <div className="form-row">
+                                <input
+                                    type="text"
+                                    value={folderPathInput}
+                                    onChange={(e) => setFolderPathInput(e.target.value)}
+                                    className="input"
+                                    placeholder="/AnkiCloudSync"
+                                />
+                                <button className="btn btn-primary btn-sm" onClick={handleSaveFolderPath} disabled={saving}>
+                                    {saving ? "Saving…" : "Save"}
+                                </button>
+                                <button className="btn btn-outline btn-sm" onClick={() => setEditing(false)} disabled={saving}>
+                                    Cancel
+                                </button>
+                            </div>
+                            {folderPathError && <p className="form-error">{folderPathError}</p>}
+                            <p className="muted" style={{marginTop: "4px", fontSize: "12px"}}>
+                                Note: moving your existing files in Google Drive to the new path is your responsibility.
+                                After changing the folder, trigger a full sync from your Anki client — until then the REST API will not see data from the new location.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="form-row">
+                            <code className="key-value" style={{flex: 1}}>{gdrive.folderPath}</code>
+                            <button className="btn btn-outline btn-sm" onClick={startEdit}>Edit</button>
+                        </div>
+                    )}
+                </div>
+            )}
         </section>
     );
 }

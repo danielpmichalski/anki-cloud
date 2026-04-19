@@ -24,7 +24,7 @@ export const storageConnections = sqliteTable(
         provider: text("provider", {enum: ["gdrive", "dropbox", "s3"]}).notNull(),
         oauthToken: text("oauth_token").notNull(),
         oauthRefreshToken: text("oauth_refresh_token").notNull(),
-        folderPath: text("folder_path").notNull().default("/AnkiSync"),
+        folderPath: text("folder_path").notNull().default("/AnkiCloudSync"),
         connectedAt: integer("connected_at", {mode: "timestamp"})
             .notNull()
             .$defaultFn(() => new Date()),

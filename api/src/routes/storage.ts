@@ -238,6 +238,55 @@ const storageListRoute = createRoute({
   },
 });
 
+const storageUpdateRoute = createRoute({
+  method: "put",
+  path: "/me/storage/{provider}",
+  middleware: [authWebMiddleware] as const,
+  request: {
+    params: z.object({ provider: ProviderSchema }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({ folderPath: z.string().min(1).startsWith("/") }),
+        },
+      },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: z.object({ ok: z.boolean() }) } },
+      description: "Folder path updated",
+    },
+    404: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Storage connection not found",
+    },
+    401: {
+      content: { "application/json": { schema: ErrorSchema } },
+      description: "Unauthenticated",
+    },
+  },
+});
+
+storageRouter.openapi(storageUpdateRoute, async (c) => {
+  const { id: userId } = c.get("user");
+  const { provider } = c.req.valid("param");
+  const { folderPath } = c.req.valid("json");
+
+  const updated = await db
+    .update(storageConnections)
+    .set({ folderPath })
+    .where(and(eq(storageConnections.userId, userId), eq(storageConnections.provider, provider)))
+    .returning({ id: storageConnections.id });
+
+  if (updated.length === 0) {
+    return c.json({ error: "Storage connection not found", code: "NOT_FOUND" }, 404);
+  }
+
+  return c.json({ ok: true }, 200);
+});
+
 storageRouter.openapi(storageListRoute, async (c) => {
   const { id: userId } = c.get("user");
   const connections = await db
