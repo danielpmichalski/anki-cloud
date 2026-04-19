@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 

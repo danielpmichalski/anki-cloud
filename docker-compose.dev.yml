@@ -1,0 +1,4 @@
+services:
+  anki-sync-server:
+    build: ../anki-cloud-sync
+    image: ""

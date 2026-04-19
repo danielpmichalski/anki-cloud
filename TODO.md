@@ -1,0 +1,2 @@
+- extend REST API with note types fetching; possibly note type creation? maybe in future
+- extend REST API with note tags fetching;

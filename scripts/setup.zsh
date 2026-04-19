@@ -1,4 +1,6 @@
 #!/usr/bin/env zsh
+# Copyright 2026 Archont Soft Daniel Klimuntowski
+# Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 # One-time dev environment setup for macOS.
 # Safe to re-run — skips anything already installed.
 set -euo pipefail

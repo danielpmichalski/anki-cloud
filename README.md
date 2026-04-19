@@ -10,54 +10,45 @@ user data.
 
 ---
 
-## Running the sync server
+## Running the stack
 
-There are two ways to run the sync server:
+The sync server ([anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync)) is a
+separate Rust service consumed here as a Docker image or local build. Two run modes are supported:
 
-- with Docker (recommended, no toolchain required), or
-- by building from source (for development).
+Two independent axes: **mode** (standalone vs cloud) and **image source** (published vs local build).
 
-See also [`anki-sync-server/README.md`](anki-sync-server/README.md) for all configuration options
-(storage backend, OAuth token, port, etc.).
+### Standalone mode
 
-To use the Google Drive backend, you'll need a
-GDrive OAuth access token — see [Getting a GDrive OAuth token](docs/e2e-testing-gdrive-sync.md#1-google-drive-oauth-access-token).
-
-### Option A — Docker (recommended)
-
-Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+No database or cloud storage required. Users defined via `SYNC_USER1` in `.env`.
+Good for local development and testing the REST API without GDrive setup.
 
 ```bash
-cp .env.example .env   # fill in sync credentials
-docker compose up
+cp .env.example .env   # set SIDECAR_TOKEN, JWT_SECRET, SYNC_USER1 at minimum
+
+# published image (fast)
+docker compose -f docker-compose.yml -f docker-compose.standalone.yml up
+
+# local build of anki-cloud-sync (when hacking on the sync server)
+docker compose --build -f docker-compose.yml -f docker-compose.standalone.yml -f docker-compose.dev.yml up
 ```
 
-The first run builds the image (~2–3 min). Subsequent starts are instant.
+### Cloud mode
 
-### Option B — Build from source
-
-Requires Rust ≥ 1.80 and `protoc`. Run the setup script once to install both:
+Full production-like stack. Users authenticate via Google OAuth; deck data stored in their
+Google Drive. Requires all OAuth credentials in `.env`.
 
 ```bash
-./scripts/setup.zsh
-source ~/.zshrc
+cp .env.example .env   # fill in all credentials
+
+# published image
+docker compose -f docker-compose.yml -f docker-compose.cloud.yml up
+
+# local build of anki-cloud-sync
+docker compose --build -f docker-compose.yml -f docker-compose.cloud.yml -f docker-compose.dev.yml up
 ```
 
-Then build and run:
-
-```bash
-cd anki-sync-server
-cargo build --bin anki-sync-server
-
-DATABASE_URL=file:/path/to/anki-cloud.db \
-  TOKEN_ENCRYPTION_KEY=<64-hex-chars> \
-  GOOGLE_CLIENT_ID=<client-id> \
-  GOOGLE_CLIENT_SECRET=<client-secret> \
-  ./target/debug/anki-sync-server
-# Listening on 0.0.0.0:8080
-```
-
-Users are authenticated via sync passwords set in the web UI — no `SYNC_USER*` env vars needed.
+`docker-compose.dev.yml` switches `anki-sync-server` from the published image to a local build
+of `../anki-cloud-sync`. First build takes ~2–3 min; subsequent starts are instant.
 
 ---
 
@@ -69,6 +60,8 @@ In Anki: **Preferences → Syncing → Self-hosted sync server**, set the URL to
 http://localhost:8080
 ```
 
+In standalone mode, use the `SYNC_USER1` credentials (email:password) when Anki prompts for login.
+
 ---
 
 ## Local dev setup
@@ -79,39 +72,67 @@ Run the setup script to install all required tools (skips anything already prese
 ./scripts/setup.zsh
 ```
 
-| Tool                                                              | Purpose                                                 |
-|-------------------------------------------------------------------|---------------------------------------------------------|
-| [Rust](https://rustup.rs) ≥ 1.80 + Cargo                          | Sync server (`anki-sync-server/`)                       |
-| [protoc](https://protobuf.dev)                                    | Compiles `.proto` files during Rust build               |
-| [Bun](https://bun.sh)                                             | TypeScript runtime for REST API, MCP server, web UI     |
-| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Full stack via `docker compose up` (install separately) |
+| Tool                                                              | Purpose                                             |
+|-------------------------------------------------------------------|-----------------------------------------------------|
+| [Bun](https://bun.sh)                                             | TypeScript runtime for REST API, MCP server, web UI |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Full stack via `docker compose` (install separately) |
+| [Rust](https://rustup.rs) ≥ 1.80 + `protoc`                      | Only needed to build anki-cloud-sync from source    |
+
+### Installing dependencies
+
+`api/` and `db/` share a Bun workspace — one install covers both:
+
+```bash
+bun install
+```
+
+`web/` and `e2e/` are standalone packages (not in the workspace) — install separately when
+working on them:
+
+```bash
+cd web && bun install   # account management UI
+cd e2e && bun install   # end-to-end tests
+```
+
+### Running packages locally (without Docker)
+
+```bash
+# REST API (hot-reload)
+bun run --hot api/src/index.ts
+
+# Web UI (Vite dev server, http://localhost:5173)
+cd web && bun run dev
+
+# E2E tests (requires the full stack running)
+cd e2e && bun test
+```
 
 ---
 
 ## Project structure
 
 ```
-anki-sync-server/   Rust workspace — fork of ankitects/anki rslib@25.09
-packages/api/       REST API — TypeScript / Hono on Bun
-packages/db/        Drizzle ORM + SQLite schema (@anki-cloud/db)
-web/                Account management UI (Vite + React)
-docs/               Architecture decisions (ADRs) + narrative docs
-scripts/            Dev tooling (setup, SDK generation, sync-server fork)
+api/        REST API — TypeScript / Hono on Bun  (shared workspace with db/)
+db/         Drizzle ORM + SQLite schema (@anki-cloud/db)
+web/        Account management UI (Vite + React)  (standalone — cd web && bun install)
+e2e/        End-to-end tests                      (standalone — cd e2e && bun install)
+docs/       Architecture decisions (ADRs) + narrative docs
+scripts/    Dev tooling (setup, SDK generation)
+
+docker-compose.yml              Base stack (api + anki-sync-server)
+docker-compose.standalone.yml   Standalone mode override (no DB/GDrive)
+docker-compose.cloud.yml        Cloud mode override (SQLite + GDrive OAuth)
+docker-compose.dev.yml          Local build of anki-cloud-sync (any mode)
 ```
+
+The sync server lives in a separate repository:
+[github.com/danielpmichalski/anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync) —
+see its README for all configuration options and environment variables.
 
 Full architecture and design decisions: [CLAUDE.md](CLAUDE.md)
 
 ---
 
-## Upgrading the upstream sync server
-
-```bash
-./scripts/fork-anki-sync-server.zsh <new-tag>   # e.g. 25.12
-cd anki-sync-server && cargo build --bin anki-sync-server
-```
-
----
-
 ## License
 
-AGPLv3 — see [LICENSE](LICENSE).
+Elastic License 2.0 (ELv2) — source-available, self-hosting permitted. See [LICENSE](LICENSE).

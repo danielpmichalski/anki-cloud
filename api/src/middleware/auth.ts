@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import { getCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 import { jwtVerify } from "jose";

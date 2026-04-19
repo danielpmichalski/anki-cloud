@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 /** Typed REST API client for e2e tests. */
 
 export interface ApiClient {

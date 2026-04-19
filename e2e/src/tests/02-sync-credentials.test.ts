@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 /**
  * Tests for sync password generation/reset via REST API.
  * Users authenticate via JWT session cookie (minted directly, skipping Google OAuth).

@@ -1,5 +1,5 @@
 {
   "name": "anki-cloud",
   "private": true,
-  "workspaces": ["api", "db", "web", "e2e"]
+  "workspaces": ["api", "db"]
 }

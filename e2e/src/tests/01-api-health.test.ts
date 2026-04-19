@@ -1,3 +1,5 @@
+// Copyright 2026 Archont Soft Daniel Klimuntowski
+// Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { startStack, type TestStack } from "@/setup";
 import { makeApiClient } from "@/helpers/api";
