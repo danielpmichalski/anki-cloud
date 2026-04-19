@@ -28,6 +28,7 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+      - run: cd web && bun install --frozen-lockfile
       - run: cd web && bun run build
 
   build-api-image:
