@@ -150,6 +150,8 @@ The sync server lives in a separate repository:
 [github.com/danielpmichalski/anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync) —
 see its README for all configuration options and environment variables.
 
+Full self-hosting walkthrough (Google OAuth setup, GDrive, Anki Desktop, Claude Desktop): [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)
+
 Full architecture and design decisions: [CLAUDE.md](CLAUDE.md)
 
 ---
