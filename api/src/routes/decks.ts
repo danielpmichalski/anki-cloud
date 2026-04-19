@@ -1,7 +1,7 @@
 // Copyright 2026 Archont Soft Daniel Klimuntowski
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import { authMiddleware } from "@/middleware/auth";
+import { authApiMiddleware } from "@/middleware/auth";
 import { sidecar } from "@/lib/sidecar";
 import type { Env } from "@/types";
 
@@ -35,7 +35,7 @@ decksRouter.openapi(
   createRoute({
     method: "get",
     path: "/decks",
-    middleware: [authMiddleware] as const,
+    middleware: [authApiMiddleware] as const,
     request: { query: PaginationQuery },
     responses: {
       200: {
@@ -63,7 +63,7 @@ decksRouter.openapi(
   createRoute({
     method: "post",
     path: "/decks",
-    middleware: [authMiddleware] as const,
+    middleware: [authApiMiddleware] as const,
     request: {
       headers: IdempotencyHeader,
       body: {
@@ -93,7 +93,7 @@ decksRouter.openapi(
   createRoute({
     method: "get",
     path: "/decks/{id}",
-    middleware: [authMiddleware] as const,
+    middleware: [authApiMiddleware] as const,
     request: { params: z.object({ id: z.string() }) },
     responses: {
       200: {
@@ -118,7 +118,7 @@ decksRouter.openapi(
   createRoute({
     method: "delete",
     path: "/decks/{id}",
-    middleware: [authMiddleware] as const,
+    middleware: [authApiMiddleware] as const,
     request: { params: z.object({ id: z.string() }) },
     responses: {
       200: {
@@ -142,7 +142,7 @@ decksRouter.openapi(
   createRoute({
     method: "get",
     path: "/decks/{id}/notes",
-    middleware: [authMiddleware] as const,
+    middleware: [authApiMiddleware] as const,
     request: {
       params: z.object({ id: z.string() }),
       query: PaginationQuery,
@@ -174,7 +174,7 @@ decksRouter.openapi(
   createRoute({
     method: "post",
     path: "/decks/{id}/notes",
-    middleware: [authMiddleware] as const,
+    middleware: [authApiMiddleware] as const,
     request: {
       params: z.object({ id: z.string() }),
       headers: IdempotencyHeader,

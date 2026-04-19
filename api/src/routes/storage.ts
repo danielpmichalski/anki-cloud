@@ -12,7 +12,7 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { db, storageConnections } from "@anki-cloud/db";
 import { encrypt } from "@anki-cloud/db/encrypt";
-import { authMiddleware } from "@/middleware/auth";
+import { authWebMiddleware } from "@/middleware/auth";
 import type { Env } from "@/types";
 
 const googleDrive = new Google(
@@ -52,7 +52,7 @@ export const storageRouter = new OpenAPIHono<Env>();
 const storageConnectRoute = createRoute({
   method: "post",
   path: "/me/storage/connect",
-  middleware: [authMiddleware] as const,
+  middleware: [authWebMiddleware] as const,
   request: {
     body: {
       content: { "application/json": { schema: StorageConnectRequestSchema } },
@@ -109,7 +109,7 @@ storageRouter.openapi(storageConnectRoute, async (c) => {
 const storageDisconnectRoute = createRoute({
   method: "delete",
   path: "/me/storage/{provider}",
-  middleware: [authMiddleware] as const,
+  middleware: [authWebMiddleware] as const,
   request: {
     params: z.object({ provider: ProviderSchema }),
   },
@@ -145,7 +145,7 @@ storageRouter.openapi(storageDisconnectRoute, async (c) => {
   return c.json({ ok: true }, 200);
 });
 
-storageRouter.get("/me/storage/connect/gdrive", authMiddleware, async (c) => {
+storageRouter.get("/me/storage/connect/gdrive", authWebMiddleware, async (c) => {
   const state = generateState();
   const codeVerifier = generateCodeVerifier();
   const url = googleDrive.createAuthorizationURL(state, codeVerifier, [
@@ -170,7 +170,7 @@ storageRouter.get("/me/storage/connect/gdrive", authMiddleware, async (c) => {
   return c.redirect(url.toString(), 302);
 });
 
-storageRouter.get("/me/storage/connect/gdrive/callback", authMiddleware, async (c) => {
+storageRouter.get("/me/storage/connect/gdrive/callback", authWebMiddleware, async (c) => {
   const { code, state } = c.req.query();
   const storedState = getCookie(c, "gdrive_oauth_state");
   const codeVerifier = getCookie(c, "gdrive_code_verifier");
@@ -225,7 +225,7 @@ storageRouter.get("/me/storage/connect/gdrive/callback", authMiddleware, async (
 const storageListRoute = createRoute({
   method: "get",
   path: "/me/storage",
-  middleware: [authMiddleware] as const,
+  middleware: [authWebMiddleware] as const,
   responses: {
     200: {
       content: { "application/json": { schema: StorageListResponseSchema } },
