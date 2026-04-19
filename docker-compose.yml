@@ -15,13 +15,21 @@ services:
       - app-data:/data
 
   api:
-    build: ./api
+    build:
+      context: .
+      dockerfile: api/Dockerfile
     ports:
       - "3000:3000"
     environment:
       DATABASE_URL: file:/data/anki-cloud.db
       SIDECAR_URL: http://anki-sync-server:8081
       SIDECAR_TOKEN: ${SIDECAR_TOKEN}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+      GOOGLE_DRIVE_REDIRECT_URI: ${GOOGLE_DRIVE_REDIRECT_URI}
+      FRONTEND_URL: ${FRONTEND_URL}
     volumes:
       - app-data:/data
     depends_on:
