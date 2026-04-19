@@ -2,12 +2,12 @@ FROM oven/bun:1 AS base
 WORKDIR /app
 
 # Copy workspace manifests first for layer caching
+COPY package.json ./
 COPY api/package.json ./api/
 COPY db/package.json ./db/
 COPY bun.lock ./
 
-RUN echo '{"workspaces":["api","db"]}' > package.json \
-    && bun install --frozen-lockfile
+RUN bun install --frozen-lockfile
 
 # Copy source
 COPY api/src ./api/src
