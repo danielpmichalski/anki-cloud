@@ -51,6 +51,12 @@ export const getStorage = () =>
 export const disconnectStorage = (provider: string) =>
     request<{ ok: boolean }>(`/me/storage/${provider}`, {method: "DELETE"});
 
+export const updateStorageFolderPath = (provider: string, folderPath: string) =>
+    request<{ ok: boolean }>(`/me/storage/${provider}`, {
+        method: "PUT",
+        body: JSON.stringify({folderPath}),
+    });
+
 export const getApiKeys = () => request<{ apiKeys: ApiKey[] }>("/me/api-keys");
 
 export const createApiKey = (label: string) =>
