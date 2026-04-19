@@ -5,6 +5,8 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY api/package.json ./api/
 COPY db/package.json ./db/
+COPY web/package.json ./web/
+COPY e2e/package.json ./e2e/
 
 # Install all workspace dependencies
 RUN bun install --frozen-lockfile
