@@ -1,6 +1,8 @@
 services:
   anki-sync-server:
     image: ghcr.io/danielpmichalski/anki-cloud-sync:v25.09-r2
+    #    image: anki-sync-server:local
+    #    pull_policy: never
     ports:
       - "8080:8080"
       - "8081:8081"
