@@ -3,7 +3,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { db, usersApiKeys } from "@anki-cloud/db";
-import { authMiddleware } from "@/middleware/auth";
+import { authWebMiddleware } from "@/middleware/auth";
 import type { Env } from "@/types";
 
 const ErrorSchema = z.object({ error: z.string(), code: z.string() });
@@ -35,7 +35,7 @@ export const apiKeysRouter = new OpenAPIHono<Env>();
 const listApiKeysRoute = createRoute({
   method: "get",
   path: "/me/api-keys",
-  middleware: [authMiddleware] as const,
+  middleware: [authWebMiddleware] as const,
   responses: {
     200: {
       content: { "application/json": { schema: ApiKeyListResponseSchema } },
@@ -76,7 +76,7 @@ apiKeysRouter.openapi(listApiKeysRoute, async (c) => {
 const createApiKeyRoute = createRoute({
   method: "post",
   path: "/me/api-keys",
-  middleware: [authMiddleware] as const,
+  middleware: [authWebMiddleware] as const,
   request: {
     body: {
       content: { "application/json": { schema: CreateApiKeyRequestSchema } },
@@ -100,7 +100,9 @@ apiKeysRouter.openapi(createApiKeyRoute, async (c) => {
   const { label } = c.req.valid("json");
 
   const rawKey = `ak_${Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url")}`;
-  const keyHash = await Bun.password.hash(rawKey, { algorithm: "bcrypt", cost: 10 });
+  const keyHash = Buffer.from(
+    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(rawKey))
+  ).toString("hex");
 
   const [created] = await db
     .insert(usersApiKeys)
@@ -121,7 +123,7 @@ apiKeysRouter.openapi(createApiKeyRoute, async (c) => {
 const revokeApiKeyRoute = createRoute({
   method: "delete",
   path: "/me/api-keys/{id}",
-  middleware: [authMiddleware] as const,
+  middleware: [authWebMiddleware] as const,
   request: {
     params: z.object({ id: z.string().uuid() }),
   },

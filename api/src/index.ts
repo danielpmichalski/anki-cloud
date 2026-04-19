@@ -10,16 +10,44 @@ import { notesRouter } from "@/routes/notes";
 import { cardsRouter } from "@/routes/cards";
 import type { Env } from "@/types";
 
+// Public REST API — spec published at /openapi.json + /docs
+const publicApi = new OpenAPIHono<Env>();
+publicApi.route("/v1", decksRouter);
+publicApi.route("/v1", notesRouter);
+publicApi.route("/v1", cardsRouter);
+
+publicApi.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {
+  type: "http",
+  scheme: "bearer",
+  description: "API key generated via POST /v1/me/api-keys (format: ak_...)",
+});
+
+publicApi.doc("/openapi.json", {
+  openapi: "3.1.0",
+  info: { title: "anki-cloud API", version: "0.1.0" },
+  security: [{ ApiKeyAuth: [] }],
+});
+
+publicApi.get("/docs", (c) =>
+  c.html(`<!doctype html>
+<html>
+<head><title>anki-cloud API Reference</title></head>
+<body>
+<script id="api-reference" data-url="/openapi.json"></script>
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
+</html>`)
+);
+
+// Main app — mounts public API + web UI routes (no spec)
 const app = new OpenAPIHono<Env>();
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+app.route("/", publicApi);
 app.route("/v1", authRouter);
 app.route("/v1", storageRouter);
 app.route("/v1", apiKeysRouter);
 app.route("/v1", syncCredentialsRouter);
-app.route("/v1", decksRouter);
-app.route("/v1", notesRouter);
-app.route("/v1", cardsRouter);
 
 app.onError((err, c) => {
   const status = (err as { status?: number }).status;

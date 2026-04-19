@@ -13,7 +13,7 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { SignJWT } from "jose";
 import { db, users } from "@anki-cloud/db";
-import { authMiddleware } from "@/middleware/auth";
+import { authWebMiddleware } from "@/middleware/auth";
 import type { Env } from "@/types";
 
 const google = new Google(
@@ -124,7 +124,7 @@ authRouter.get("/auth/google/callback", async (c) => {
 const meRoute = createRoute({
   method: "get",
   path: "/me",
-  middleware: [authMiddleware] as const,
+  middleware: [authWebMiddleware] as const,
   responses: {
     200: {
       content: { "application/json": { schema: MeResponseSchema } },

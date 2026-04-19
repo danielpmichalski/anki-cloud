@@ -3,7 +3,7 @@
 import {eq} from "drizzle-orm";
 import {OpenAPIHono, createRoute, z} from "@hono/zod-openapi";
 import {db, users, usersSyncState} from "@anki-cloud/db";
-import {authMiddleware} from "@/middleware/auth";
+import {authWebMiddleware} from "@/middleware/auth";
 import type {Env} from "@/types";
 
 const CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -24,7 +24,7 @@ const SyncCredentialsSchema = z.object({
 const getSyncPasswordRoute = createRoute({
     method: "get",
     path: "/me/sync-password",
-    middleware: [authMiddleware] as const,
+    middleware: [authWebMiddleware] as const,
     responses: {
         200: {
             content: {"application/json": {schema: SyncCredentialsSchema}},
@@ -40,7 +40,7 @@ const getSyncPasswordRoute = createRoute({
 const resetSyncPasswordRoute = createRoute({
     method: "post",
     path: "/me/sync-password/reset",
-    middleware: [authMiddleware] as const,
+    middleware: [authWebMiddleware] as const,
     responses: {
         200: {
             content: {"application/json": {schema: SyncCredentialsSchema}},

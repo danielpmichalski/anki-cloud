@@ -1,7 +1,7 @@
 // Copyright 2026 Archont Soft Daniel Klimuntowski
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import { authMiddleware } from "@/middleware/auth";
+import { authApiMiddleware } from "@/middleware/auth";
 import { sidecar } from "@/lib/sidecar";
 import type { Env } from "@/types";
 
@@ -26,7 +26,7 @@ notesRouter.openapi(
   createRoute({
     method: "get",
     path: "/notes/search",
-    middleware: [authMiddleware] as const,
+    middleware: [authApiMiddleware] as const,
     request: {
       query: z.object({ q: z.string().min(1) }).merge(PaginationQuery),
     },
@@ -56,7 +56,7 @@ notesRouter.openapi(
   createRoute({
     method: "get",
     path: "/notes/{id}",
-    middleware: [authMiddleware] as const,
+    middleware: [authApiMiddleware] as const,
     request: { params: z.object({ id: z.string() }) },
     responses: {
       200: {
@@ -81,7 +81,7 @@ notesRouter.openapi(
   createRoute({
     method: "put",
     path: "/notes/{id}",
-    middleware: [authMiddleware] as const,
+    middleware: [authApiMiddleware] as const,
     request: {
       params: z.object({ id: z.string() }),
       body: {
@@ -120,7 +120,7 @@ notesRouter.openapi(
   createRoute({
     method: "delete",
     path: "/notes/{id}",
-    middleware: [authMiddleware] as const,
+    middleware: [authApiMiddleware] as const,
     request: { params: z.object({ id: z.string() }) },
     responses: {
       200: {
