@@ -29,7 +29,7 @@ cp .env.example .env   # set SIDECAR_TOKEN, JWT_SECRET, SYNC_USER1 at minimum
 docker compose -f docker-compose.yml -f docker-compose.standalone.yml up
 
 # local build of anki-cloud-sync (when hacking on the sync server)
-docker compose -f docker-compose.yml -f docker-compose.standalone.yml -f docker-compose.dev.yml up
+docker compose --build -f docker-compose.yml -f docker-compose.standalone.yml -f docker-compose.dev.yml up
 ```
 
 ### Cloud mode
@@ -44,7 +44,7 @@ cp .env.example .env   # fill in all credentials
 docker compose -f docker-compose.yml -f docker-compose.cloud.yml up
 
 # local build of anki-cloud-sync
-docker compose -f docker-compose.yml -f docker-compose.cloud.yml -f docker-compose.dev.yml up
+docker compose --build -f docker-compose.yml -f docker-compose.cloud.yml -f docker-compose.dev.yml up
 ```
 
 `docker-compose.dev.yml` switches `anki-sync-server` from the published image to a local build
