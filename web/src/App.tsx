@@ -375,7 +375,7 @@ function SyncPasswordSection({
     <section className="card">
       <h2 className="card-title">Anki Sync</h2>
       <p className="muted" style={{marginBottom: "16px"}}>
-        Use these credentials in Anki → Preferences → Syncing → Self-hosted sync server.
+        In Anki: <strong>Preferences → Syncing → Self-hosted sync server</strong>, set the URL below. Then under <strong>AnkiWeb Account</strong>, click <strong>Log In</strong> (or Log Out first, then Log In) and enter these credentials.
       </p>
 
       <div className="form-row" style={{marginBottom: "12px"}}>
