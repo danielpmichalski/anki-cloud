@@ -220,7 +220,7 @@ PORT="$API_PORT" \
     bun run "$API_ENTRY" &>/tmp/smoke_api.log &
 API_PID=$!
 
-wait_for_http "http://127.0.0.1:${INTERNAL_PORT}/health"
+wait_for_http "http://127.0.0.1:${SYNC_PORT}/health"
 wait_for_http "http://127.0.0.1:${API_PORT}/health"
 echo "    sync PID $SYNC_PID, api PID $API_PID — ready"
 echo ""
@@ -357,11 +357,11 @@ assert_http "GET /notes/search?q=tag:bulk → 200" "200" "$code" "$body"
 SEARCH_COUNT=$(echo "$body" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['notes']))")
 assert_eq "tag:bulk finds 1 note" "1" "$SEARCH_COUNT"
 
-code=$(api GET "/notes/search?q=tag%3Asmoke")
+code=$(api GET "/notes/search?q=tag%3Aupdated")
 body=$(cat /tmp/smoke_api_body)
-assert_http "GET /notes/search?q=tag:smoke → 200" "200" "$code" "$body"
-SMOKE_COUNT=$(echo "$body" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['notes']))")
-assert_eq "tag:smoke finds 1 note" "1" "$SMOKE_COUNT"
+assert_http "GET /notes/search?q=tag:updated → 200" "200" "$code" "$body"
+UPDATED_COUNT=$(echo "$body" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['notes']))")
+assert_eq "tag:updated finds 1 note (tag set by update in section 7)" "1" "$UPDATED_COUNT"
 
 code=$(api GET "/cards/search?q=deck%3ASmokeTestDeck")
 body=$(cat /tmp/smoke_api_body)
