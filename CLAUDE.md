@@ -327,15 +327,15 @@ web UI. Stored as bcrypt hash in `users.sync_password_hash`. Username = email ad
 
 ---
 
-## 6. API Design Principles
+## 6. API Design Principles — [ADR-0013](docs/decisions/0013-defer-pagination-rate-limiting-idempotency-and-bulk-endpoints-to-post-mvp.md)
 
 - **REST, not RPC** — standard HTTP verbs, resource-oriented URLs
 - **OpenAPI 3.1** — spec is auto-generated, always in sync with code
 - **Versioned** — all routes prefixed `/v1/`
 - **Consistent error responses** — always `{ error: string, code: string, details?: object }`
-- **Pagination** — cursor-based for all list endpoints
-- **Rate limiting** — per API key, via Redis, 429 with `Retry-After` header
-- **Idempotency** — POST endpoints accept `Idempotency-Key` header
+- **Pagination** — cursor-based for all list endpoints *(deferred post-MVP — see ADR-0013)*
+- **Rate limiting** — per API key, via Redis, 429 with `Retry-After` header *(deferred post-MVP — see ADR-0013)*
+- **Idempotency** — POST endpoints accept `Idempotency-Key` header *(deferred post-MVP — see ADR-0013)*
 
 ### Key endpoints (illustrative)
 
