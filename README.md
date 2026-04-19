@@ -78,20 +78,51 @@ Run the setup script to install all required tools (skips anything already prese
 | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Full stack via `docker compose` (install separately) |
 | [Rust](https://rustup.rs) ≥ 1.80 + `protoc`                      | Only needed to build anki-cloud-sync from source    |
 
+### Installing dependencies
+
+`api/` and `db/` share a Bun workspace — one install covers both:
+
+```bash
+bun install
+```
+
+`web/` and `e2e/` are standalone packages (not in the workspace) — install separately when
+working on them:
+
+```bash
+cd web && bun install   # account management UI
+cd e2e && bun install   # end-to-end tests
+```
+
+### Running packages locally (without Docker)
+
+```bash
+# REST API (hot-reload)
+bun run --hot api/src/index.ts
+
+# Web UI (Vite dev server, http://localhost:5173)
+cd web && bun run dev
+
+# E2E tests (requires the full stack running)
+cd e2e && bun test
+```
+
 ---
 
 ## Project structure
 
 ```
-api/        REST API — TypeScript / Hono on Bun
+api/        REST API — TypeScript / Hono on Bun  (shared workspace with db/)
 db/         Drizzle ORM + SQLite schema (@anki-cloud/db)
-web/        Account management UI (Vite + React)
+web/        Account management UI (Vite + React)  (standalone — cd web && bun install)
+e2e/        End-to-end tests                      (standalone — cd e2e && bun install)
 docs/       Architecture decisions (ADRs) + narrative docs
 scripts/    Dev tooling (setup, SDK generation)
 
 docker-compose.yml              Base stack (api + anki-sync-server)
 docker-compose.standalone.yml   Standalone mode override (no DB/GDrive)
 docker-compose.cloud.yml        Cloud mode override (SQLite + GDrive OAuth)
+docker-compose.dev.yml          Local build of anki-cloud-sync (any mode)
 ```
 
 The sync server lives in a separate repository:
