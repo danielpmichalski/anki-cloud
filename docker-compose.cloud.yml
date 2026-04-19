@@ -1,0 +1,8 @@
+services:
+  anki-sync-server:
+    environment:
+      SYNC_MODE: cloud
+      DATABASE_URL: file:/data/anki-cloud.db
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}

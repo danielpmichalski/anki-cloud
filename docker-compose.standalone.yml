@@ -1,0 +1,5 @@
+services:
+  anki-sync-server:
+    environment:
+      SYNC_MODE: standalone
+      SYNC_USER1: ${SYNC_USER1}

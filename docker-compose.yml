@@ -1,15 +1,13 @@
 services:
   anki-sync-server:
-    image: ghcr.io/danielpmichalski/anki-cloud-sync:v25.09-r1
+    build: ../anki-cloud-sync
     ports:
       - "8080:8080"
+      - "8081:8081"
     environment:
       SYNC_BASE: /data
-      DATABASE_URL: file:/data/anki-cloud.db
-      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       SYNC_INTERNAL_PORT: 8081
+      SYNC_INTERNAL_HOST: 0.0.0.0
       SYNC_INTERNAL_TOKEN: ${SIDECAR_TOKEN}
     volumes:
       - app-data:/data
