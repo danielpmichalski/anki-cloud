@@ -138,6 +138,12 @@ SELECT
 FROM `storage_connections`;
 --> statement-breakpoint
 
+-- Drop old indexes before recreating with same names on new tables (SQLite index names are DB-scoped)
+DROP INDEX IF EXISTS `idx_storage_user_id`;
+--> statement-breakpoint
+DROP INDEX IF EXISTS `uq_storage_user_provider`;
+--> statement-breakpoint
+
 -- ── user_api_key (renamed from users_api_keys) ───────────────────────────────
 
 CREATE TABLE `user_api_key` (
@@ -182,6 +188,10 @@ INSERT INTO `user_sync_state`
   (`id`, `user_id`, `last_sync_at`, `client_version`, `sync_key`)
 SELECT `id`, `user_id`, `last_sync_at`, `client_version`, `sync_key`
 FROM `users_sync_state`;
+--> statement-breakpoint
+
+-- Drop old index before recreating with same name on new table
+DROP INDEX IF EXISTS `idx_sync_state_user_id`;
 --> statement-breakpoint
 
 -- ── Drop old tables ───────────────────────────────────────────────────────────
