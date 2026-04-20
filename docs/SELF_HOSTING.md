@@ -8,12 +8,15 @@ Get your own sync server running in under 10 minutes. All you need is Docker and
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose)
 - A Google account (for OAuth login and Google Drive storage)
+- A GitHub account (optional — if you want GitHub sign-in)
 
 No other tools required.
 
 ---
 
-## Step 1 — Create a Google OAuth app
+## Step 1 — Create OAuth app(s)
+
+### Google (required — for sign-in and Google Drive storage)
 
 You need a Google OAuth 2.0 app to handle sign-in and Google Drive access.
 
@@ -33,6 +36,16 @@ You need a Google OAuth 2.0 app to handle sign-in and Google Drive access.
       http://localhost:5173/v1/me/storage/connect/google/callback
       ```
 5. Copy the **Client ID** and **Client Secret** — you'll need them in the next step.
+
+### GitHub (optional — for GitHub sign-in)
+
+1. Go to [GitHub Settings → Developer settings → OAuth Apps](https://github.com/settings/developers) and click **New OAuth App**.
+2. Fill in **Application name** (e.g. `anki-cloud`), **Homepage URL** (e.g. `http://localhost:3000`), and set the **Authorization callback URL** to:
+   ```
+   http://localhost:3000/v1/auth/callback/github
+   ```
+3. Click **Register application**, then click **Generate a new client secret**.
+4. Copy the **Client ID** and **Client Secret** — you'll need them in the next step.
 
 ---
 
@@ -56,9 +69,13 @@ TOKEN_ENCRYPTION_KEY=<generated>
 # Public base URL of the API server — used by Better Auth for OAuth callbacks
 BETTER_AUTH_URL=http://localhost:3000
 
-# From Step 1
-GOOGLE_CLIENT_ID=<your-client-id>
-GOOGLE_CLIENT_SECRET=<your-client-secret>
+# From Step 1 — Google
+GOOGLE_CLIENT_ID=<your-google-client-id>
+GOOGLE_CLIENT_SECRET=<your-google-client-secret>
+
+# From Step 1 — GitHub (optional)
+GITHUB_CLIENT_ID=<your-github-client-id>
+GITHUB_CLIENT_SECRET=<your-github-client-secret>
 
 # Must match the redirect URI you registered in Google Cloud Console
 GOOGLE_DRIVE_REDIRECT_URI=http://localhost:5173/v1/me/storage/connect/google/callback
@@ -92,7 +109,7 @@ Once running:
 ## Step 4 — Sign in and connect Google Drive
 
 1. Open `http://localhost:5173` in your browser.
-2. Click **Sign in with Google** and complete the OAuth flow.
+2. Click **Continue with Google** or **Continue with GitHub** and complete the OAuth flow.
 3. Once signed in, click **Connect Google Drive** under Storage.
 4. Authorize the Drive access — scope is `drive.file` (only files this app creates).
 5. A `/AnkiCloudSync` folder is created in your Drive. Your deck data will live here.
@@ -135,9 +152,12 @@ docker compose -f docker-compose.yml -f docker-compose.cloud.yml up
 
 ## Troubleshooting
 
-**OAuth redirect mismatch error**
+**OAuth redirect mismatch error (Google)**
 Verify the redirect URIs in Google Cloud Console exactly match those derived from `BETTER_AUTH_URL` and `GOOGLE_DRIVE_REDIRECT_URI` in your `.env`. For local dev: `http://localhost:3000/v1/auth/callback/google` (sign-in)
 and `http://localhost:5173/v1/me/storage/connect/google/callback` (Drive). Trailing slashes and `http` vs `https` matter.
+
+**OAuth redirect mismatch error (GitHub)**
+Verify the Authorization callback URL in your GitHub OAuth App exactly matches `{BETTER_AUTH_URL}/v1/auth/callback/github`. For local dev: `http://localhost:3000/v1/auth/callback/github`. Leave `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` empty in `.env` to disable the GitHub button entirely.
 
 **Anki says "sync server not configured"**
 Ensure the sync URL in Anki is `http://localhost:8080` (no trailing slash) and the stack is running.
