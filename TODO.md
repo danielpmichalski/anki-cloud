@@ -1,3 +1,4 @@
+- implement comprehensive unit tests for api module
 - we have e2e module and ./scripts/smoke-test.sh - not sure if we should keep both or combine them somehow
 - make code more extensible following the Open-Closed principle; the below isn't extensible:
   - if (provider !== "google") {
