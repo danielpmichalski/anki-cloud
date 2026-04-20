@@ -39,5 +39,17 @@ services:
     depends_on:
       - anki-sync-server
 
+  mcp:
+    build:
+      context: .
+      dockerfile: mcp/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      API_URL: http://api:3000
+      API_KEY: ${MCP_API_KEY}
+    depends_on:
+      - api
+
 volumes:
   app-data:
