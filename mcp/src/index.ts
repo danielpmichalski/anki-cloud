@@ -4,6 +4,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerTools } from "./tools/index.js";
 
-const server = new McpServer({ name: "anki-cloud", version: "0.1.0" });
+const server = new McpServer({ name: "anki-cloud", version: "1.0.0" });
 registerTools(server);
 await server.connect(new StdioServerTransport());

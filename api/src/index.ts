@@ -27,7 +27,7 @@ publicApi.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {
 
 publicApi.doc("/openapi.json", {
   openapi: "3.1.0",
-  info: { title: "anki-cloud API", version: "0.1.0" },
+  info: { title: "anki-cloud API", version: "1.0.0" },
   security: [{ ApiKeyAuth: [] }],
 });
 
