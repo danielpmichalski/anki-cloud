@@ -63,5 +63,6 @@ app.onError((err, c) => {
 
 export default {
   port: Number.parseInt(process.env.PORT ?? "3000"),
+  idleTimeout: 120,
   fetch: app.fetch,
 };
