@@ -4,10 +4,15 @@ import {betterAuth} from "better-auth";
 import {drizzleAdapter} from "better-auth/adapters/drizzle";
 import {db} from "@anki-cloud/db";
 
+const trustedOrigins = process.env.TRUSTED_ORIGINS
+    ? process.env.TRUSTED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
+    : [process.env.FRONTEND_URL ?? "http://localhost:5173"];
+
 export const auth = betterAuth({
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
     basePath: "/v1/auth",
     secret: process.env.BETTER_AUTH_SECRET!,
+    trustedOrigins,
     database: drizzleAdapter(db, {
         provider: "sqlite",
     }),
