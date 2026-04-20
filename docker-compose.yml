@@ -1,6 +1,6 @@
 services:
   anki-sync-server:
-    image: ghcr.io/danielpmichalski/anki-cloud-sync:v25.09-r5
+    image: ghcr.io/danielpmichalski/anki-cloud-sync:v25.09-r6
     #    image: anki-sync-server:local
     #    pull_policy: never
     ports:
