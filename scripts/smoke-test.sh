@@ -9,7 +9,7 @@
 set -euo pipefail
 
 # ---- Config ---------------------------------------------------------------
-TEST_JWT_SECRET="0000000000000000000000000000000000000000000000000000000000000000"
+TEST_BETTER_AUTH_SECRET="0000000000000000000000000000000000000000000000000000000000000000"
 TEST_ENCRYPTION_KEY="0000000000000000000000000000000000000000000000000000000000000000"
 SIDECAR_TOKEN="smoke-sidecar-token"
 TEST_EMAIL="smoke@example.com"
@@ -27,7 +27,7 @@ BASE_URL="http://127.0.0.1:${API_PORT}/v1"
 API_PID=""
 SYNC_PID=""
 WORK_DIR=""
-SESSION_JWT=""
+SESSION_TOKEN=""
 
 # ---- Helpers ---------------------------------------------------------------
 PASS_COUNT=0
@@ -71,14 +71,14 @@ api_with_body() {
     api "$method" "$path" -d "$body"
 }
 
-# curl wrapper for /me/* endpoints: attaches session cookie
+# curl wrapper for /me/* endpoints: attaches Better Auth session cookie
 api_me() {
     local method="$1" path="$2"; shift 2
     local extra_args=("$@")
     curl -s -o /tmp/smoke_api_body -w "%{http_code}" \
         -X "$method" \
         -H "Content-Type: application/json" \
-        -H "Cookie: session=${SESSION_JWT}" \
+        -H "Cookie: better-auth.session_token=${SESSION_TOKEN}" \
         ${extra_args[@]+"${extra_args[@]}"} \
         "${BASE_URL}${path}"
 }
@@ -133,13 +133,12 @@ DB_PATH="${WORK_DIR}/test.db"
 SYNC_BASE="${WORK_DIR}/sync"
 mkdir -p "$SYNC_BASE"
 
-# Apply migrations, seed user + local storage connection + API key, mint JWT — all via Python
-SESSION_JWT=$(python3 - <<PYEOF
-import sqlite3, hmac, hashlib, base64, json, time, os, re, uuid
+# Apply migrations, seed user + local storage connection + API key, insert session — all via Python
+SESSION_TOKEN=$(python3 - <<PYEOF
+import sqlite3, hashlib, time, os, re, uuid
 
 db_path   = "${DB_PATH}"
 mig_dir   = "${MIGRATIONS_DIR}"
-secret    = "${TEST_JWT_SECRET}"
 email     = "${TEST_EMAIL}"
 api_key   = "${TEST_API_KEY}"
 user_id   = str(uuid.uuid4())
@@ -156,15 +155,17 @@ for fname in sorted(f for f in os.listdir(mig_dir) if f.endswith('.sql')):
             conn.execute(stmt)
 conn.commit()
 
-# -- Seed user --------------------------------------------------------------
+# -- Seed user (Better Auth `user` table) -----------------------------------
 now_ms = int(time.time() * 1000)
 conn.execute(
-    "INSERT INTO users (id, google_sub, email, name, created_at) VALUES (?, ?, ?, ?, ?)",
-    (user_id, "google-sub-smoke", email, "Smoke Test User", now_ms)
+    "INSERT INTO \"user\" (id, name, email, email_verified, image, created_at, updated_at) "
+    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+    (user_id, "Smoke Test User", email, 1, None, now_ms, now_ms)
 )
-# provider='local' → no-op Rust backend; no real GDrive creds needed
+
+# -- Seed local storage connection (provider='local' → no-op Rust backend) --
 conn.execute(
-    "INSERT INTO storage_connections "
+    "INSERT INTO user_storage_connection "
     "(id, user_id, provider, oauth_token, oauth_refresh_token, folder_path, connected_at) "
     "VALUES (?, ?, ?, ?, ?, ?, ?)",
     (str(uuid.uuid4()), user_id, "local", "", "", "/AnkiSync", now_ms)
@@ -173,28 +174,27 @@ conn.execute(
 # -- Seed API key (SHA-256 of test key) -------------------------------------
 key_hash = hashlib.sha256(api_key.encode()).hexdigest()
 conn.execute(
-    "INSERT INTO users_api_keys (id, user_id, key_hash, label, created_at) VALUES (?, ?, ?, ?, ?)",
+    "INSERT INTO user_api_key (id, user_id, key_hash, label, created_at) VALUES (?, ?, ?, ?, ?)",
     (str(uuid.uuid4()), user_id, key_hash, "smoke-test", now_ms)
+)
+
+# -- Seed Better Auth session -----------------------------------------------
+token = str(uuid.uuid4())
+expires_at = now_ms + 3600 * 1000  # 1 hour
+conn.execute(
+    "INSERT INTO session (id, user_id, token, expires_at, ip_address, user_agent, created_at, updated_at) "
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    (str(uuid.uuid4()), user_id, token, expires_at, None, None, now_ms, now_ms)
 )
 conn.commit()
 conn.close()
 
-# -- Mint HS256 JWT { sub: user_id } ----------------------------------------
-def b64url(data):
-    if isinstance(data, str): data = data.encode()
-    return base64.urlsafe_b64encode(data).rstrip(b'=').decode()
-
-hdr = b64url(json.dumps({"alg": "HS256", "typ": "JWT"}, separators=(',', ':')))
-now = int(time.time())
-pay = b64url(json.dumps({"sub": user_id, "iat": now, "exp": now + 3600}, separators=(',', ':')))
-msg = f"{hdr}.{pay}"
-sig = hmac.new(bytes.fromhex(secret), msg.encode(), hashlib.sha256).digest()
-print(f"{msg}.{b64url(sig)}")
+print(token)
 PYEOF
 )
 
-echo "    DB:  $DB_PATH"
-echo "    JWT: ${SESSION_JWT:0:40}..."
+echo "    DB:      $DB_PATH"
+echo "    Token:   ${SESSION_TOKEN:0:40}..."
 echo "    API key: ${TEST_API_KEY:0:20}..."
 
 # ---- Start servers ---------------------------------------------------------
@@ -210,7 +210,8 @@ SYNC_PID=$!
 
 echo "==> Starting API (port :${API_PORT})..."
 DATABASE_URL="file:${DB_PATH}" \
-JWT_SECRET="$TEST_JWT_SECRET" \
+BETTER_AUTH_SECRET="$TEST_BETTER_AUTH_SECRET" \
+BETTER_AUTH_URL="http://127.0.0.1:${API_PORT}" \
 TOKEN_ENCRYPTION_KEY="$TEST_ENCRYPTION_KEY" \
 SIDECAR_URL="http://127.0.0.1:${INTERNAL_PORT}" \
 SIDECAR_TOKEN="$SIDECAR_TOKEN" \

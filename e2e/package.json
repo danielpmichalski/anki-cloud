@@ -9,8 +9,7 @@
   "dependencies": {
     "@anki-cloud/db": "workspace:*",
     "@mongodb-js/zstd": "^1.2.2",
-    "drizzle-orm": "^0.43.1",
-    "jose": "^6.2.2"
+    "drizzle-orm": "^0.43.1"
   },
   "devDependencies": {
     "@types/bun": "^1.2.10",
