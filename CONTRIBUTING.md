@@ -60,7 +60,7 @@ A `BREAKING CHANGE:` footer (or `!` after the type) triggers a major version bum
 feat(api): add POST /v1/decks endpoint
 fix(auth): handle expired refresh token on Google Drive callback
 docs: add self-hosting guide
-chore: bump anki-cloud-sync image to v25.09-r5
+chore: bump anki-cloud-sync image to v25.09-r7
 feat(sync)!: change hkey derivation algorithm
 
 BREAKING CHANGE: existing sync sessions will be invalidated
