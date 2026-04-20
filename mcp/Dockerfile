@@ -3,6 +3,8 @@ WORKDIR /app
 
 # Copy workspace manifests first for layer caching
 COPY package.json ./
+COPY api/package.json ./api/
+COPY db/package.json ./db/
 COPY mcp/package.json ./mcp/
 COPY bun.lock ./
 

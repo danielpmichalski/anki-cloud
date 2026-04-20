@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package.json ./
 COPY api/package.json ./api/
 COPY db/package.json ./db/
+COPY mcp/package.json ./mcp/
 COPY bun.lock ./
 
 RUN bun install --frozen-lockfile
