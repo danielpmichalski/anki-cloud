@@ -1,6 +1,3 @@
-- default GDrive directory should be /AnkiCloudSync
-- extend REST API with note types fetching; possibly note type creation? maybe in future
-- extend REST API with note tags fetching;
 - we have e2e module and ./scripts/smoke-test.sh - not sure if we should keep both or combine them somehow
-- allow users to configure GDrive directory, so it's not hardcoded to /AnkiSync
+- extend REST API with note tags fetching;
 - 
