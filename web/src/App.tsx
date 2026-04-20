@@ -133,7 +133,7 @@ function Header({user}: { user: User }) {
 
 function LoginPage() {
     const handleGoogleLogin = async () => {
-        await authClient.signIn.social({provider: "google", callbackURL: "/"});
+        await authClient.signIn.social({provider: "google", callbackURL: window.location.origin});
     };
 
     return (
