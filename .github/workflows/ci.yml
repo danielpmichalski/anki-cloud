@@ -61,12 +61,6 @@ jobs:
       TOKEN_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
     steps:
       - uses: actions/checkout@v4
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GH_PAT }}
       - name: Pull sync server image
         run: docker compose pull anki-sync-server
       - name: Build API image and create containers
