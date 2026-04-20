@@ -18,7 +18,7 @@ cp .env.example .env   # fill in SIDECAR_TOKEN and JWT_SECRET at minimum
 Start the full local stack:
 
 ```bash
-# Standalone mode — no GDrive or OAuth setup required
+# Standalone mode — no Google Drive or OAuth setup required
 docker compose -f docker-compose.yml -f docker-compose.standalone.yml up
 ```
 
@@ -58,7 +58,7 @@ A `BREAKING CHANGE:` footer (or `!` after the type) triggers a major version bum
 
 ```
 feat(api): add POST /v1/decks endpoint
-fix(auth): handle expired refresh token on GDrive callback
+fix(auth): handle expired refresh token on Google Drive callback
 docs: add self-hosting guide
 chore: bump anki-cloud-sync image to v25.09-r5
 feat(sync)!: change hkey derivation algorithm

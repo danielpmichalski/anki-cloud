@@ -20,7 +20,7 @@ Two independent axes: **mode** (standalone vs cloud) and **image source** (publi
 ### Standalone mode
 
 No database or cloud storage required. Users defined via `SYNC_USER1` in `.env`.
-Good for local development and testing the REST API without GDrive setup.
+Good for local development and testing the REST API without Google Drive setup.
 
 ```bash
 cp .env.example .env   # set SIDECAR_TOKEN, BETTER_AUTH_SECRET, SYNC_USER1 at minimum
@@ -42,7 +42,7 @@ Before running, add these URIs to your Google OAuth app in
 
 ```
 {BETTER_AUTH_URL}/v1/auth/callback/google          # sign-in callback
-{FRONTEND_URL}/v1/me/storage/connect/gdrive/callback  # Google Drive callback
+{FRONTEND_URL}/v1/me/storage/connect/google/callback  # Google Drive callback
 ```
 
 Set `TRUSTED_ORIGINS` in `.env` to your frontend URL(s) (comma-separated) so Better Auth accepts
@@ -152,8 +152,8 @@ docs/       Architecture decisions (ADRs) + narrative docs
 scripts/    Dev tooling (setup, SDK generation)
 
 docker-compose.yml              Base stack (api + anki-sync-server)
-docker-compose.standalone.yml   Standalone mode override (no DB/GDrive)
-docker-compose.cloud.yml        Cloud mode override (SQLite + GDrive OAuth)
+docker-compose.standalone.yml   Standalone mode override (no DB/Google Drive)
+docker-compose.cloud.yml        Cloud mode override (SQLite + Google Drive OAuth)
 docker-compose.dev.yml          Local build of anki-cloud-sync (any mode)
 ```
 
@@ -161,7 +161,7 @@ The sync server lives in a separate repository:
 [github.com/danielpmichalski/anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync) —
 see its README for all configuration options and environment variables.
 
-Full self-hosting walkthrough (Google OAuth setup, GDrive, Anki Desktop, Claude Desktop): [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)
+Full self-hosting walkthrough (Google OAuth setup, Google Drive, Anki Desktop, Claude Desktop): [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)
 
 Full architecture and design decisions: [CLAUDE.md](CLAUDE.md)
 

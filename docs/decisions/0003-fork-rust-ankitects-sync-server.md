@@ -37,7 +37,7 @@ The upstream server writes one directory per user under `SYNC_BASE`:
   collection.media/       ← media files stored by hash
 ```
 
-SQLite must reside on local disk during an active sync — it requires random access, WAL, and file locking. GDrive I/O cannot substitute for local SQLite at operation time.
+SQLite must reside on local disk during an active sync — it requires random access, WAL, and file locking. Google Drive I/O cannot substitute for local SQLite at operation time.
 
 ### Why not abstract storage at the SQLite level
 

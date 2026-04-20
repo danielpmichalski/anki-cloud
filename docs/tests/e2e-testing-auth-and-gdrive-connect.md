@@ -1,4 +1,4 @@
-# E2E Testing: Google OAuth2 Login + GDrive Connection
+# E2E Testing: Google OAuth2 Login + Google Drive Connection
 
 Manual test guide for the M2 auth flows: Google login (identity) and Google Drive connection (storage).
 
@@ -11,7 +11,7 @@ Manual test guide for the M2 auth flows: Google login (identity) and Google Driv
 - ✅ Authenticated user can connect Google Drive
 - ✅ OAuth tokens are stored encrypted in `storage_connections`
 - ✅ `GET /v1/me/storage` returns connection metadata (no tokens)
-- ✅ Re-connecting GDrive updates tokens (upsert)
+- ✅ Re-connecting Google Drive updates tokens (upsert)
 - ✅ All protected routes reject unauthenticated requests
 
 ## Prerequisites
@@ -24,11 +24,11 @@ In [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services
 - Authorized redirect URIs must include **both**:
   ```
   http://localhost:3000/v1/auth/google/callback
-  http://localhost:3000/v1/me/storage/connect/gdrive/callback
+  http://localhost:3000/v1/me/storage/connect/google/callback
   ```
 
 APIs & Services → Enabled APIs must include:
-- Google Drive API (required for GDrive connection flow)
+- Google Drive API (required for Google Drive connection flow)
 
 ### 2. Environment
 
@@ -38,7 +38,7 @@ APIs & Services → Enabled APIs must include:
 GOOGLE_CLIENT_ID=<your-client-id>
 GOOGLE_CLIENT_SECRET=<your-client-secret>
 GOOGLE_REDIRECT_URI=http://localhost:3000/v1/auth/google/callback
-GOOGLE_DRIVE_REDIRECT_URI=http://localhost:3000/v1/me/storage/connect/gdrive/callback
+GOOGLE_DRIVE_REDIRECT_URI=http://localhost:3000/v1/me/storage/connect/google/callback
 JWT_SECRET=<32-byte hex — openssl rand -hex 32>
 TOKEN_ENCRYPTION_KEY=<32-byte hex — openssl rand -hex 32>
 DATABASE_URL=file:../data/anki-cloud.db
@@ -187,22 +187,20 @@ http://localhost:3000/v1/auth/google/callback?code=fakecode&state=wrongstate
 In browser (same session):
 
 ```
-http://localhost:3000/v1/me/storage/connect/gdrive
+http://localhost:3000/v1/me/storage/connect/google
 ```
 
 **Expected:**
 - Browser redirects to `accounts.google.com` with `drive.file` scope
 - Consent screen shows: _"See, edit, create, and delete only the specific Google Drive files you use with this app"_
-- Two new cookies: `gdrive_oauth_state`, `gdrive_code_verifier`
 
 ### Step 2: Approve consent
 
 Click **Allow** on the Google consent screen.
 
 **Expected:**
-- Redirects to `http://localhost:3000/v1/me/storage/connect/gdrive/callback`
+- Redirects to `http://localhost:3000/v1/me/storage/connect/google/callback`
 - Response: `{"ok":true}`
-- `gdrive_oauth_state` and `gdrive_code_verifier` cookies cleared
 
 ### Step 3: Verify in DB
 
@@ -211,7 +209,7 @@ sqlite3 packages/data/anki-cloud.db \
   "SELECT user_id, provider, folder_path, connected_at FROM storage_connections;"
 ```
 
-**Expected:** One row with `provider=gdrive`, `folder_path=/AnkiSync`.
+**Expected:** One row with `provider=google`, `folder_path=/AnkiSync`.
 
 Verify tokens are encrypted (not plaintext):
 
@@ -237,7 +235,7 @@ curl http://localhost:3000/v1/me/storage \
   "connections": [
     {
       "id": "<uuid>",
-      "provider": "gdrive",
+      "provider": "google",
       "folderPath": "/AnkiSync",
       "connectedAt": "<ISO 8601 timestamp>"
     }
@@ -249,7 +247,7 @@ Verify `oauthToken` and `oauthRefreshToken` are **absent** from the response.
 
 ---
 
-## Test 10: Re-connect GDrive (Upsert)
+## Test 10: Re-connect Google Drive (Upsert)
 
 Repeat Test 8 (go through Drive OAuth again, same account).
 
@@ -271,7 +269,7 @@ sqlite3 packages/data/anki-cloud.db "SELECT COUNT(*) FROM storage_connections;"
 Open in browser without a session cookie (use incognito or clear cookies):
 
 ```
-http://localhost:3000/v1/me/storage/connect/gdrive
+http://localhost:3000/v1/me/storage/connect/google
 ```
 
 **Expected:** `{"error":"Unauthenticated","code":"MISSING_SESSION"}` with `401` — redirect to Google does NOT happen.
@@ -289,7 +287,7 @@ All of the following must be true:
 - [ ] Logging in twice same account = still 1 user row
 - [ ] Invalid session token = `401 INVALID_SESSION`
 - [ ] Invalid OAuth state = `400 INVALID_OAUTH_STATE`
-- [ ] GDrive consent shows `drive.file` scope
+- [ ] Google Drive consent shows `drive.file` scope
 - [ ] Drive connect completes, `storage_connections` row in DB
 - [ ] Token stored as encrypted base64url (not plaintext)
 - [ ] `GET /v1/me/storage` returns connection without token fields
@@ -331,6 +329,6 @@ Browser-based tests are required for steps involving OAuth redirects. Use DevToo
 
 ## See Also
 
-- [E2E Testing: GDrive Sync Integration](./e2e-testing-gdrive-sync.md) — Rust sync server + GDrive adapter
+- [E2E Testing: Google Drive Sync Integration](./e2e-testing-gdrive-sync.md) — Rust sync server + Google Drive adapter
 - [ADR-0004: OAuth2 Authentication](../decisions/0004-use-oauth2-for-authentication-no-password-storage.md)
 - [ADR-0005: Google as OAuth Provider](../decisions/0005-use-google-as-the-sole-oauth-provider-mvp.md)
