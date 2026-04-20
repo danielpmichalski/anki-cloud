@@ -5,7 +5,7 @@ import {drizzleAdapter} from "better-auth/adapters/drizzle";
 import {db} from "@anki-cloud/db";
 
 export const auth = betterAuth({
-    baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
     basePath: "/v1/auth",
     secret: process.env.BETTER_AUTH_SECRET!,
     database: drizzleAdapter(db, {
