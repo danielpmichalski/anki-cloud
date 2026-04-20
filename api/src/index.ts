@@ -46,7 +46,7 @@ publicApi.get("/docs", (c) =>
 const app = new OpenAPIHono<Env>();
 
 app.get("/health", (c) => c.json({ status: "ok" }));
-app.on(["POST", "GET"], "/api/auth/**", (c) => auth.handler(c.req.raw));
+app.on(["POST", "GET"], "/v1/auth/**", (c) => auth.handler(c.req.raw));
 app.route("/", publicApi);
 app.route("/v1", authRouter);
 app.route("/v1", storageRouter);

@@ -41,7 +41,7 @@ Before running, add the Better Auth callback URI to your Google OAuth app in
 [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials:
 
 ```
-{BETTER_AUTH_URL}/api/auth/callback/google
+{BETTER_AUTH_URL}/v1/auth/callback/google
 ```
 
 ```bash

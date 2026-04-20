@@ -3,7 +3,7 @@
 import {useEffect, useState} from "react";
 import {createAuthClient} from "better-auth/client";
 
-const authClient = createAuthClient({baseURL: window.location.origin});
+const authClient = createAuthClient({baseURL: window.location.origin, basePath: "/v1/auth"});
 import type {ApiKey, NewApiKey, StorageConnection, SyncCredentials, User} from "./api";
 import * as api from "./api";
 
