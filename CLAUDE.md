@@ -143,7 +143,7 @@ users
 storage_connections (
   id,
   user_id,
-  provider,             -- 'gdrive' | 'dropbox' | 's3' | 'local'
+  provider,             -- 'google' | 'dropbox' | 's3' | 'local'
   oauth_token,          -- encrypted at rest (AES-256-GCM)
   oauth_refresh_token,  -- encrypted at rest (AES-256-GCM); null for 'local' provider
   folder_path,

@@ -26,7 +26,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL ?? "/";
 
 const ErrorSchema = z.object({error: z.string(), code: z.string()});
 
-const ProviderSchema = z.enum(["gdrive", "dropbox", "s3"]);
+const ProviderSchema = z.enum(["google", "dropbox", "s3"]);
 
 const StorageConnectionSchema = z.object({
     id: z.string().uuid(),
@@ -78,7 +78,7 @@ const storageConnectRoute = createRoute({
 storageRouter.openapi(storageConnectRoute, async (c) => {
     const {provider} = c.req.valid("json");
 
-    if (provider !== "gdrive") {
+    if (provider !== "google") {
         return c.json({error: "Provider not yet supported", code: "UNSUPPORTED_PROVIDER"}, 400);
     }
 
@@ -90,13 +90,13 @@ storageRouter.openapi(storageConnectRoute, async (c) => {
     url.searchParams.set("access_type", "offline");
     url.searchParams.set("prompt", "consent");
 
-    setCookie(c, "gdrive_oauth_state", state, {
+    setCookie(c, "google_storage_state", state, {
         httpOnly: true,
         sameSite: "Lax",
         path: "/",
         maxAge: OAUTH_STATE_MAX_AGE,
     });
-    setCookie(c, "gdrive_code_verifier", codeVerifier, {
+    setCookie(c, "google_storage_verifier", codeVerifier, {
         httpOnly: true,
         sameSite: "Lax",
         path: "/",
@@ -150,7 +150,7 @@ storageRouter.openapi(storageDisconnectRoute, async (c) => {
     return c.json({ok: true}, 200);
 });
 
-storageRouter.get("/me/storage/connect/gdrive", authWebMiddleware, async (c) => {
+storageRouter.get("/me/storage/connect/google", authWebMiddleware, async (c) => {
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
     const url = googleDrive.createAuthorizationURL(state, codeVerifier, [
@@ -159,13 +159,13 @@ storageRouter.get("/me/storage/connect/gdrive", authWebMiddleware, async (c) => 
     url.searchParams.set("access_type", "offline");
     url.searchParams.set("prompt", "consent");
 
-    setCookie(c, "gdrive_oauth_state", state, {
+    setCookie(c, "google_storage_state", state, {
         httpOnly: true,
         sameSite: "Lax",
         path: "/",
         maxAge: OAUTH_STATE_MAX_AGE,
     });
-    setCookie(c, "gdrive_code_verifier", codeVerifier, {
+    setCookie(c, "google_storage_verifier", codeVerifier, {
         httpOnly: true,
         sameSite: "Lax",
         path: "/",
@@ -175,13 +175,13 @@ storageRouter.get("/me/storage/connect/gdrive", authWebMiddleware, async (c) => 
     return c.redirect(url.toString(), 302);
 });
 
-storageRouter.get("/me/storage/connect/gdrive/callback", authWebMiddleware, async (c) => {
+storageRouter.get("/me/storage/connect/google/callback", authWebMiddleware, async (c) => {
     const {code, state} = c.req.query();
-    const storedState = getCookie(c, "gdrive_oauth_state");
-    const codeVerifier = getCookie(c, "gdrive_code_verifier");
+    const storedState = getCookie(c, "google_storage_state");
+    const codeVerifier = getCookie(c, "google_storage_verifier");
 
-    deleteCookie(c, "gdrive_oauth_state");
-    deleteCookie(c, "gdrive_code_verifier");
+    deleteCookie(c, "google_storage_state");
+    deleteCookie(c, "google_storage_verifier");
 
     if (!code || !state || !storedState || !codeVerifier || state !== storedState) {
         return c.redirect(`${FRONTEND_URL}?storage=error`, 302);
@@ -211,7 +211,7 @@ storageRouter.get("/me/storage/connect/gdrive/callback", authWebMiddleware, asyn
         .insert(userStorageConnection)
         .values({
             userId,
-            provider: "gdrive",
+            provider: "google",
             oauthToken: encryptedAccess,
             oauthRefreshToken: encryptedRefresh,
         })

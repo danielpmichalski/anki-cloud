@@ -49,7 +49,7 @@ export async function seedLocalStorage(dbPath: string, userId: string): Promise<
   await db.insert(storageConnections).values({
     id: crypto.randomUUID(),
     userId,
-    provider: "local" as "gdrive",  // "local" accepted by Rust but not in TS schema enum
+    provider: "local" as "google",  // "local" accepted by Rust but not in TS schema enum
     oauthToken: "",
     oauthRefreshToken: "",
     folderPath: "/AnkiSync",

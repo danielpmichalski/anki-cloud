@@ -131,7 +131,10 @@ CREATE INDEX `idx_storage_user_id` ON `user_storage_connection` (`user_id`);
 
 INSERT INTO `user_storage_connection`
   (`id`, `user_id`, `provider`, `oauth_token`, `oauth_refresh_token`, `folder_path`, `connected_at`)
-SELECT `id`, `user_id`, `provider`, `oauth_token`, `oauth_refresh_token`, `folder_path`, `connected_at`
+SELECT
+  `id`, `user_id`,
+  CASE `provider` WHEN 'gdrive' THEN 'google' ELSE `provider` END,
+  `oauth_token`, `oauth_refresh_token`, `folder_path`, `connected_at`
 FROM `storage_connections`;
 --> statement-breakpoint
 

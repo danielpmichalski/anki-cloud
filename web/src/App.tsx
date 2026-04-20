@@ -220,7 +220,8 @@ function StorageSection({
     const [folderPathInput, setFolderPathInput] = useState("");
     const [folderPathError, setFolderPathError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
-    const gdrive = connections.find((c) => c.provider === "gdrive");
+
+    const gdrive = connections.find((c) => c.provider === "google");
 
     const handleDisconnect = async () => {
         if (!confirm("Disconnect Google Drive? Your data in Drive will not be deleted.")) return;
@@ -274,7 +275,7 @@ function StorageSection({
                         {busy ? "Disconnecting…" : "Disconnect"}
                     </button>
                 ) : (
-                    <a href="/v1/me/storage/connect/gdrive" className="btn btn-primary btn-sm">
+                    <a href="/v1/me/storage/connect/google" className="btn btn-primary btn-sm">
                         Connect
                     </a>
                 )}

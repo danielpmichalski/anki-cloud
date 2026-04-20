@@ -73,7 +73,7 @@ export const userStorageConnection = sqliteTable(
         userId: text("user_id")
             .notNull()
             .references(() => user.id, {onDelete: "cascade"}),
-        provider: text("provider", {enum: ["gdrive", "dropbox", "s3"]}).notNull(),
+        provider: text("provider", {enum: ["google", "dropbox", "s3"]}).notNull(),
         oauthToken: text("oauth_token").notNull(),
         oauthRefreshToken: text("oauth_refresh_token").notNull(),
         folderPath: text("folder_path").notNull().default("/AnkiCloudSync"),
