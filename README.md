@@ -23,7 +23,7 @@ No database or cloud storage required. Users defined via `SYNC_USER1` in `.env`.
 Good for local development and testing the REST API without GDrive setup.
 
 ```bash
-cp .env.example .env   # set SIDECAR_TOKEN, JWT_SECRET, SYNC_USER1 at minimum
+cp .env.example .env   # set SIDECAR_TOKEN, BETTER_AUTH_SECRET, SYNC_USER1 at minimum
 
 # published image (fast)
 docker compose -f docker-compose.yml -f docker-compose.standalone.yml up
@@ -34,8 +34,15 @@ docker compose --build -f docker-compose.yml -f docker-compose.standalone.yml -f
 
 ### Cloud mode
 
-Full production-like stack. Users authenticate via Google OAuth; deck data stored in their
-Google Drive. Requires all OAuth credentials in `.env`.
+Full production-like stack. Users authenticate via Google OAuth (via Better Auth); deck data
+stored in their Google Drive. Requires all OAuth credentials in `.env`.
+
+Before running, add the Better Auth callback URI to your Google OAuth app in
+[Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials:
+
+```
+{BETTER_AUTH_URL}/api/auth/callback/google
+```
 
 ```bash
 cp .env.example .env   # fill in all credentials
@@ -69,7 +76,7 @@ Authorization: Bearer ak_<your-key>
 
 Generate a key in the web UI under **Account → API Keys**, or via `POST /v1/me/api-keys`.
 
-Account management endpoints (`/v1/me/*`) use the session cookie set by Google OAuth login.
+Account management endpoints (`/v1/me/*`) use the session cookie set by [Better Auth](https://better-auth.com) after Google OAuth login. The auth handler is mounted at `/api/auth/*`.
 
 ---
 

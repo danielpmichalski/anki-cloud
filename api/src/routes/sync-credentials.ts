@@ -2,7 +2,7 @@
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import {eq} from "drizzle-orm";
 import {OpenAPIHono, createRoute, z} from "@hono/zod-openapi";
-import {db, users, usersSyncState} from "@anki-cloud/db";
+import {db, userSyncConfig, userSyncState} from "@anki-cloud/db";
 import {authWebMiddleware} from "@/middleware/auth";
 import type {Env} from "@/types";
 
@@ -56,31 +56,48 @@ const resetSyncPasswordRoute = createRoute({
 export const syncCredentialsRouter = new OpenAPIHono<Env>();
 
 syncCredentialsRouter.openapi(getSyncPasswordRoute, async (c) => {
-    const {id} = c.get("user");
-    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
-    if (!user) return c.json({error: "User not found", code: "USER_NOT_FOUND"}, 401);
+    const {id, email} = c.get("user");
 
-    if (user.syncPasswordHash !== null) {
-        return c.json({username: user.email, password: null}, 200);
+    const [config] = await db
+        .select()
+        .from(userSyncConfig)
+        .where(eq(userSyncConfig.userId, id))
+        .limit(1);
+
+    if (config?.syncPasswordHash !== null && config?.syncPasswordHash !== undefined) {
+        return c.json({username: email, password: null}, 200);
     }
 
     const password = generatePassword();
     const hash = await Bun.password.hash(password, {algorithm: "bcrypt", cost: 10});
-    await db.update(users).set({syncPasswordHash: hash}).where(eq(users.id, id));
 
-    return c.json({username: user.email, password}, 200);
+    await db
+        .insert(userSyncConfig)
+        .values({userId: id, syncPasswordHash: hash})
+        .onConflictDoUpdate({
+            target: userSyncConfig.userId,
+            set: {syncPasswordHash: hash},
+        });
+
+    return c.json({username: email, password}, 200);
 });
 
 syncCredentialsRouter.openapi(resetSyncPasswordRoute, async (c) => {
-    const {id} = c.get("user");
-    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
-    if (!user) return c.json({error: "User not found", code: "USER_NOT_FOUND"}, 401);
+    const {id, email} = c.get("user");
 
     const password = generatePassword();
     const hash = await Bun.password.hash(password, {algorithm: "bcrypt", cost: 10});
-    await db.update(users).set({syncPasswordHash: hash}).where(eq(users.id, id));
-    // Invalidate any existing hkey so the sync server rejects the old session.
-    await db.update(usersSyncState).set({syncKey: null}).where(eq(usersSyncState.userId, id));
 
-    return c.json({username: user.email, password}, 200);
+    await db
+        .insert(userSyncConfig)
+        .values({userId: id, syncPasswordHash: hash})
+        .onConflictDoUpdate({
+            target: userSyncConfig.userId,
+            set: {syncPasswordHash: hash},
+        });
+
+    // Invalidate any existing hkey so the sync server rejects the old session.
+    await db.update(userSyncState).set({syncKey: null}).where(eq(userSyncState.userId, id));
+
+    return c.json({username: email, password}, 200);
 });

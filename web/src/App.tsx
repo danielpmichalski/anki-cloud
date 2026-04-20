@@ -1,6 +1,9 @@
 // Copyright 2026 Archont Soft Daniel Klimuntowski
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import {useEffect, useState} from "react";
+import {createAuthClient} from "better-auth/client";
+
+const authClient = createAuthClient({baseURL: window.location.origin});
 import type {ApiKey, NewApiKey, StorageConnection, SyncCredentials, User} from "./api";
 import * as api from "./api";
 
@@ -108,14 +111,19 @@ export default function App() {
 // ── Header ───────────────────────────────────────────────────────────────────
 
 function Header({user}: { user: User }) {
+    const handleSignOut = async () => {
+        await authClient.signOut();
+        window.location.href = "/";
+    };
+
     return (
         <header className="header">
             <span className="header-title">Account Settings</span>
             <div className="header-user">
                 <span>{user.email ?? user.name ?? "Account"}</span>
-                <a href="/v1/auth/logout" className="btn btn-sm btn-outline-light">
+                <button onClick={handleSignOut} className="btn btn-sm btn-outline-light">
                     Sign out
-                </a>
+                </button>
             </div>
         </header>
     );
@@ -124,15 +132,19 @@ function Header({user}: { user: User }) {
 // ── Login Page ───────────────────────────────────────────────────────────────
 
 function LoginPage() {
+    const handleGoogleLogin = async () => {
+        await authClient.signIn.social({provider: "google", callbackURL: "/"});
+    };
+
     return (
         <div className="login-page">
             <div className="login-card">
                 <h1 className="login-title">Account Settings</h1>
                 <p className="login-subtitle">Sign in to manage your account</p>
-                <a href="/v1/auth/google" className="btn-google">
+                <button onClick={handleGoogleLogin} className="btn-google">
                     <GoogleIcon/>
                     Continue with Google
-                </a>
+                </button>
             </div>
         </div>
     );

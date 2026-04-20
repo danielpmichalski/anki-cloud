@@ -3,24 +3,76 @@
 import {relations} from "drizzle-orm";
 import {index, integer, sqliteTable, text, unique} from "drizzle-orm/sqlite-core";
 
-export const users = sqliteTable("users", {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    googleSub: text("google_sub").notNull().unique(),
-    email: text("email"),
-    name: text("name"),
-    createdAt: integer("created_at", {mode: "timestamp"})
+// ── Better Auth tables (owned by Better Auth, do not add app columns here) ────
+
+export const user = sqliteTable("user", {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    emailVerified: integer("email_verified", {mode: "boolean"}).notNull(),
+    image: text("image"),
+    createdAt: integer("created_at", {mode: "timestamp"}).notNull(),
+    updatedAt: integer("updated_at", {mode: "timestamp"}).notNull(),
+});
+
+export const session = sqliteTable("session", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
         .notNull()
-        .$defaultFn(() => new Date()),
+        .references(() => user.id, {onDelete: "cascade"}),
+    token: text("token").notNull().unique(),
+    expiresAt: integer("expires_at", {mode: "timestamp"}).notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    createdAt: integer("created_at", {mode: "timestamp"}).notNull(),
+    updatedAt: integer("updated_at", {mode: "timestamp"}).notNull(),
+});
+
+export const account = sqliteTable("account", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id, {onDelete: "cascade"}),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    accessTokenExpiresAt: integer("access_token_expires_at", {mode: "timestamp"}),
+    refreshTokenExpiresAt: integer("refresh_token_expires_at", {mode: "timestamp"}),
+    scope: text("scope"),
+    idToken: text("id_token"),
+    password: text("password"),
+    createdAt: integer("created_at", {mode: "timestamp"}).notNull(),
+    updatedAt: integer("updated_at", {mode: "timestamp"}).notNull(),
+});
+
+export const verification = sqliteTable("verification", {
+    id: text("id").primaryKey(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: integer("expires_at", {mode: "timestamp"}).notNull(),
+    createdAt: integer("created_at", {mode: "timestamp"}),
+    updatedAt: integer("updated_at", {mode: "timestamp"}),
+});
+
+// ── App tables ────────────────────────────────────────────────────────────────
+
+export const userSyncConfig = sqliteTable("user_sync_config", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+        .notNull()
+        .unique()
+        .references(() => user.id, {onDelete: "cascade"}),
     syncPasswordHash: text("sync_password_hash"),
 });
 
-export const storageConnections = sqliteTable(
-    "storage_connections",
+export const userStorageConnection = sqliteTable(
+    "user_storage_connection",
     {
         id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
         userId: text("user_id")
             .notNull()
-            .references(() => users.id, {onDelete: "cascade"}),
+            .references(() => user.id, {onDelete: "cascade"}),
         provider: text("provider", {enum: ["gdrive", "dropbox", "s3"]}).notNull(),
         oauthToken: text("oauth_token").notNull(),
         oauthRefreshToken: text("oauth_refresh_token").notNull(),
@@ -35,13 +87,13 @@ export const storageConnections = sqliteTable(
     ]
 );
 
-export const usersApiKeys = sqliteTable(
-    "users_api_keys",
+export const userApiKey = sqliteTable(
+    "user_api_key",
     {
         id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
         userId: text("user_id")
             .notNull()
-            .references(() => users.id, {onDelete: "cascade"}),
+            .references(() => user.id, {onDelete: "cascade"}),
         keyHash: text("key_hash").notNull(),
         label: text("label").notNull(),
         lastUsedAt: integer("last_used_at", {mode: "timestamp"}),
@@ -51,19 +103,19 @@ export const usersApiKeys = sqliteTable(
         revokedAt: integer("revoked_at", {mode: "timestamp"}),
     },
     (t) => [
-        index("idx_api_keys_user_id").on(t.userId),
-        index("idx_api_keys_hash").on(t.keyHash),
+        index("idx_api_key_user_id").on(t.userId),
+        index("idx_api_key_hash").on(t.keyHash),
     ]
 );
 
-export const usersSyncState = sqliteTable(
-    "users_sync_state",
+export const userSyncState = sqliteTable(
+    "user_sync_state",
     {
         id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
         userId: text("user_id")
             .notNull()
             .unique()
-            .references(() => users.id, {onDelete: "cascade"}),
+            .references(() => user.id, {onDelete: "cascade"}),
         lastSyncAt: integer("last_sync_at", {mode: "timestamp"}),
         clientVersion: text("client_version"),
         syncKey: text("sync_key"),
@@ -71,32 +123,55 @@ export const usersSyncState = sqliteTable(
     (t) => [index("idx_sync_state_user_id").on(t.userId)]
 );
 
-export const usersRelations = relations(users, ({many, one}) => ({
-    storageConnections: many(storageConnections),
-    apiKeys: many(usersApiKeys),
-    syncState: one(usersSyncState, {
-        fields: [users.id],
-        references: [usersSyncState.userId],
+// ── Relations ─────────────────────────────────────────────────────────────────
+
+export const userRelations = relations(user, ({many, one}) => ({
+    sessions: many(session),
+    accounts: many(account),
+    syncConfig: one(userSyncConfig, {
+        fields: [user.id],
+        references: [userSyncConfig.userId],
+    }),
+    storageConnections: many(userStorageConnection),
+    apiKeys: many(userApiKey),
+    syncState: one(userSyncState, {
+        fields: [user.id],
+        references: [userSyncState.userId],
     }),
 }));
 
-export const storageConnectionsRelations = relations(storageConnections, ({one}) => ({
-    user: one(users, {fields: [storageConnections.userId], references: [users.id]}),
+export const sessionRelations = relations(session, ({one}) => ({
+    user: one(user, {fields: [session.userId], references: [user.id]}),
 }));
 
-export const usersApiKeysRelations = relations(usersApiKeys, ({one}) => ({
-    user: one(users, {fields: [usersApiKeys.userId], references: [users.id]}),
+export const accountRelations = relations(account, ({one}) => ({
+    user: one(user, {fields: [account.userId], references: [user.id]}),
 }));
 
-export const usersSyncStateRelations = relations(usersSyncState, ({one}) => ({
-    user: one(users, {fields: [usersSyncState.userId], references: [users.id]}),
+export const userSyncConfigRelations = relations(userSyncConfig, ({one}) => ({
+    user: one(user, {fields: [userSyncConfig.userId], references: [user.id]}),
 }));
 
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-export type StorageConnection = typeof storageConnections.$inferSelect;
-export type NewStorageConnection = typeof storageConnections.$inferInsert;
-export type UsersApiKey = typeof usersApiKeys.$inferSelect;
-export type NewUsersApiKey = typeof usersApiKeys.$inferInsert;
-export type UsersSyncState = typeof usersSyncState.$inferSelect;
-export type NewUsersSyncState = typeof usersSyncState.$inferInsert;
+export const userStorageConnectionRelations = relations(userStorageConnection, ({one}) => ({
+    user: one(user, {fields: [userStorageConnection.userId], references: [user.id]}),
+}));
+
+export const userApiKeyRelations = relations(userApiKey, ({one}) => ({
+    user: one(user, {fields: [userApiKey.userId], references: [user.id]}),
+}));
+
+export const userSyncStateRelations = relations(userSyncState, ({one}) => ({
+    user: one(user, {fields: [userSyncState.userId], references: [user.id]}),
+}));
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+export type User = typeof user.$inferSelect;
+export type UserSyncConfig = typeof userSyncConfig.$inferSelect;
+export type NewUserSyncConfig = typeof userSyncConfig.$inferInsert;
+export type UserStorageConnection = typeof userStorageConnection.$inferSelect;
+export type NewUserStorageConnection = typeof userStorageConnection.$inferInsert;
+export type UserApiKey = typeof userApiKey.$inferSelect;
+export type NewUserApiKey = typeof userApiKey.$inferInsert;
+export type UserSyncState = typeof userSyncState.$inferSelect;
+export type NewUserSyncState = typeof userSyncState.$inferInsert;
