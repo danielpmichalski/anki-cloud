@@ -74,21 +74,7 @@ List all decks in the user's collection.
 
 **Example response**
 
-```json
-{
-  "decks": [
-    {
-      "id": "1",
-      "name": "Default"
-    },
-    {
-      "id": "1700000000001",
-      "name": "Spanish Vocabulary"
-    }
-  ],
-  "nextCursor": null
-}
-```
+![](images/claude-anki-cloud-integration-example--list-all-my-decks.png)
 
 ---
 
