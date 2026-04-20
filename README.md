@@ -34,15 +34,22 @@ docker compose --build -f docker-compose.yml -f docker-compose.standalone.yml -f
 
 ### Cloud mode
 
-Full production-like stack. Users authenticate via Google OAuth (via Better Auth); deck data
-stored in their Google Drive. Requires all OAuth credentials in `.env`.
+Full production-like stack. Users authenticate via Google or GitHub OAuth (via Better Auth); deck data
+stored in their Google Drive. Requires OAuth credentials in `.env`.
 
-Before running, add these URIs to your Google OAuth app in
-[Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials:
+Before running, register these callback URIs in your OAuth apps:
+
+**Google** ([Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials):
 
 ```
 {BETTER_AUTH_URL}/v1/auth/callback/google          # sign-in callback
 {FRONTEND_URL}/v1/me/storage/connect/google/callback  # Google Drive callback
+```
+
+**GitHub** (optional — [Settings → Developer settings → OAuth Apps](https://github.com/settings/developers)):
+
+```
+{BETTER_AUTH_URL}/v1/auth/callback/github          # sign-in callback
 ```
 
 Set `TRUSTED_ORIGINS` in `.env` to your frontend URL(s) (comma-separated) so Better Auth accepts
@@ -80,7 +87,7 @@ Authorization: Bearer ak_<your-key>
 
 Generate a key in the web UI under **Account → API Keys**, or via `POST /v1/me/api-keys`.
 
-Account management endpoints (`/v1/me/*`) use the session cookie set by [Better Auth](https://better-auth.com) after Google OAuth login. The auth handler is mounted at `/v1/auth/*`.
+Account management endpoints (`/v1/me/*`) use the session cookie set by [Better Auth](https://better-auth.com) after Google or GitHub OAuth login. The auth handler is mounted at `/v1/auth/*`.
 
 ---
 

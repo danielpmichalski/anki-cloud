@@ -290,6 +290,29 @@ body {
     background: #f9fafb;
 }
 
+.btn-github {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+    padding: 11px 20px;
+    background: #24292f;
+    border: 1px solid #24292f;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.1s;
+    margin-top: 10px;
+}
+
+.btn-github:hover {
+    background: #32383f;
+}
+
 /* ── Storage Section ─────────────────────────────────────────────────────── */
 
 .storage-row {

@@ -136,6 +136,10 @@ function LoginPage() {
         await authClient.signIn.social({provider: "google", callbackURL: window.location.origin});
     };
 
+    const handleGitHubLogin = async () => {
+        await authClient.signIn.social({provider: "github", callbackURL: window.location.origin});
+    };
+
     return (
         <div className="login-page">
             <div className="login-card">
@@ -144,6 +148,10 @@ function LoginPage() {
                 <button onClick={handleGoogleLogin} className="btn-google">
                     <GoogleIcon/>
                     Continue with Google
+                </button>
+                <button onClick={handleGitHubLogin} className="btn-github">
+                    <GitHubIcon/>
+                    Continue with GitHub
                 </button>
             </div>
         </div>
@@ -500,6 +508,19 @@ function SyncPasswordSection({
                 {resetting ? "Resetting…" : "Reset sync password"}
             </button>
         </section>
+    );
+}
+
+// ── GitHub Icon ──────────────────────────────────────────────────────────────
+
+function GitHubIcon() {
+    return (
+        <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M12 1C5.923 1 1 5.923 1 12c0 4.867 3.149 8.979 7.521 10.436.55.096.756-.234.756-.521 0-.258-.009-.943-.014-1.85-3.06.664-3.706-1.475-3.706-1.475-.501-1.271-1.221-1.609-1.221-1.609-.999-.682.075-.668.075-.668 1.104.077 1.685 1.133 1.685 1.133.982 1.682 2.576 1.196 3.202.914.1-.71.384-1.196.699-1.47-2.443-.277-5.012-1.221-5.012-5.437 0-1.202.429-2.183 1.133-2.954-.113-.278-.491-1.397.108-2.91 0 0 .924-.296 3.028 1.129A10.563 10.563 0 0 1 12 6.792c.937.004 1.881.127 2.762.373 2.102-1.425 3.025-1.129 3.025-1.129.6 1.513.222 2.632.109 2.91.705.771 1.132 1.752 1.132 2.954 0 4.226-2.573 5.157-5.023 5.428.394.341.746 1.011.746 2.037 0 1.47-.014 2.657-.014 3.018 0 .289.203.622.761.517C19.854 20.975 23 16.866 23 12c0-6.077-4.923-11-11-11z"
+                fill="#ffffff"
+            />
+        </svg>
     );
 }
 
