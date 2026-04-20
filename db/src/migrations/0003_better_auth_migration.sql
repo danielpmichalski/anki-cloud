@@ -124,10 +124,6 @@ CREATE TABLE `user_storage_connection` (
   FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `uq_storage_user_provider` ON `user_storage_connection` (`user_id`, `provider`);
---> statement-breakpoint
-CREATE INDEX `idx_storage_user_id` ON `user_storage_connection` (`user_id`);
---> statement-breakpoint
 
 INSERT INTO `user_storage_connection`
   (`id`, `user_id`, `provider`, `oauth_token`, `oauth_refresh_token`, `folder_path`, `connected_at`)
@@ -138,10 +134,14 @@ SELECT
 FROM `storage_connections`;
 --> statement-breakpoint
 
--- Drop old indexes before recreating with same names on new tables (SQLite index names are DB-scoped)
+-- Drop old indexes before recreating with same names on new table (SQLite index names are DB-scoped)
+DROP INDEX IF EXISTS `uq_storage_user_provider`;
+--> statement-breakpoint
 DROP INDEX IF EXISTS `idx_storage_user_id`;
 --> statement-breakpoint
-DROP INDEX IF EXISTS `uq_storage_user_provider`;
+CREATE UNIQUE INDEX `uq_storage_user_provider` ON `user_storage_connection` (`user_id`, `provider`);
+--> statement-breakpoint
+CREATE INDEX `idx_storage_user_id` ON `user_storage_connection` (`user_id`);
 --> statement-breakpoint
 
 -- ── user_api_key (renamed from users_api_keys) ───────────────────────────────
@@ -179,10 +179,6 @@ CREATE TABLE `user_sync_state` (
   FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `user_sync_state_user_id_unique` ON `user_sync_state` (`user_id`);
---> statement-breakpoint
-CREATE INDEX `idx_sync_state_user_id` ON `user_sync_state` (`user_id`);
---> statement-breakpoint
 
 INSERT INTO `user_sync_state`
   (`id`, `user_id`, `last_sync_at`, `client_version`, `sync_key`)
@@ -190,8 +186,12 @@ SELECT `id`, `user_id`, `last_sync_at`, `client_version`, `sync_key`
 FROM `users_sync_state`;
 --> statement-breakpoint
 
--- Drop old index before recreating with same name on new table
+-- Drop old index before recreating with same name on new table (SQLite index names are DB-scoped)
 DROP INDEX IF EXISTS `idx_sync_state_user_id`;
+--> statement-breakpoint
+CREATE UNIQUE INDEX `user_sync_state_user_id_unique` ON `user_sync_state` (`user_id`);
+--> statement-breakpoint
+CREATE INDEX `idx_sync_state_user_id` ON `user_sync_state` (`user_id`);
 --> statement-breakpoint
 
 -- ── Drop old tables ───────────────────────────────────────────────────────────
