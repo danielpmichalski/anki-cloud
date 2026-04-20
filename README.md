@@ -91,6 +91,38 @@ Account management endpoints (`/v1/me/*`) use the session cookie set by [Better 
 
 ---
 
+## MCP integration (LLM → Anki)
+
+The MCP server lets any LLM (Claude Desktop, API clients) manage your decks and notes directly:
+
+```
+User: "Create flashcards from this discussion"
+LLM:  "<calls create_notes_bulk> → cards appear in Anki instantly"
+```
+
+**Claude Desktop setup** — add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "anki-cloud": {
+      "command": "bun",
+      "args": ["run", "/path/to/anki-cloud/mcp/src/index.ts"],
+      "env": {
+        "API_URL": "http://localhost:3000",
+        "API_KEY": "ak_your_key_here"
+      }
+    }
+  }
+}
+```
+
+Generate an API key in the web UI under **Account → API Keys**, replace the path and key, then restart Claude Desktop.
+
+Full setup guide, available tools, and Docker deployment: [docs/mcp-integration.md](docs/mcp-integration.md)
+
+---
+
 ## Connecting Anki Desktop
 
 In Anki: **Preferences → Syncing → Self-hosted sync server**, set the URL to:
@@ -151,8 +183,9 @@ cd e2e && bun test
 ## Project structure
 
 ```
-api/        REST API — TypeScript / Hono on Bun  (shared workspace with db/)
+api/        REST API — TypeScript / Hono on Bun  (shared workspace with db/ and mcp/)
 db/         Drizzle ORM + SQLite schema (@anki-cloud/db)
+mcp/        MCP server — wraps REST API, 8 tools for LLM integration
 web/        Account management UI (Vite + React)  (standalone — cd web && bun install)
 e2e/        End-to-end tests                      (standalone — cd e2e && bun install)
 docs/       Architecture decisions (ADRs) + narrative docs

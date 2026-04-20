@@ -11,9 +11,7 @@ COPY bun.lock ./
 RUN bun install --frozen-lockfile
 
 # Copy source
-COPY api/src ./api/src
-COPY api/tsconfig.json ./api/
-COPY db/src ./db/src
+COPY mcp/src ./mcp/src
+COPY mcp/tsconfig.json ./mcp/
 
-# Run migrations then start API
-CMD ["sh", "-c", "bun run db/src/migrate.ts && bun run api/src/index.ts"]
+CMD ["bun", "run", "mcp/src/index.ts"]
