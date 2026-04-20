@@ -13,7 +13,7 @@ const SYNC_BIN = join(import.meta.dir, "../../anki-sync-server/target/debug/anki
 
 // 32-byte all-zeros key (hex) — test only
 export const TEST_ENCRYPTION_KEY = "0".repeat(64);
-export const TEST_JWT_SECRET = "0".repeat(64);
+export const TEST_BETTER_AUTH_SECRET = "0".repeat(64);
 export const TEST_GOOGLE_CLIENT_ID = "test-client-id";
 export const TEST_GOOGLE_CLIENT_SECRET = "test-client-secret";
 
@@ -44,7 +44,8 @@ export async function startStack(): Promise<TestStack> {
   const env: Record<string, string> = {
     DATABASE_URL: `file:${dbPath}`,
     TOKEN_ENCRYPTION_KEY: TEST_ENCRYPTION_KEY,
-    JWT_SECRET: TEST_JWT_SECRET,
+    BETTER_AUTH_SECRET: TEST_BETTER_AUTH_SECRET,
+    BETTER_AUTH_URL: `http://localhost:${apiPort}`,
     GOOGLE_CLIENT_ID: TEST_GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: TEST_GOOGLE_CLIENT_SECRET,
     PORT: String(apiPort),

@@ -24,7 +24,7 @@ SESSION=<paste-cookie-value>
 
 ## Option B: Docker Compose standalone (no Google OAuth)
 
-Fastest for REST API testing — no GDrive or OAuth setup needed.
+Fastest for REST API testing — no Google Drive or OAuth setup needed.
 
 ```bash
 cd ~/Projects/anki-cloud

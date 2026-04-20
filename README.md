@@ -20,10 +20,10 @@ Two independent axes: **mode** (standalone vs cloud) and **image source** (publi
 ### Standalone mode
 
 No database or cloud storage required. Users defined via `SYNC_USER1` in `.env`.
-Good for local development and testing the REST API without GDrive setup.
+Good for local development and testing the REST API without Google Drive setup.
 
 ```bash
-cp .env.example .env   # set SIDECAR_TOKEN, JWT_SECRET, SYNC_USER1 at minimum
+cp .env.example .env   # set SIDECAR_TOKEN, BETTER_AUTH_SECRET, SYNC_USER1 at minimum
 
 # published image (fast)
 docker compose -f docker-compose.yml -f docker-compose.standalone.yml up
@@ -34,8 +34,19 @@ docker compose --build -f docker-compose.yml -f docker-compose.standalone.yml -f
 
 ### Cloud mode
 
-Full production-like stack. Users authenticate via Google OAuth; deck data stored in their
-Google Drive. Requires all OAuth credentials in `.env`.
+Full production-like stack. Users authenticate via Google OAuth (via Better Auth); deck data
+stored in their Google Drive. Requires all OAuth credentials in `.env`.
+
+Before running, add these URIs to your Google OAuth app in
+[Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials:
+
+```
+{BETTER_AUTH_URL}/v1/auth/callback/google          # sign-in callback
+{FRONTEND_URL}/v1/me/storage/connect/google/callback  # Google Drive callback
+```
+
+Set `TRUSTED_ORIGINS` in `.env` to your frontend URL(s) (comma-separated) so Better Auth accepts
+requests from the web UI. Defaults to `FRONTEND_URL` if unset.
 
 ```bash
 cp .env.example .env   # fill in all credentials
@@ -56,10 +67,10 @@ of `../anki-cloud-sync`. First build takes ~2–3 min; subsequent starts are ins
 
 Once the stack is running, two endpoints are available:
 
-| URL | Purpose |
-|-----|---------|
+| URL                                  | Purpose                                                      |
+|--------------------------------------|--------------------------------------------------------------|
 | `http://localhost:3000/openapi.json` | OpenAPI 3.1 spec — import into Postman via **Import → Link** |
-| `http://localhost:3000/docs` | Scalar interactive UI |
+| `http://localhost:3000/docs`         | Scalar interactive UI                                        |
 
 All data endpoints (`/v1/decks/*`, `/v1/notes/*`, `/v1/cards/*`) require an API key:
 
@@ -69,7 +80,7 @@ Authorization: Bearer ak_<your-key>
 
 Generate a key in the web UI under **Account → API Keys**, or via `POST /v1/me/api-keys`.
 
-Account management endpoints (`/v1/me/*`) use the session cookie set by Google OAuth login.
+Account management endpoints (`/v1/me/*`) use the session cookie set by [Better Auth](https://better-auth.com) after Google OAuth login. The auth handler is mounted at `/v1/auth/*`.
 
 ---
 
@@ -93,11 +104,11 @@ Run the setup script to install all required tools (skips anything already prese
 ./scripts/setup.zsh
 ```
 
-| Tool                                                              | Purpose                                             |
-|-------------------------------------------------------------------|-----------------------------------------------------|
-| [Bun](https://bun.sh)                                             | TypeScript runtime for REST API, MCP server, web UI |
+| Tool                                                              | Purpose                                              |
+|-------------------------------------------------------------------|------------------------------------------------------|
+| [Bun](https://bun.sh)                                             | TypeScript runtime for REST API, MCP server, web UI  |
 | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Full stack via `docker compose` (install separately) |
-| [Rust](https://rustup.rs) ≥ 1.80 + `protoc`                      | Only needed to build anki-cloud-sync from source    |
+| [Rust](https://rustup.rs) ≥ 1.80 + `protoc`                       | Only needed to build anki-cloud-sync from source     |
 
 ### Installing dependencies
 
@@ -141,8 +152,8 @@ docs/       Architecture decisions (ADRs) + narrative docs
 scripts/    Dev tooling (setup, SDK generation)
 
 docker-compose.yml              Base stack (api + anki-sync-server)
-docker-compose.standalone.yml   Standalone mode override (no DB/GDrive)
-docker-compose.cloud.yml        Cloud mode override (SQLite + GDrive OAuth)
+docker-compose.standalone.yml   Standalone mode override (no DB/Google Drive)
+docker-compose.cloud.yml        Cloud mode override (SQLite + Google Drive OAuth)
 docker-compose.dev.yml          Local build of anki-cloud-sync (any mode)
 ```
 
@@ -150,7 +161,7 @@ The sync server lives in a separate repository:
 [github.com/danielpmichalski/anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync) —
 see its README for all configuration options and environment variables.
 
-Full self-hosting walkthrough (Google OAuth setup, GDrive, Anki Desktop, Claude Desktop): [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)
+Full self-hosting walkthrough (Google OAuth setup, Google Drive, Anki Desktop, Claude Desktop): [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)
 
 Full architecture and design decisions: [CLAUDE.md](CLAUDE.md)
 

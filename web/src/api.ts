@@ -24,7 +24,7 @@ export type User = {
 
 export type StorageConnection = {
     id: string;
-    provider: "gdrive" | "dropbox" | "s3";
+    provider: "google" | "dropbox" | "s3";
     folderPath: string;
     connectedAt: string;
 };

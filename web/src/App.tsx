@@ -1,6 +1,9 @@
 // Copyright 2026 Archont Soft Daniel Klimuntowski
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import {useEffect, useState} from "react";
+import {createAuthClient} from "better-auth/client";
+
+const authClient = createAuthClient({baseURL: window.location.origin, basePath: "/v1/auth"});
 import type {ApiKey, NewApiKey, StorageConnection, SyncCredentials, User} from "./api";
 import * as api from "./api";
 
@@ -108,14 +111,19 @@ export default function App() {
 // ── Header ───────────────────────────────────────────────────────────────────
 
 function Header({user}: { user: User }) {
+    const handleSignOut = async () => {
+        await authClient.signOut();
+        window.location.href = "/";
+    };
+
     return (
         <header className="header">
             <span className="header-title">Account Settings</span>
             <div className="header-user">
                 <span>{user.email ?? user.name ?? "Account"}</span>
-                <a href="/v1/auth/logout" className="btn btn-sm btn-outline-light">
+                <button onClick={handleSignOut} className="btn btn-sm btn-outline-light">
                     Sign out
-                </a>
+                </button>
             </div>
         </header>
     );
@@ -124,15 +132,19 @@ function Header({user}: { user: User }) {
 // ── Login Page ───────────────────────────────────────────────────────────────
 
 function LoginPage() {
+    const handleGoogleLogin = async () => {
+        await authClient.signIn.social({provider: "google", callbackURL: window.location.origin});
+    };
+
     return (
         <div className="login-page">
             <div className="login-card">
                 <h1 className="login-title">Account Settings</h1>
                 <p className="login-subtitle">Sign in to manage your account</p>
-                <a href="/v1/auth/google" className="btn-google">
+                <button onClick={handleGoogleLogin} className="btn-google">
                     <GoogleIcon/>
                     Continue with Google
-                </a>
+                </button>
             </div>
         </div>
     );
@@ -208,20 +220,21 @@ function StorageSection({
     const [folderPathInput, setFolderPathInput] = useState("");
     const [folderPathError, setFolderPathError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
-    const gdrive = connections.find((c) => c.provider === "gdrive");
+
+    const google = connections.find((c) => c.provider === "google");
 
     const handleDisconnect = async () => {
         if (!confirm("Disconnect Google Drive? Your data in Drive will not be deleted.")) return;
         setBusy(true);
         try {
-            await onDisconnect("gdrive");
+            await onDisconnect("google");
         } finally {
             setBusy(false);
         }
     };
 
     const startEdit = () => {
-        setFolderPathInput(gdrive?.folderPath ?? "/AnkiCloudSync");
+        setFolderPathInput(google?.folderPath ?? "/AnkiCloudSync");
         setFolderPathError(null);
         setEditing(true);
     };
@@ -233,7 +246,7 @@ function StorageSection({
         }
         setSaving(true);
         try {
-            await onUpdateFolderPath("gdrive", folderPathInput);
+            await onUpdateFolderPath("google", folderPathInput);
             setEditing(false);
         } catch (err) {
             setFolderPathError(err instanceof Error ? err.message : "Failed to update.");
@@ -248,26 +261,26 @@ function StorageSection({
             <div className="storage-row">
                 <div>
                     <p className="storage-name">Google Drive</p>
-                    {gdrive ? (
+                    {google ? (
                         <p className="storage-status connected">
                             Connected · since{" "}
-                            {new Date(gdrive.connectedAt).toLocaleDateString()}
+                            {new Date(google.connectedAt).toLocaleDateString()}
                         </p>
                     ) : (
                         <p className="storage-status disconnected">Not connected</p>
                     )}
                 </div>
-                {gdrive ? (
+                {google ? (
                     <button className="btn btn-danger btn-sm" onClick={handleDisconnect} disabled={busy}>
                         {busy ? "Disconnecting…" : "Disconnect"}
                     </button>
                 ) : (
-                    <a href="/v1/me/storage/connect/gdrive" className="btn btn-primary btn-sm">
+                    <a href="/v1/me/storage/connect/google" className="btn btn-primary btn-sm">
                         Connect
                     </a>
                 )}
             </div>
-            {gdrive && (
+            {google && (
                 <div style={{marginTop: "12px"}}>
                     <p className="form-label" style={{marginBottom: "6px"}}>Sync folder</p>
                     {editing ? (
@@ -295,7 +308,7 @@ function StorageSection({
                         </div>
                     ) : (
                         <div className="form-row">
-                            <code className="key-value" style={{flex: 1}}>{gdrive.folderPath}</code>
+                            <code className="key-value" style={{flex: 1}}>{google.folderPath}</code>
                             <button className="btn btn-outline btn-sm" onClick={startEdit}>Edit</button>
                         </div>
                     )}

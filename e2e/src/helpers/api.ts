@@ -3,9 +3,9 @@
 /** Typed REST API client for e2e tests. */
 
 export interface ApiClient {
-  getSyncPassword(sessionCookie: string): Promise<SyncCredentials>;
-  resetSyncPassword(sessionCookie: string): Promise<SyncCredentials>;
-  getMe(sessionCookie: string): Promise<MeResponse>;
+  getSyncPassword(sessionToken: string): Promise<SyncCredentials>;
+  resetSyncPassword(sessionToken: string): Promise<SyncCredentials>;
+  getMe(sessionToken: string): Promise<MeResponse>;
   health(): Promise<boolean>;
 }
 
@@ -21,19 +21,19 @@ export interface MeResponse {
 }
 
 export function makeApiClient(baseUrl: string): ApiClient {
-  async function get<T>(path: string, cookie: string): Promise<T> {
+  async function get<T>(path: string, sessionToken: string): Promise<T> {
     const res = await fetch(`${baseUrl}${path}`, {
-      headers: { cookie: `session=${cookie}` },
+      headers: { cookie: `better-auth.session_token=${sessionToken}` },
     });
     if (!res.ok) throw new Error(`GET ${path} failed ${res.status}`);
     return res.json() as Promise<T>;
   }
 
-  async function post<T>(path: string, cookie: string, body?: unknown): Promise<T> {
+  async function post<T>(path: string, sessionToken: string, body?: unknown): Promise<T> {
     const res = await fetch(`${baseUrl}${path}`, {
       method: "POST",
       headers: {
-        cookie: `session=${cookie}`,
+        cookie: `better-auth.session_token=${sessionToken}`,
         "content-type": "application/json",
       },
       body: body ? JSON.stringify(body) : undefined,
@@ -43,9 +43,9 @@ export function makeApiClient(baseUrl: string): ApiClient {
   }
 
   return {
-    getSyncPassword: (cookie) => get("/v1/me/sync-password", cookie),
-    resetSyncPassword: (cookie) => post("/v1/me/sync-password/reset", cookie),
-    getMe: (cookie) => get("/v1/me", cookie),
+    getSyncPassword: (token) => get("/v1/me/sync-password", token),
+    resetSyncPassword: (token) => post("/v1/me/sync-password/reset", token),
+    getMe: (token) => get("/v1/me", token),
     async health() {
       try {
         const res = await fetch(`${baseUrl}/health`);

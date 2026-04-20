@@ -1,6 +1,6 @@
 services:
   anki-sync-server:
-    image: ghcr.io/danielpmichalski/anki-cloud-sync:v25.09-r5
+    image: ghcr.io/danielpmichalski/anki-cloud-sync:v25.09-r7
     #    image: anki-sync-server:local
     #    pull_policy: never
     ports:
@@ -24,12 +24,13 @@ services:
       DATABASE_URL: file:/data/anki-cloud.db
       SIDECAR_URL: http://anki-sync-server:8081
       SIDECAR_TOKEN: ${SIDECAR_TOKEN}
-      JWT_SECRET: ${JWT_SECRET}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
       GOOGLE_DRIVE_REDIRECT_URI: ${GOOGLE_DRIVE_REDIRECT_URI}
       FRONTEND_URL: ${FRONTEND_URL}
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
       TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY}
     volumes:
       - app-data:/data

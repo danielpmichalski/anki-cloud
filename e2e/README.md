@@ -37,6 +37,6 @@ so they can run without any external services.
 ## Architecture notes
 
 - Each test suite calls `startStack()` which spawns fresh API + sync server processes with a temp DB.
-- JWTs are minted directly (skipping Google OAuth) via `mintSessionJwt()`.
+- Sessions are seeded directly into the DB (skipping Google OAuth) via `createTestSession()`.
 - Storage connections use `provider = "local"` so no cloud credentials are needed.
 - Sync requests use Anki sync protocol v11: `anki-sync` header + zstd-compressed JSON body.

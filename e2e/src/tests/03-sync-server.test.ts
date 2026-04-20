@@ -10,7 +10,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { compress } from "@mongodb-js/zstd";
 import { startStack, type TestStack } from "@/setup";
-import { seedUser, seedLocalStorage, mintSessionJwt } from "@/helpers/auth";
+import { seedUser, seedLocalStorage, createTestSession } from "@/helpers/auth";
 import { makeApiClient } from "@/helpers/api";
 import { makeSyncClient } from "@/helpers/sync";
 
@@ -25,9 +25,9 @@ describe("Sync server — authentication", () => {
     // Create user via API (generates sync password, returns it once)
     const user = await seedUser(stack.dbPath, { email });
     await seedLocalStorage(stack.dbPath, user.id);
-    const jwt = await mintSessionJwt(user.id);
+    const sessionToken = await createTestSession(stack.dbPath, user.id);
     const api = makeApiClient(`http://localhost:${stack.apiPort}`);
-    const creds = await api.getSyncPassword(jwt);
+    const creds = await api.getSyncPassword(sessionToken);
     // Store for tests
     (stack as TestStack & { syncPassword: string }).syncPassword = creds.password as string;
   });
@@ -86,9 +86,9 @@ describe("Sync server — stateless re-hydration", () => {
 
     const user = await seedUser(stack.dbPath, { email });
     await seedLocalStorage(stack.dbPath, user.id);
-    const jwt = await mintSessionJwt(user.id);
+    const sessionToken = await createTestSession(stack.dbPath, user.id);
     const api = makeApiClient(`http://localhost:${stack.apiPort}`);
-    const creds = await api.getSyncPassword(jwt);
+    const creds = await api.getSyncPassword(sessionToken);
 
     const sync = makeSyncClient(`http://localhost:${stack.syncPort}`);
     hkey = await sync.hostKey(email, creds.password as string);

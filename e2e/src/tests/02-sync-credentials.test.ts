@@ -2,23 +2,23 @@
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 /**
  * Tests for sync password generation/reset via REST API.
- * Users authenticate via JWT session cookie (minted directly, skipping Google OAuth).
+ * Users authenticate via Better Auth session (seeded directly into DB, skipping Google OAuth).
  */
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { startStack, type TestStack } from "@/setup";
-import { seedUser, mintSessionJwt } from "@/helpers/auth";
+import { seedUser, createTestSession } from "@/helpers/auth";
 import { makeApiClient } from "@/helpers/api";
 
 describe("Sync credentials", () => {
   let stack: TestStack;
   let userId: string;
-  let sessionJwt: string;
+  let sessionToken: string;
 
   beforeAll(async () => {
     stack = await startStack();
     const user = await seedUser(stack.dbPath, { email: "sync-test@example.com" });
     userId = user.id;
-    sessionJwt = await mintSessionJwt(userId);
+    sessionToken = await createTestSession(stack.dbPath, userId);
   });
 
   afterAll(async () => {
@@ -27,7 +27,7 @@ describe("Sync credentials", () => {
 
   it("GET /v1/me/sync-password — first call generates and returns password", async () => {
     const api = makeApiClient(`http://localhost:${stack.apiPort}`);
-    const creds = await api.getSyncPassword(sessionJwt);
+    const creds = await api.getSyncPassword(sessionToken);
 
     expect(creds.username).toBe("sync-test@example.com");
     expect(typeof creds.password).toBe("string");
@@ -36,7 +36,7 @@ describe("Sync credentials", () => {
 
   it("GET /v1/me/sync-password — second call returns null password (already set)", async () => {
     const api = makeApiClient(`http://localhost:${stack.apiPort}`);
-    const creds = await api.getSyncPassword(sessionJwt);
+    const creds = await api.getSyncPassword(sessionToken);
 
     expect(creds.username).toBe("sync-test@example.com");
     expect(creds.password).toBeNull();
@@ -44,7 +44,7 @@ describe("Sync credentials", () => {
 
   it("POST /v1/me/sync-password/reset — returns new plaintext password", async () => {
     const api = makeApiClient(`http://localhost:${stack.apiPort}`);
-    const creds = await api.resetSyncPassword(sessionJwt);
+    const creds = await api.resetSyncPassword(sessionToken);
 
     expect(creds.username).toBe("sync-test@example.com");
     expect(typeof creds.password).toBe("string");
@@ -53,7 +53,7 @@ describe("Sync credentials", () => {
 
   it("GET /v1/me/sync-password — after reset, still returns null (hash is set)", async () => {
     const api = makeApiClient(`http://localhost:${stack.apiPort}`);
-    const creds = await api.getSyncPassword(sessionJwt);
+    const creds = await api.getSyncPassword(sessionToken);
     expect(creds.password).toBeNull();
   });
 

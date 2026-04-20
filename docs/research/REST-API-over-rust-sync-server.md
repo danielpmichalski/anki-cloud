@@ -80,10 +80,10 @@ The forked Rust binary runs two HTTP listeners:
 ```
 
 Hono REST API never touches `collection.anki2`. All collection mutations go through
-the sidecar. Rust owns USN, mtime, graves, GDrive download/upload, and the per-user lock.
+the sidecar. Rust owns USN, mtime, graves, Google Drive download/upload, and the per-user lock.
 
 ```
-LLM → MCP → Hono REST (:443) → Rust sidecar (:8081) → rslib → GDrive
+LLM → MCP → Hono REST (:443) → Rust sidecar (:8081) → rslib → Google Drive
                                        ↑
                     Anki Desktop → Rust sync (:8080)
 ```
@@ -91,7 +91,7 @@ LLM → MCP → Hono REST (:443) → Rust sidecar (:8081) → rslib → GDrive
 **Why this is the only correct choice:**
 - Single write path — USN/mtime/graves handled exclusively by rslib
 - Per-user lock already exists for sync; sidecar acquires same lock → CRUD and sync are mutually exclusive
-- No GDrive race — one process owns the file lifecycle
+- No Google Drive race — one process owns the file lifecycle
 - Hono stays TypeScript ([ADR-0008](../decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)); no Rust CRUD surface exposed publicly
 - Internal API is never public — no versioning pressure, no OpenAPI needed for it
 
@@ -104,11 +104,11 @@ LLM → MCP → Hono REST (:443) → Rust sidecar (:8081) → rslib → GDrive
 
 ### Option 2 — Both processes coordinate via Redis lock + raw SQLite (rejected)
 
-Hono and Rust both download `collection.anki2` from GDrive, mutate, upload. Redis
+Hono and Rust both download `collection.anki2` from Google Drive, mutate, upload. Redis
 distributed lock per user enforces one writer at a time.
 
 **Why rejected:** Hono must reimplement USN management in TypeScript. Any bug permanently
-desynchronizes the collection. GDrive upload race still possible on lock expiry. Most of
+desynchronizes the collection. Google Drive upload race still possible on lock expiry. Most of
 Option 1's operational complexity without Option 1's correctness guarantee.
 
 ---
@@ -119,7 +119,7 @@ Option 1's operational complexity without Option 1's correctness guarantee.
 
 **Why rejected:** Adds Python to the stack alongside Rust and TypeScript. Full collection
 in memory. Schema version between pip release and forked rslib can diverge silently.
-GDrive race still exists. Worst of all worlds.
+Google Drive race still exists. Worst of all worlds.
 
 ---
 
@@ -171,22 +171,22 @@ tokio::join!(
 );
 ```
 
-### Lock and GDrive lifecycle for sidecar requests
+### Lock and Google Drive lifecycle for sidecar requests
 
 ```
 1. Receive request on :8081
 2. Acquire per-user lock (same Mutex/RwLock used by sync handlers)
-3. If collection not in local temp dir → download from GDrive (CollectionStorage::fetch)
+3. If collection not in local temp dir → download from Google Drive (CollectionStorage::fetch)
 4. Open collection via rslib
 5. Execute operation (rslib handles USN/mtime/graves automatically)
 6. Close collection (rslib flushes WAL)
-7. Upload modified file back to GDrive (CollectionStorage::commit)
+7. Upload modified file back to Google Drive (CollectionStorage::commit)
 8. Release lock
 9. Return JSON response to Hono
 ```
 
 Warm-cache optimization: if a sync recently finished, the temp dir may still exist.
-Compare GDrive file etag before downloading to skip unnecessary round-trips.
+Compare Google Drive file etag before downloading to skip unnecessary round-trips.
 
 ### Auth on the sidecar
 
@@ -203,7 +203,7 @@ authenticated requests.
 When a note references media:
 
 1. Hono uploads the file to the sidecar as a multipart field
-2. Rust computes the content hash, stores file in `collection.media/` on GDrive
+2. Rust computes the content hash, stores file in `collection.media/` on Google Drive
 3. Rust updates `collection.media.db` via rslib media APIs
 4. File participates in the next `/msync/` cycle automatically
 
@@ -215,11 +215,11 @@ Never write media references into `notes.flds` without updating `collection.medi
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| GDrive concurrent upload (CRUD + sync racing) | Critical | Shared per-user lock; CRUD and sync mutually exclusive |
+| Google Drive concurrent upload (CRUD + sync racing) | Critical | Shared per-user lock; CRUD and sync mutually exclusive |
 | Sidecar port exposed outside container network | High | Bind to 127.0.0.1; no published port; shared secret header |
-| Stale temp dir on crash | Medium | Validate GDrive etag on startup; clean orphaned temp dirs |
+| Stale temp dir on crash | Medium | Validate Google Drive etag on startup; clean orphaned temp dirs |
 | Media orphaning (notes ref files not in media.db) | Medium | All media writes through rslib media APIs only |
-| GDrive API rate limits under heavy CRUD | Low | Exponential backoff; batch small mutations |
+| Google Drive API rate limits under heavy CRUD | Low | Exponential backoff; batch small mutations |
 
 ---
 

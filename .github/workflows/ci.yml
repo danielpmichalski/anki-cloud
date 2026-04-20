@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   typecheck:
@@ -46,3 +47,22 @@ jobs:
           tags: ghcr.io/danielpmichalski/anki-cloud:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  docker-compose-smoke:
+    name: Docker Compose smoke test
+    runs-on: ubuntu-latest
+    env:
+      SIDECAR_TOKEN: ci-dummy-token
+      BETTER_AUTH_SECRET: ci-dummy-secret-32-chars-minimum!!
+      BETTER_AUTH_URL: http://localhost:3000
+      GOOGLE_CLIENT_ID: dummy-client-id
+      GOOGLE_CLIENT_SECRET: dummy-client-secret
+      GOOGLE_DRIVE_REDIRECT_URI: http://localhost:3000/auth/callback/google-drive
+      FRONTEND_URL: http://localhost:5173
+      TOKEN_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pull sync server image
+        run: docker compose pull anki-sync-server
+      - name: Build API image and create containers
+        run: docker compose up --no-start --build

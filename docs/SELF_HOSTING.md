@@ -29,8 +29,8 @@ You need a Google OAuth 2.0 app to handle sign-in and Google Drive access.
     - Application type: **Web application**
     - Add these **Authorized redirect URIs**:
       ```
-      http://localhost:5173/v1/auth/google/callback
-      http://localhost:5173/v1/me/storage/connect/gdrive/callback
+      http://localhost:3000/v1/auth/callback/google
+      http://localhost:5173/v1/me/storage/connect/google/callback
       ```
 5. Copy the **Client ID** and **Client Secret** — you'll need them in the next step.
 
@@ -47,19 +47,21 @@ cp .env.example .env
 Open `.env` and fill in the required values:
 
 ```bash
-# Generate two random secrets (run these commands, paste the output):
+# Generate random secrets (run these commands, paste the output):
 # openssl rand -hex 32
 SIDECAR_TOKEN=<generated>
-JWT_SECRET=<generated>
+BETTER_AUTH_SECRET=<generated>
 TOKEN_ENCRYPTION_KEY=<generated>
+
+# Public base URL of the API server — used by Better Auth for OAuth callbacks
+BETTER_AUTH_URL=http://localhost:3000
 
 # From Step 1
 GOOGLE_CLIENT_ID=<your-client-id>
 GOOGLE_CLIENT_SECRET=<your-client-secret>
 
-# Must match the redirect URIs you registered in Google Cloud Console
-GOOGLE_REDIRECT_URI=http://localhost:5173/v1/auth/google/callback
-GOOGLE_DRIVE_REDIRECT_URI=http://localhost:5173/v1/me/storage/connect/gdrive/callback
+# Must match the redirect URI you registered in Google Cloud Console
+GOOGLE_DRIVE_REDIRECT_URI=http://localhost:5173/v1/me/storage/connect/google/callback
 
 # Where to redirect after OAuth flows complete
 FRONTEND_URL=http://localhost:5173
@@ -83,7 +85,7 @@ Once running:
 |------------------------------|---------------------------|
 | `http://localhost:5173`      | Account management web UI |
 | `http://localhost:8080`      | Anki sync server endpoint |
-| `http://localhost:5173/docs` | Interactive API reference |
+| `http://localhost:3000/docs` | Interactive API reference |
 
 ---
 
@@ -134,7 +136,8 @@ docker compose -f docker-compose.yml -f docker-compose.cloud.yml up
 ## Troubleshooting
 
 **OAuth redirect mismatch error**
-Verify the redirect URIs in Google Cloud Console exactly match `GOOGLE_REDIRECT_URI` and `GOOGLE_DRIVE_REDIRECT_URI` in your `.env`. Trailing slashes and `http` vs `https` matter.
+Verify the redirect URIs in Google Cloud Console exactly match those derived from `BETTER_AUTH_URL` and `GOOGLE_DRIVE_REDIRECT_URI` in your `.env`. For local dev: `http://localhost:3000/v1/auth/callback/google` (sign-in)
+and `http://localhost:5173/v1/me/storage/connect/google/callback` (Drive). Trailing slashes and `http` vs `https` matter.
 
 **Anki says "sync server not configured"**
 Ensure the sync URL in Anki is `http://localhost:8080` (no trailing slash) and the stack is running.

@@ -102,7 +102,7 @@ Hono on Bun. Full CRUD API with OpenAPI spec auto-generated from Zod schemas. MC
 │         │                 │                                │
 │  ┌──────▼─────────────────▼──────────────────────────────┐ │
 │  │              Auth & Storage Adapter Layer             │ │
-│  │  Google OAuth (identity) + GDrive OAuth (storage)     │ │
+│  │  Google OAuth (identity) + Google Drive OAuth (storage)     │ │
 │  └──────────────────────────┬────────────────────────────┘ │
 │                             │                              │
 │  ┌────────────────┐  ┌────────▼──────┐                     │
@@ -143,7 +143,7 @@ users
 storage_connections (
   id,
   user_id,
-  provider,             -- 'gdrive' | 'dropbox' | 's3' | 'local'
+  provider,             -- 'google' | 'dropbox' | 's3' | 'local'
   oauth_token,          -- encrypted at rest (AES-256-GCM)
   oauth_refresh_token,  -- encrypted at rest (AES-256-GCM); null for 'local' provider
   folder_path,
@@ -168,11 +168,11 @@ users_sync_state (
 ```
 
 **What is NOT stored:** deck data, card content, review history, media files.
-All of that lives in the user's GDrive.
+All of that lives in the user's Google Drive.
 
 **Redis (ephemeral):**
 
-- Active sync session state (flushed to GDrive on completion)
+- Active sync session state (flushed to Google Drive on completion)
 - OAuth flow state (PKCE codes, state params — TTL: 10 minutes)
 - Rate limiting counters
 - API response cache (TTL: configurable)
@@ -186,7 +186,7 @@ All of that lives in the user's GDrive.
 | MCP Server          | TypeScript / Hono on Bun             | [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md) · [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)        |
 | Persistent DB       | SQLite (via Drizzle ORM)             | [ADR-0009](docs/decisions/0009-use-sqlite-for-persistent-storage.md)                                                                                               |
 | Cache / Sessions    | Redis                                | —                                                                                                                                                                  |
-| Storage backends    | GDrive API / Dropbox API / S3 SDK    | [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md) |
+| Storage backends    | Google Drive API / Dropbox API / S3 SDK    | [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md) |
 | Containerization    | Docker + Docker Compose              | —                                                                                                                                                                  |
 | CI/CD               | GitHub Actions                       | —                                                                                                                                                                  |
 | Docs: API reference | Scalar (from OpenAPI spec)           | —                                                                                                                                                                  |
@@ -309,8 +309,8 @@ web UI. Stored as bcrypt hash in `users.sync_password_hash`. Username = email ad
 6. Sync server → returns hkey to Anki client (used as session token for all subsequent requests)
 7. Anki client → sends requests with hkey in anki-sync header
 8. Sync server → looks up hkey in memory map; if missing (restart/failover), re-hydrates from DB
-9. Sync server → fetches GDrive OAuth refresh_token from SQLite, exchanges for fresh access_token
-10. Sync server → reads/writes collection from/to user's GDrive
+9. Sync server → fetches Google Drive OAuth refresh_token from SQLite, exchanges for fresh access_token
+10. Sync server → reads/writes collection from/to user's Google Drive
 11. Sync server → returns sync response to Anki client
 ```
 
@@ -322,7 +322,7 @@ web UI. Stored as bcrypt hash in `users.sync_password_hash`. Username = email ad
 3. LLM → calls MCP tool (e.g. create_flashcard)
 4. MCP server → validates API key (lookup in SQLite by hash)
 5. MCP server → calls REST API with user context
-6. REST API → applies change via storage adapter → writes to GDrive
+6. REST API → applies change via storage adapter → writes to Google Drive
 ```
 
 ---
@@ -401,7 +401,7 @@ docker compose up
 ```
 
 No external dependencies beyond Docker and a Google OAuth app (for auth).
-Storage backend credentials are per-user (their own GDrive etc.).
+Storage backend credentials are per-user (their own Google Drive etc.).
 
 ---
 
@@ -415,7 +415,7 @@ Storage backend credentials are per-user (their own GDrive etc.).
 5. **OpenAPI first.** The spec is the contract. SDKs and docs generate from it.
 6. **Conventional commits.** Enables automated changelog and semantic versioning.
 7. **Do not use "Anki" in the product name.** Registered trademark — legal risk.
-8. **Prove the sync → GDrive adapter works before building anything else.**
+8. **Prove the sync → Google Drive adapter works before building anything else.**
    It's the riskiest assumption. Validate it first.
 9. **AI Agents: Never auto-commit code.** When work is complete, inform the user that changes are ready to commit. Let the user handle git commits themselves. This preserves user agency and prevents accidental commits.
 
@@ -439,8 +439,8 @@ ADRs live in `docs/decisions/`. Use `adr-tools` to manage them.
 ## 12. Open Questions (OSS-scoped)
 
 - [ ] **Conflict resolution** — what happens when two devices sync simultaneously?
-- [ ] **Media files** — large audio/image files need special handling in GDrive (size limits, latency)
-- [ ] **GDrive API rate limits** — need to understand quotas for sync-heavy users
+- [ ] **Media files** — large audio/image files need special handling in Google Drive (size limits, latency)
+- [ ] **Google Drive API rate limits** — need to understand quotas for sync-heavy users
 - [ ] **AnkiMobile compatibility** — verify custom sync URL works with the iOS app
 
 ---

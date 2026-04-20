@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { compress } from "@mongodb-js/zstd";
 import { startStack, type TestStack } from "@/setup";
-import { seedUser, seedLocalStorage, mintSessionJwt } from "@/helpers/auth";
+import { seedUser, seedLocalStorage, createTestSession } from "@/helpers/auth";
 import { makeApiClient } from "@/helpers/api";
 import { makeSyncClient } from "@/helpers/sync";
 
@@ -22,9 +22,9 @@ describe("Sync password rotation", () => {
 
     const user = await seedUser(stack.dbPath, { email });
     await seedLocalStorage(stack.dbPath, user.id);
-    const jwt = await mintSessionJwt(user.id);
+    const sessionToken = await createTestSession(stack.dbPath, user.id);
     const api = makeApiClient(`http://localhost:${stack.apiPort}`);
-    const creds = await api.getSyncPassword(jwt);
+    const creds = await api.getSyncPassword(sessionToken);
     oldPassword = creds.password as string;
   });
 
@@ -46,10 +46,10 @@ describe("Sync password rotation", () => {
     const freshEmail = `rotate-fresh-${crypto.randomUUID()}@example.com`;
     const freshUser = await seedUser(dbPath, { email: freshEmail });
     await seedLocalStorage(dbPath, freshUser.id);
-    const freshJwt = await mintSessionJwt(freshUser.id);
+    const freshToken = await createTestSession(dbPath, freshUser.id);
     const freshApi = makeApiClient(`http://localhost:${apiPort}`);
 
-    const initialCreds = await freshApi.getSyncPassword(freshJwt);
+    const initialCreds = await freshApi.getSyncPassword(freshToken);
     const initialPassword = initialCreds.password as string;
 
     // Verify initial password works
@@ -58,7 +58,7 @@ describe("Sync password rotation", () => {
     expect(hkeyBefore.length).toBeGreaterThan(0);
 
     // Reset
-    const newCreds = await freshApi.resetSyncPassword(freshJwt);
+    const newCreds = await freshApi.resetSyncPassword(freshToken);
     const newPassword = newCreds.password as string;
     expect(newPassword).not.toBe(initialPassword);
 

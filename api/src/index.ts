@@ -1,6 +1,7 @@
 // Copyright 2026 Archont Soft Daniel Klimuntowski
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { auth } from "@/auth";
 import { authRouter } from "@/routes/auth";
 import { storageRouter } from "@/routes/storage";
 import { apiKeysRouter } from "@/routes/api-keys";
@@ -45,6 +46,7 @@ publicApi.get("/docs", (c) =>
 const app = new OpenAPIHono<Env>();
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+app.on(["POST", "GET"], "/v1/auth/*", (c) => auth.handler(c.req.raw));
 app.route("/", publicApi);
 app.route("/v1", authRouter);
 app.route("/v1", storageRouter);
@@ -61,5 +63,6 @@ app.onError((err, c) => {
 
 export default {
   port: Number.parseInt(process.env.PORT ?? "3000"),
+  idleTimeout: 120,
   fetch: app.fetch,
 };
