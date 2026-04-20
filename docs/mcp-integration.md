@@ -17,8 +17,8 @@ their own key — the server runs locally on their machine.
 
 Add the following to your Claude Desktop config file:
 
-**Mac:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+- **Mac:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
