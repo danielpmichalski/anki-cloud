@@ -12,44 +12,23 @@ user data.
 
 ## Running the stack
 
-The sync server ([anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync)) is a
-separate Rust service consumed here as a Docker image or local build. Two run modes are supported:
-
-Two independent axes: **mode** (standalone vs cloud) and **image source** (published vs local build).
-
-### Standalone mode
-
-No database or cloud storage required. Users defined via `SYNC_USER1` in `.env`.
-Good for local development and testing the REST API without Google Drive setup.
-
-```bash
-cp .env.example .env   # set SIDECAR_TOKEN, BETTER_AUTH_SECRET, SYNC_USER1 at minimum
-
-# published image (fast)
-docker compose -f docker-compose.yml -f docker-compose.standalone.yml up
-
-# local build of anki-cloud-sync (when hacking on the sync server)
-docker compose --build -f docker-compose.yml -f docker-compose.standalone.yml -f docker-compose.dev.yml up
-```
-
-### Cloud mode
-
-Full production-like stack. Users authenticate via Google or GitHub OAuth (via Better Auth); deck data
-stored in their Google Drive. Requires OAuth credentials in `.env`.
+The sync server is compiled locally from `sync-platform-cloud/` via `Dockerfile.sync`.
+It authenticates Anki clients against the shared SQLite database and resolves each user's
+Google Drive backend. Google OAuth credentials are required.
 
 Before running, register these callback URIs in your OAuth apps:
 
 **Google** ([Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials):
 
 ```
-{BETTER_AUTH_URL}/v1/auth/callback/google          # sign-in callback
+{BETTER_AUTH_URL}/v1/auth/callback/google             # sign-in callback
 {FRONTEND_URL}/v1/me/storage/connect/google/callback  # Google Drive callback
 ```
 
 **GitHub** (optional — [Settings → Developer settings → OAuth Apps](https://github.com/settings/developers)):
 
 ```
-{BETTER_AUTH_URL}/v1/auth/callback/github          # sign-in callback
+{BETTER_AUTH_URL}/v1/auth/callback/github             # sign-in callback
 ```
 
 Set `TRUSTED_ORIGINS` in `.env` to your frontend URL(s) (comma-separated) so Better Auth accepts
@@ -57,16 +36,27 @@ requests from the web UI. Defaults to `FRONTEND_URL` if unset.
 
 ```bash
 cp .env.example .env   # fill in all credentials
-
-# published image
-docker compose -f docker-compose.yml -f docker-compose.cloud.yml up
-
-# local build of anki-cloud-sync
-docker compose --build -f docker-compose.yml -f docker-compose.cloud.yml -f docker-compose.dev.yml up
+docker compose up --build
 ```
 
-`docker-compose.dev.yml` switches `anki-sync-server` from the published image to a local build
-of `../anki-cloud-sync`. First build takes ~2–3 min; subsequent starts are instant.
+> **First build:** `docker compose up --build` compiles the Rust sync server from source
+> (~10–20 min on first run). Subsequent starts are instant once the image is cached.
+
+If you're actively developing `sync-platform-cloud/` or `anki-cloud-sync`, rebuild only the
+sync image:
+
+```bash
+docker compose build anki-sync-server
+docker compose up
+```
+
+To develop against a local checkout of `anki-cloud-sync` (instead of fetching git deps):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+`docker-compose.dev.yml` overrides `anki-sync-server` to build directly from `../anki-cloud-sync`.
 
 ---
 
@@ -131,7 +121,8 @@ In Anki: **Preferences → Syncing → Self-hosted sync server**, set the URL to
 http://localhost:8080
 ```
 
-In standalone mode, use the `SYNC_USER1` credentials (email:password) when Anki prompts for login.
+In the web UI, go to **Account → Sync Password** to generate your Anki sync credentials
+(one-time setup). Use your account email and the generated password when Anki prompts for login.
 
 ---
 
@@ -183,23 +174,25 @@ cd e2e && bun test
 ## Project structure
 
 ```
-api/        REST API — TypeScript / Hono on Bun  (shared workspace with db/ and mcp/)
-db/         Drizzle ORM + SQLite schema (@anki-cloud/db)
-mcp/        MCP server — wraps REST API, 8 tools for LLM integration
-web/        Account management UI (Vite + React)  (standalone — cd web && bun install)
-e2e/        End-to-end tests                      (standalone — cd e2e && bun install)
-docs/       Architecture decisions (ADRs) + narrative docs
-scripts/    Dev tooling (setup, SDK generation)
+api/                    REST API — TypeScript / Hono on Bun  (shared workspace with db/ and mcp/)
+db/                     Drizzle ORM + SQLite schema (@anki-cloud/db)
+mcp/                    MCP server — wraps REST API, 8 tools for LLM integration
+web/                    Account management UI (Vite + React)  (standalone — cd web && bun install)
+e2e/                    End-to-end tests                      (standalone — cd e2e && bun install)
+sync-platform-cloud/    Rust crate — CloudAuthProvider + CloudBackendResolver (sync server binary)
+docs/                   Architecture decisions (ADRs) + narrative docs
+scripts/                Dev tooling (setup, SDK generation)
 
-docker-compose.yml              Base stack (api + anki-sync-server)
-docker-compose.standalone.yml   Standalone mode override (no DB/Google Drive)
-docker-compose.cloud.yml        Cloud mode override (SQLite + Google Drive OAuth)
-docker-compose.dev.yml          Local build of anki-cloud-sync (any mode)
+docker-compose.yml      Full stack (builds sync server from Dockerfile.sync)
+docker-compose.dev.yml  Override: build sync server from ../anki-cloud-sync local checkout
+Dockerfile.sync         Multi-stage build for the Rust sync server binary
+.sync-server-version    Pinned anki-cloud-sync git tag used by Dockerfile.sync
 ```
 
-The sync server lives in a separate repository:
+The sync server traits and backends live in a separate repository:
 [github.com/danielpmichalski/anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync) —
-see its README for all configuration options and environment variables.
+`sync-platform-cloud/` implements the `AuthProvider` and `BackendResolver` traits against
+the shared SQLite database.
 
 Full self-hosting walkthrough (Google OAuth setup, Google Drive, Anki Desktop, Claude Desktop): [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)
 
