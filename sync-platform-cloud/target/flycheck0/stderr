@@ -1,0 +1,15 @@
+    Updating crates.io index
+    Updating git repository `https://github.com/danielpmichalski/anki-cloud-sync`
+error: failed to get `anki` as a dependency of package `sync-platform-cloud v25.9.0 (/Users/me/Projects/anki-cloud/sync-platform-cloud)`
+
+Caused by:
+  failed to load source for dependency `anki`
+
+Caused by:
+  unable to update https://github.com/danielpmichalski/anki-cloud-sync?tag=v25.09-r8
+
+Caused by:
+  failed to find tag `v25.09-r8`
+
+Caused by:
+  reference 'refs/remotes/origin/tags/v25.09-r8' not found; class=Reference (4); code=NotFound (-3)

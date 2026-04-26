@@ -1,0 +1,30 @@
+[package]
+name = "sync-platform-cloud"
+version = "25.9.0"
+edition = "2021"
+license = "ELv2"
+
+[[bin]]
+name = "anki-sync-server"
+path = "src/main.rs"
+
+[dependencies]
+anki                  = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v25.09-r8" }
+sync-platform-api     = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v25.09-r8" }
+sync-storage-backends = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v25.09-r8" }
+sync-storage-server   = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v25.09-r8" }
+
+aes-gcm       = "0.10"
+anyhow        = "1.0.98"
+bcrypt        = "0.15"
+data-encoding = "2.9.0"
+envy          = "0.4.2"
+hex           = "0.4.3"
+reqwest       = { version = "0.12.20", default-features = false, features = ["json", "rustls-tls"] }
+rusqlite      = { version = "0.36.0", features = ["bundled"] }
+serde         = { version = "1.0.219", features = ["derive"] }
+serde_json    = "1.0.140"
+snafu         = { version = "0.8.6", features = ["rust_1_61"] }
+tokio         = { version = "1.45", features = ["rt-multi-thread", "macros", "signal"] }
+tracing            = { version = "0.1.41", features = ["max_level_trace", "release_max_level_debug"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

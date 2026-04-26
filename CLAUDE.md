@@ -179,18 +179,18 @@ All of that lives in the user's Google Drive.
 
 ### 4.3 Tech Stack
 
-| Layer               | Technology                           | ADR                                                                                                                                                                |
-|---------------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Sync server         | Rust (fork of ankitects sync server) | [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md)                                                                                                 |
-| REST API + Auth     | TypeScript / Hono on Bun             | [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)                                                                                     |
-| MCP Server          | TypeScript / Hono on Bun             | [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md) · [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)        |
-| Persistent DB       | SQLite (via Drizzle ORM)             | [ADR-0009](docs/decisions/0009-use-sqlite-for-persistent-storage.md)                                                                                               |
-| Cache / Sessions    | Redis                                | —                                                                                                                                                                  |
-| Storage backends    | Google Drive API / Dropbox API / S3 SDK    | [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md) |
-| Containerization    | Docker + Docker Compose              | —                                                                                                                                                                  |
-| CI/CD               | GitHub Actions                       | —                                                                                                                                                                  |
-| Docs: API reference | Scalar (from OpenAPI spec)           | —                                                                                                                                                                  |
-| Docs: Narrative     | Docusaurus                           | —                                                                                                                                                                  |
+| Layer               | Technology                              | ADR                                                                                                                                                                |
+|---------------------|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Sync server         | Rust (fork of ankitects sync server)    | [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md)                                                                                                 |
+| REST API + Auth     | TypeScript / Hono on Bun                | [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)                                                                                     |
+| MCP Server          | TypeScript / Hono on Bun                | [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md) · [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)        |
+| Persistent DB       | SQLite (via Drizzle ORM)                | [ADR-0009](docs/decisions/0009-use-sqlite-for-persistent-storage.md)                                                                                               |
+| Cache / Sessions    | Redis                                   | —                                                                                                                                                                  |
+| Storage backends    | Google Drive API / Dropbox API / S3 SDK | [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md) |
+| Containerization    | Docker + Docker Compose                 | —                                                                                                                                                                  |
+| CI/CD               | GitHub Actions                          | —                                                                                                                                                                  |
+| Docs: API reference | Scalar (from OpenAPI spec)              | —                                                                                                                                                                  |
+| Docs: Narrative     | Docusaurus                              | —                                                                                                                                                                  |
 
 ### 4.4 OpenAPI as Single Source of Truth
 
@@ -213,9 +213,35 @@ polished auto-generated SDK clients.
 
 ### 4.5 Repository Structure
 
-The sync server lives in a separate repository:
+The sync server traits and backends live in a separate repository:
 **[github.com/danielpmichalski/anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync)**
-— consumed here as a Docker image (`ghcr.io/danielpmichalski/anki-cloud-sync:<version>`).
+— consumed here as Cargo git dependencies, built into a local Docker image via `Dockerfile.sync`.
+
+### 4.6 sync-platform-cloud (Rust sync binary)
+
+`sync-platform-cloud/` is a Rust binary crate at the repo root. Built by `Dockerfile.sync`, it
+replaces the pre-built `ghcr.io/danielpmichalski/anki-cloud-sync` image with a locally compiled
+binary that wires the Anki sync protocol into the cloud database.
+
+**Implements:**
+
+- `CloudAuthProvider` — bcrypt-verifies against `user_sync_config.sync_password_hash`; upserts
+  hkey into `user_sync_state.sync_key`
+- `CloudBackendResolver` — reads `user_storage_connection`, AES-256-GCM decrypts the refresh
+  token, exchanges it for a Google access token, returns a `GoogleDriveBackend`
+
+**Required env vars** (beyond `SYNC_BASE` / `SYNC_INTERNAL_*`):
+
+- `DATABASE_URL` — shared SQLite path, e.g. `file:/data/anki-cloud.db`
+- `TOKEN_ENCRYPTION_KEY` — 32-byte AES-256 key (64 hex chars or 44 base64 chars)
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — for OAuth2 refresh token exchange
+
+**Pinned anki-cloud-sync tag:** see `.sync-server-version`. To upgrade:
+
+1. Update `.sync-server-version`
+2. Update the `tag =` value in `sync-platform-cloud/Cargo.toml` (all 4 git deps)
+3. Run `docker build -f Dockerfile.sync .` locally and verify it succeeds
+4. Update this file
 
 ```
 /
@@ -410,7 +436,8 @@ Storage backend credentials are per-user (their own Google Drive etc.).
 1. **We never store deck data.** User data lives in user-controlled storage. Always.
 2. **We never store passwords for OAuth-authenticated users.** OAuth tokens only. Always scoped, always revocable. Exception: Anki sync uses a dedicated per-user sync password (bcrypt hash only, plaintext never
    persisted) because the Anki sync protocol does not support OAuth.
-3. **Dual-license strategy.** `anki-cloud-sync` (Rust sync server fork) is AGPLv3 — required by upstream Ankitects license. `anki-cloud` (REST API, MCP server, web UI) is **Elastic License 2.0 (ELv2)**: source-available, self-hosting permitted, offering it as a managed service requires a commercial license.
+3. **Dual-license strategy.** `anki-cloud-sync` (Rust sync server fork) is AGPLv3 — required by upstream Ankitects license. `anki-cloud` (REST API, MCP server, web UI) is **Elastic License 2.0 (ELv2)**: source-available,
+   self-hosting permitted, offering it as a managed service requires a commercial license.
 4. **Self-hostable.** Everything runs with `docker compose up`. No hidden dependencies.
 5. **OpenAPI first.** The spec is the contract. SDKs and docs generate from it.
 6. **Conventional commits.** Enables automated changelog and semantic versioning.
