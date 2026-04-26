@@ -6,14 +6,8 @@ pub fn db_path() -> Result<String> {
     Ok(url.strip_prefix("file:").unwrap_or(&url).to_string())
 }
 
-fn open_ro(path: &str) -> Result<Connection> {
-    Connection::open_with_flags(
-        path,
-        OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-    )
-    .with_context(|| format!("open (ro) {path}"))
-}
-
+// Open read-write: WAL-mode databases require write access to the SHM file
+// even for read-only operations, and this server runs in a trusted container.
 fn open_rw(path: &str) -> Result<Connection> {
     Connection::open_with_flags(
         path,
@@ -25,7 +19,9 @@ fn open_rw(path: &str) -> Result<Connection> {
 // Timing-safe: always runs bcrypt even for unknown users.
 pub fn verify_sync_credentials(email: &str, password: &str) -> Result<()> {
     const DUMMY: &str = "$2b$10$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    let conn = open_ro(&db_path()?)?;
+    let path = db_path()?;
+    tracing::debug!("verify_sync_credentials: opening DB at {path}");
+    let conn = open_rw(&path).context("open DB for credential check")?;
     let hash: Option<String> = conn
         .query_row(
             r#"SELECT usc.sync_password_hash
@@ -38,6 +34,7 @@ pub fn verify_sync_credentials(email: &str, password: &str) -> Result<()> {
         .optional()
         .context("query user_sync_config")?
         .flatten();
+    tracing::debug!("verify_sync_credentials: hash found={}", hash.is_some());
     let ok = bcrypt::verify(password, hash.as_deref().unwrap_or(DUMMY)).unwrap_or(false);
     if hash.is_none() || !ok {
         return Err(anyhow!("invalid credentials"));
@@ -59,7 +56,7 @@ pub fn store_sync_key(email: &str, hkey: &str) -> Result<()> {
 }
 
 pub fn lookup_user_by_sync_key(hkey: &str) -> Result<String> {
-    let conn = open_ro(&db_path()?)?;
+    let conn = open_rw(&db_path()?)?;
     conn.query_row(
         r#"SELECT u.email
            FROM "user" u
@@ -73,7 +70,7 @@ pub fn lookup_user_by_sync_key(hkey: &str) -> Result<String> {
 
 /// Returns (provider, Option<encrypted_refresh_token>, folder_path).
 pub fn fetch_storage_connection(email: &str) -> Result<(String, Option<String>, String)> {
-    let conn = open_ro(&db_path()?)?;
+    let conn = open_rw(&db_path()?)?;
     conn.query_row(
         r#"SELECT sc.provider, sc.oauth_refresh_token, sc.folder_path
            FROM user_storage_connection sc

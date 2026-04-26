@@ -8,6 +8,13 @@ use sync_storage_server::InternalServer;
 #[snafu::report]
 #[tokio::main]
 async fn main() -> anki::error::Result<(), Whatever> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
+
     let config = envy::prefixed("SYNC_")
         .from_env::<SyncServerConfig>()
         .whatever_context("reading SYNC_* env vars")?;
