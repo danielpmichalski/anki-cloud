@@ -97,7 +97,10 @@ LLM:  "<calls create_notes_bulk> → cards appear in Anki instantly"
   "mcpServers": {
     "anki-cloud": {
       "command": "bun",
-      "args": ["run", "/path/to/anki-cloud/mcp/src/index.ts"],
+      "args": [
+        "run",
+        "/path/to/anki-cloud/mcp/src/index.ts"
+      ],
       "env": {
         "API_URL": "http://localhost:3000",
         "API_KEY": "ak_your_key_here"
@@ -197,6 +200,22 @@ the shared SQLite database.
 Full self-hosting walkthrough (Google OAuth setup, Google Drive, Anki Desktop, Claude Desktop): [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)
 
 Full architecture and design decisions: [CLAUDE.md](CLAUDE.md)
+
+---
+
+## Releasing
+
+Releases are triggered by pushing a version tag. The workflow builds the API Docker image,
+pushes it to GHCR, and creates a GitHub Release with auto-generated notes.
+
+```bash
+git checkout main
+git tag v2.0.0
+git push origin v2.0.0
+```
+
+The Rust sync server (`Dockerfile.sync`) is not published — self-hosters build it locally
+via `docker compose up --build`.
 
 ---
 
