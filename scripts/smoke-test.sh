@@ -135,7 +135,8 @@ mkdir -p "$SYNC_BASE"
 
 # Apply migrations, seed user + local storage connection + API key, insert session — all via Python
 SESSION_TOKEN=$(python3 - <<PYEOF
-import sqlite3, hashlib, time, os, re, uuid
+import sqlite3, hashlib, hmac, base64, time, os, re, uuid
+from urllib.parse import quote
 
 db_path   = "${DB_PATH}"
 mig_dir   = "${MIGRATIONS_DIR}"
@@ -189,7 +190,10 @@ conn.execute(
 conn.commit()
 conn.close()
 
-print(token)
+# Better Auth only accepts a signed session cookie: "<token>.<base64 HMAC-SHA256(token)>", URL-encoded.
+secret = "${TEST_BETTER_AUTH_SECRET}".encode()
+sig = base64.b64encode(hmac.new(secret, token.encode(), hashlib.sha256).digest()).decode()
+print(quote(f"{token}.{sig}", safe=""))
 PYEOF
 )
 
