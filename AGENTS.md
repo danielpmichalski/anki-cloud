@@ -64,16 +64,21 @@ Do NOT use "Anki" in the product name. Other apps have already received cease & 
 
 ### 3.1 Authentication — [ADR-0004](docs/decisions/0004-use-oauth2-for-authentication-no-password-storage.md) · [ADR-0005](docs/decisions/0005-use-google-as-the-sole-oauth-provider-mvp.md)
 
-OAuth2 only, no passwords. Google as sole provider for MVP.
+OAuth2 only, no passwords, handled by [Better Auth](https://better-auth.com) (mounted at `/v1/auth/*`).
+Google and GitHub are the sign-in providers (GitHub is optional, enabled via env vars). Microsoft,
+Facebook and GitLab are parked in the GitHub `Backlog` milestone. Note: ADR-0005 still says
+"Google as the sole provider" — it predates the GitHub provider and should be superseded.
 
 ### 3.2 Storage — [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md)
 
-Deck data lives in user-owned cloud storage. Google Drive for MVP; Dropbox, S3, OneDrive on roadmap.
-A `local` provider is also supported for testing/self-hosting without cloud storage.
+Deck data lives in user-owned cloud storage. Google Drive is the only connectable provider today;
+Dropbox, S3, OneDrive are in milestone M08. A `local` backend (filesystem under `SYNC_BASE`) exists in
+the sync server for testing/standalone self-hosting without cloud storage.
 
 ### 3.3 Sync Protocol — [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md)
 
-Fork of the Rust ankitects sync server with a cloud storage adapter layer.
+Fork of the Rust ankitects sync server (separate repo, `anki-cloud-sync`) exposing a platform-neutral
+trait boundary. This repo supplies the cloud implementation as the `sync-platform-cloud` crate (§4.6).
 
 ### 3.4 REST API + MCP Server — [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md) · [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)
 
@@ -96,21 +101,18 @@ Hono on Bun. Full CRUD API with OpenAPI spec auto-generated from Zod schemas. MC
 │                     Your Service                           │
 │                                                            │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │  Sync Server │  │  REST API    │  │   MCP Server     │  │
-│  │  (Rust)      │  │ (Hono/Bun)   │  │   (wraps REST)   │  │
-│  └──────┬───────┘  └──────┬───────┘  └──────────────────┘  │
+│  │  Sync Server │◄─┤  REST API    │◄─┤   MCP Server     │  │
+│  │  (Rust,      │  │ (Hono/Bun,   │  │   (wraps REST)   │  │
+│  │  :8080 sync, │  │  Better Auth)│  └──────────────────┘  │
+│  │  :8081 side- │  └──────┬───────┘                        │
+│  │  car)        │         │                                │
+│  └──────┬───────┘         │                                │
 │         │                 │                                │
 │  ┌──────▼─────────────────▼──────────────────────────────┐ │
-│  │              Auth & Storage Adapter Layer             │ │
-│  │  Google OAuth (identity) + Google Drive OAuth (storage)     │ │
-│  └──────────────────────────┬────────────────────────────┘ │
-│                             │                              │
-│  ┌────────────────┐  ┌────────▼──────┐                     │
-│  │  SQLite        │  │  Redis        │                     │
-│  │  (user table,  │  │  (sessions,   │                     │
-│  │   api keys,    │  │   cache,      │                     │
-│  │   oauth tokens)│  │   rate limit) │                     │
-│  └────────────────┘  └───────────────┘                     │
+│  │                 Shared SQLite database                │ │
+│  │ users/sessions (Better Auth), sync password hash,     │ │
+│  │ encrypted storage tokens, API key hashes, sync keys   │ │
+│  └───────────────────────────────────────────────────────┘ │
 └──────────────────────────────┬─────────────────────────────┘
                                │ OAuth2 + Storage API
                                ▼
@@ -121,71 +123,75 @@ Hono on Bun. Full CRUD API with OpenAPI spec auto-generated from Zod schemas. MC
               └──────────────────────────────────┘
 ```
 
+The REST API never touches collection files itself: collection mutations (decks, notes, cards) go
+through the sync server's internal sidecar HTTP API on :8081 (`SIDECAR_URL` / `SIDECAR_TOKEN`,
+see [ADR-0010](docs/decisions/0010-rust-sync-server-exposes-internal-sidecar-for-collection-mutations.md)).
+Redis is **not** part of the stack today (see Redis note in §4.2).
+
 **Deployment:** The sync server runs as multiple stateless instances behind a load balancer.
 Each instance queries a shared SQLite database for per-user config (OAuth tokens, storage provider) on every request,
 enabling horizontal scaling via sharding. See [ADR-0011](docs/decisions/0011-use-stateless-horizontally-scalable-sync-server-architecture-with-per-request-db-lookups.md).
 
 ### 4.2 Data the Service Stores
 
-**SQLite (persistent, tiny footprint):**
+**SQLite (persistent, tiny footprint)** — schema in `db/src/schema.ts` (Drizzle), migrations in `db/src/migrations/`:
 
 ```sql
-users
-(
+-- Owned by Better Auth (do not add app columns): user, session, account, verification
+user (id, name, email, email_verified, image, created_at, updated_at)
+
+-- App tables
+user_sync_config (
   id,
-  google_sub,           -- Google's permanent user ID
-  email,
-  name,
-  sync_password_hash,   -- bcrypt hash of per-user Anki sync password (nullable — null = not yet set up)
-  created_at
+  user_id,              -- unique FK -> user
+  sync_password_hash    -- bcrypt hash of per-user Anki sync password (null = not yet set up)
 )
 
-storage_connections (
+user_storage_connection (
   id,
   user_id,
-  provider,             -- 'google' | 'dropbox' | 's3' | 'local'
+  provider,             -- 'google' | 'dropbox' | 's3' (only 'google' connectable today)
   oauth_token,          -- encrypted at rest (AES-256-GCM)
-  oauth_refresh_token,  -- encrypted at rest (AES-256-GCM); null for 'local' provider
-  folder_path,
-  connected_at
+  oauth_refresh_token,  -- encrypted at rest (AES-256-GCM)
+  folder_path,          -- default '/AnkiCloudSync'
+  connected_at          -- unique (user_id, provider)
 )
 
-api_keys (
+user_api_key (
   id,
   user_id,
-  key_hash,            -- bcrypt hash, never store plaintext
+  key_hash,             -- SHA-256 of the 'ak_...' key; plaintext never stored
   label,
   last_used_at,
   created_at,
   revoked_at
 )
 
-users_sync_state (
+user_sync_state (
   id,
-  user_id,
-  sync_key             -- hkey stored here for cross-instance re-hydration after restart
+  user_id,              -- unique FK -> user
+  last_sync_at,
+  client_version,
+  sync_key              -- hkey stored here for cross-instance re-hydration after restart
 )
 ```
 
 **What is NOT stored:** deck data, card content, review history, media files.
 All of that lives in the user's Google Drive.
 
-**Redis (ephemeral):**
-
-- Active sync session state (flushed to Google Drive on completion)
-- OAuth flow state (PKCE codes, state params — TTL: 10 minutes)
-- Rate limiting counters
-- API response cache (TTL: configurable)
+**Redis (not implemented):** earlier designs planned Redis for sessions, rate limiting and caching.
+Sessions are handled by Better Auth in SQLite, and rate limiting is deferred ([ADR-0013](docs/decisions/0013-defer-pagination-rate-limiting-idempotency-and-bulk-endpoints-to-post-mvp.md)).
+Redis is tracked in issue #9 (milestone M10) and is not part of `docker compose` today.
 
 ### 4.3 Tech Stack
 
 | Layer               | Technology                              | ADR                                                                                                                                                                |
 |---------------------|-----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Sync server         | Rust (fork of ankitects sync server)    | [ADR-0003](docs/decisions/0003-fork-rust-ankitects-sync-server.md)                                                                                                 |
-| REST API + Auth     | TypeScript / Hono on Bun                | [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)                                                                                     |
+| REST API + Auth     | TypeScript / Hono on Bun + Better Auth  | [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)                                                                                     |
 | MCP Server          | TypeScript / Hono on Bun                | [ADR-0007](docs/decisions/0007-mcp-server-wraps-rest-api-not-direct-db.md) · [ADR-0008](docs/decisions/0008-use-hono-on-bun-for-rest-api-and-mcp-server.md)        |
 | Persistent DB       | SQLite (via Drizzle ORM)                | [ADR-0009](docs/decisions/0009-use-sqlite-for-persistent-storage.md)                                                                                               |
-| Cache / Sessions    | Redis                                   | —                                                                                                                                                                  |
+| Cache / Sessions    | Better Auth sessions in SQLite (Redis planned, #9) | —                                                                                                                                                                |
 | Storage backends    | Google Drive API / Dropbox API / S3 SDK | [ADR-0002](docs/decisions/0002-use-user-owned-cloud-storage-for-deck-data.md) · [ADR-0006](docs/decisions/0006-use-google-drive-as-the-primary-storage-backend.md) |
 | Containerization    | Docker + Docker Compose                 | —                                                                                                                                                                  |
 | CI/CD               | GitHub Actions                          | —                                                                                                                                                                  |
@@ -213,15 +219,53 @@ polished auto-generated SDK clients.
 
 ### 4.5 Repository Structure
 
-The sync server traits and backends live in a separate repository:
+The sync server (Anki protocol fork, trait boundary, storage backends) lives in a separate repository:
 **[github.com/danielpmichalski/anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync)**
-— consumed here as Cargo git dependencies, built into a local Docker image via `Dockerfile.sync`.
+(AGPLv3, tagged releases like `v26.09.4-r1`). It has no knowledge of the REST API, MCP or web UI. Its
+`sync-platform-api` crate defines `AuthProvider`, `BackendResolver` and `StorageBackend`; this repo
+implements them in `sync-platform-cloud/`. Verbatim-upstream dirs there (`rslib/`, `ftl/`, `proto/`) are
+never hand-edited. It is consumed here as Cargo git dependencies, built into a local Docker image via
+`Dockerfile.sync`.
+
+```
+/
+├── CLAUDE.md                  ← this file
+├── README.md, CONTRIBUTING.md, CHANGELOG.md, TODO.md
+├── Dockerfile.sync            ← builds sync-platform-cloud (Rust sync binary)
+├── .sync-server-version       ← pinned anki-cloud-sync tag
+├── docker-compose.yml         ← full stack: anki-sync-server (8080/8081) + api (3000) + mcp
+├── docker-compose.cloud.yml / docker-compose.standalone.yml   ← variants
+│
+├── api/                       ← TypeScript / Hono on Bun (REST API + Better Auth)
+│   └── src/
+│       ├── index.ts, auth.ts, types.ts   ← auth.ts = Better Auth config (Google, GitHub)
+│       ├── routes/            ← api-keys, sync-credentials, storage, decks, notes, cards, note-types
+│       ├── middleware/auth.ts ← session cookie + `Authorization: Bearer ak_...` API key auth
+│       └── lib/sidecar.ts     ← client for the sync server's internal sidecar (:8081)
+│
+├── db/                        ← Drizzle ORM + SQLite (@anki-cloud/db)
+│   └── src/ schema.ts, migrations/, migrate.ts, encrypt.ts (AES-256-GCM, byte-compatible with Rust)
+│
+├── mcp/                       ← MCP server wrapping the REST API
+│   └── src/ index.ts, client.ts, tools/ (decks.ts, notes.ts)
+│
+├── web/                       ← Account management UI (Vite + React; storage, sync password, API keys)
+│
+├── sync-platform-cloud/       ← Rust crate, own Cargo.toml (NOT an npm workspace) — see §4.6
+│
+├── e2e/                       ← end-to-end test suite (src/tests/01–04, helpers/)
+├── scripts/                   ← setup.zsh, smoke-test.sh (curl-based API smoke test)
+├── docs/                      ← SELF_HOSTING.md, mcp-integration.md, decisions/ (ADRs), research/, tests/
+└── .github/workflows/         ← ci.yml, commitlint.yml, release.yml (release-please)
+```
+
+npm workspaces: `api`, `db`, `mcp` (see root `package.json`).
 
 ### 4.6 sync-platform-cloud (Rust sync binary)
 
-`sync-platform-cloud/` is a Rust binary crate at the repo root. Built by `Dockerfile.sync`, it
-replaces the pre-built `ghcr.io/danielpmichalski/anki-cloud-sync` image with a locally compiled
-binary that wires the Anki sync protocol into the cloud database.
+`sync-platform-cloud/` is a Rust binary crate (`anki-sync-server`) at the repo root. Built by
+`Dockerfile.sync`, it replaced the pre-built `ghcr.io/danielpmichalski/anki-cloud-sync` image in v2.0.0
+(breaking change for self-hosters: the image is now compiled locally, ~10–20 min first build).
 
 **Implements:**
 
@@ -236,106 +280,58 @@ binary that wires the Anki sync protocol into the cloud database.
 - `TOKEN_ENCRYPTION_KEY` — 32-byte AES-256 key (64 hex chars or 44 base64 chars)
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — for OAuth2 refresh token exchange
 
-**Pinned anki-cloud-sync tag:** see `.sync-server-version`. To upgrade:
+Token format: `base64url(IV[12] || ciphertext || GCM-tag[16])`; must stay byte-compatible with `db/src/encrypt.ts`.
+
+**Pinned anki-cloud-sync tag:** `v26.09.4-r1` (see `.sync-server-version`). To upgrade:
 
 1. Update `.sync-server-version`
 2. Update the `tag =` value in `sync-platform-cloud/Cargo.toml` (all 4 git deps)
-3. Run `docker build -f Dockerfile.sync .` locally and verify it succeeds
+3. Run `docker build -f Dockerfile.sync .` locally and verify it succeeds (CI also builds it)
 4. Update this file
-
-```
-/
-├── CLAUDE.md                  ← this file
-├── README.md
-├── docker-compose.yml         ← full local stack (pulls anki-cloud-sync image)
-├── docker-compose.dev.yml     ← dev overrides
-│
-├── api/                       ← TypeScript / Hono on Bun (REST API + auth)
-│   ├── src/
-│   │   ├── index.ts
-│   │   ├── routes/
-│   │   │   ├── auth.ts               ← OAuth2 flows
-│   │   │   ├── api-keys.ts
-│   │   │   └── sync-credentials.ts   ← GET/POST /v1/me/sync-password
-│   │   └── middleware/               ← JWT session auth
-│   └── package.json
-│
-├── db/                        ← Drizzle ORM + SQLite schema (@anki-cloud/db)
-│   ├── src/
-│   │   ├── schema.ts                 ← users, storage_connections, api_keys, users_sync_state
-│   │   ├── migrations/               ← auto-generated SQL migrations
-│   │   └── encrypt.ts                ← AES-256-GCM token encryption (matches sync-storage-config)
-│   └── package.json
-│
-├── web/                       ← Simple account management UI (Vite + React)
-│   ├── src/
-│   │   ├── App.tsx            ← StorageSection, SyncPasswordSection, ApiKeysSection
-│   │   └── api.ts             ← typed REST API client
-│   └── package.json
-│
-├── docs/                      ← Docusaurus narrative docs
-│   ├── docs/
-│   │   ├── getting-started.md
-│   │   ├── self-hosting.md
-│   │   ├── api-reference.md   ← links to Scalar
-│   │   └── mcp-integration.md
-│   └── docusaurus.config.js
-│
-├── .github/
-│   └── workflows/
-│       ├── ci.yml
-│       ├── publish-docs.yml
-│       └── release.yml        ← release-please + conventional commits
-│
-└── scripts/
-    └── generate-sdk.sh        ← openapi-generator invocation
-```
 
 ---
 
 ## 5. Auth Flows
 
-### 5.1 User Registration / Login (Google OAuth2)
+### 5.1 User Registration / Login (Google or GitHub OAuth2)
+
+Handled by Better Auth (`api/src/auth.ts`, mounted at `/v1/auth/*`, tables `user`/`session`/`account`).
 
 ```
-1. User → clicks "Sign in with Google" on web UI
-2. Service → redirects to Google OAuth2 with scopes: openid email profile
-3. Google → user authenticates + consents
-4. Google → redirects back with auth code
-5. Service → exchanges code for id_token + access_token (server-side)
-6. Service → decodes id_token, extracts sub (permanent Google user ID)
-7. Service → upserts user record in SQLite (create if new, login if exists)
-8. Service → issues session cookie / JWT to user
+1. User → clicks "Sign in with Google" (or GitHub) on web UI
+2. Better Auth → redirects to the provider's OAuth2 consent screen
+3. Provider → redirects back to {BETTER_AUTH_URL}/v1/auth/callback/{provider} with auth code
+4. Better Auth → exchanges code server-side, upserts user + account rows in SQLite
+5. Better Auth → issues a session cookie (session stored in SQLite)
 ```
 
 ### 5.2 Google Drive Connection
 
 ```
-1. Authenticated user → clicks "Connect Google Drive"
-2. Service → redirects to Google OAuth2 with scopes: drive.file (NOT drive — minimal scope)
-3. Google → user sees consent screen for Drive access
-4. Google → redirects back with auth code
-5. Service → exchanges for access_token + refresh_token
-6. Service → stores refresh_token encrypted in SQLite (storage_connections table)
-7. Service → creates /AnkiSync/ folder in user's Drive
+1. Authenticated user → clicks "Connect Google Drive" (POST /v1/me/storage/connect)
+2. Service → redirects to Google OAuth2 with scope drive.file (NOT drive — minimal scope)
+3. Google → user consents, redirects to {FRONTEND_URL}/v1/me/storage/connect/google/callback
+4. Service → exchanges code for access_token + refresh_token
+5. Service → stores both encrypted (AES-256-GCM) in user_storage_connection
+   (folder_path defaults to /AnkiCloudSync, changeable via PUT /v1/me/storage/{provider})
 ```
 
 ### 5.3 Anki Client Sync
 
-**Credentials:** Each user has a dedicated auto-generated sync password (separate from Google OAuth).
+**Credentials:** Each user has a dedicated auto-generated sync password (separate from OAuth login).
 Generated/reset via `GET /v1/me/sync-password` and `POST /v1/me/sync-password/reset` — shown once in
-web UI. Stored as bcrypt hash in `users.sync_password_hash`. Username = email address.
+web UI. Stored as bcrypt hash in `user_sync_config.sync_password_hash`. Username = email address.
 
 ```
 1. User → visits web UI, generates sync password (shown once), copies it
 2. User → configures Anki client: custom sync URL + email + sync password (one-time setup)
 3. Anki client → POST /sync/hostKey {username: email, password: sync_password}
-4. Sync server → verifies bcrypt(password, users.sync_password_hash) — timing-safe
-5. Sync server → derives hkey = SHA1(email:password), stores in users_sync_state.sync_key
+4. Sync server → verifies bcrypt(password, sync_password_hash) — timing-safe
+5. Sync server → derives hkey = SHA1(email:password), stores in user_sync_state.sync_key
 6. Sync server → returns hkey to Anki client (used as session token for all subsequent requests)
 7. Anki client → sends requests with hkey in anki-sync header
 8. Sync server → looks up hkey in memory map; if missing (restart/failover), re-hydrates from DB
-9. Sync server → fetches Google Drive OAuth refresh_token from SQLite, exchanges for fresh access_token
+9. Sync server → fetches Google Drive refresh_token from SQLite, exchanges for fresh access_token
 10. Sync server → reads/writes collection from/to user's Google Drive
 11. Sync server → returns sync response to Anki client
 ```
@@ -343,12 +339,12 @@ web UI. Stored as bcrypt hash in `users.sync_password_hash`. Username = email ad
 ### 5.4 LLM / MCP Auth
 
 ```
-1. User → generates API key in web UI (one-time setup)
-2. User → configures LLM MCP settings with: URL + API key
-3. LLM → calls MCP tool (e.g. create_flashcard)
-4. MCP server → validates API key (lookup in SQLite by hash)
-5. MCP server → calls REST API with user context
-6. REST API → applies change via storage adapter → writes to Google Drive
+1. User → generates API key (ak_...) in web UI (one-time setup)
+2. User → configures LLM MCP settings with: MCP URL + API key (see docs/mcp-integration.md)
+3. LLM → calls MCP tool (e.g. create_note)
+4. MCP server → calls REST API with `Authorization: Bearer ak_...`
+5. REST API → validates key (SHA-256 lookup in user_api_key, not revoked)
+6. REST API → mutates the collection via the sync server sidecar (:8081) → written to Google Drive
 ```
 
 ---
@@ -363,7 +359,7 @@ web UI. Stored as bcrypt hash in `users.sync_password_hash`. Username = email ad
 - **Rate limiting** — per API key, via Redis, 429 with `Retry-After` header *(deferred post-MVP — see ADR-0013)*
 - **Idempotency** — POST endpoints accept `Idempotency-Key` header *(deferred post-MVP — see ADR-0013)*
 
-### Key endpoints (illustrative)
+### Key endpoints (see `/openapi.json` / `/docs` for the authoritative list)
 
 ```
 GET    /v1/decks
@@ -373,24 +369,27 @@ DELETE /v1/decks/{id}
 
 GET    /v1/decks/{id}/notes
 POST   /v1/decks/{id}/notes
+GET    /v1/notes/search
 GET    /v1/notes/{id}
 PUT    /v1/notes/{id}
 DELETE /v1/notes/{id}
+GET    /v1/note-types, /v1/note-types/{id}
 
 GET    /v1/cards/search?q=tag:python
 POST   /v1/cards/bulk
 
 GET    /v1/me
-GET    /v1/me/api-keys
-POST   /v1/me/api-keys
-DELETE /v1/me/api-keys/{id}
+GET    /v1/me/api-keys, POST /v1/me/api-keys, DELETE /v1/me/api-keys/{id}
+GET    /v1/me/sync-password, POST /v1/me/sync-password/reset
+GET    /v1/me/storage, POST /v1/me/storage/connect, PUT|DELETE /v1/me/storage/{provider}
 ```
 
 ---
 
 ## 7. MCP Tools
 
-The MCP server exposes these tools to LLMs:
+The MCP server (`mcp/src/tools/`) exposes these tools to LLMs. `get_stats` (study statistics) is
+not implemented yet.
 
 | Tool                | Description                                |
 |---------------------|--------------------------------------------|
@@ -402,7 +401,6 @@ The MCP server exposes these tools to LLMs:
 | `search_notes`      | Search notes by query (Anki search syntax) |
 | `update_note`       | Edit an existing note                      |
 | `delete_note`       | Delete a note                              |
-| `get_stats`         | Get study statistics for a deck            |
 
 ---
 
@@ -413,6 +411,10 @@ Milestones and issue tracking live entirely on GitHub — that is the single sou
 - **Milestones:** https://github.com/danielpmichalski/anki-cloud/milestones
 - **Issues:** https://github.com/danielpmichalski/anki-cloud/issues
 
+M01–M06 are closed (v1.0.0 shipped 2026-04-20; v2.0.0 = sync-platform-cloud rearchitecture). Open: M07 (extra
+auth providers — remaining ones moved to `Backlog`), M08 storage backends, M09 CLI, M10 misc.
+The `Backlog` milestone holds ideas that are explicitly not planned for now.
+
 ---
 
 ## 9. Self-Hosting
@@ -422,11 +424,12 @@ The entire stack must be runnable with:
 ```bash
 git clone https://github.com/your-org/anki-cloud
 cd anki-cloud
-cp .env.example .env   # fill in Google OAuth credentials
-docker compose up
+cp .env.example .env   # fill in Google OAuth credentials, secrets, TOKEN_ENCRYPTION_KEY
+docker compose up --build   # first run compiles the Rust sync server (~10–20 min)
 ```
 
-No external dependencies beyond Docker and a Google OAuth app (for auth).
+No external dependencies beyond Docker and a Google OAuth app (for auth); GitHub OAuth is optional.
+See README.md and docs/SELF_HOSTING.md.
 Storage backend credentials are per-user (their own Google Drive etc.).
 
 ---
@@ -472,4 +475,4 @@ ADRs live in `docs/decisions/`. Use `adr-tools` to manage them.
 
 ---
 
-*Last updated: initial design session. Update this file as decisions evolve.*
+*Last updated: 2026-11-05 (aligned with Anki 26.09.4). Update this file as decisions evolve.*

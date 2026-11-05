@@ -1,6 +1,6 @@
 [package]
 name = "sync-platform-cloud"
-version = "25.9.0"
+version = "26.9.4"
 edition = "2021"
 license = "ELv2"
 
@@ -9,10 +9,10 @@ name = "anki-sync-server"
 path = "src/main.rs"
 
 [dependencies]
-anki                  = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v25.09-r8" }
-sync-platform-api     = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v25.09-r8" }
-sync-storage-backends = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v25.09-r8" }
-sync-storage-server   = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v25.09-r8" }
+anki                  = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r1" }
+sync-platform-api     = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r1" }
+sync-storage-backends = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r1" }
+sync-storage-server   = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r1" }
 
 aes-gcm       = "0.10"
 anyhow        = "1.0.98"
