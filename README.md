@@ -199,7 +199,7 @@ the shared SQLite database.
 
 Full self-hosting walkthrough (Google OAuth setup, Google Drive, Anki Desktop, Claude Desktop): [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md)
 
-Full architecture and design decisions: [CLAUDE.md](CLAUDE.md)
+Full architecture and design decisions: [CLAUDE.md](AGENTS.md)
 
 ---
 

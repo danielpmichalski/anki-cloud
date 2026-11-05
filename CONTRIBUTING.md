@@ -83,10 +83,10 @@ Architecture decisions are documented as ADRs in `docs/decisions/`. Read [ADR-00
    ```bash
    adr new "<title>"
    ```
-3. Fill in the context, decision, and consequences. Follow the conventions in [CLAUDE.md § 11](CLAUDE.md).
+3. Fill in the context, decision, and consequences. Follow the conventions in [CLAUDE.md § 11](AGENTS.md).
 4. If the ADR supersedes an existing one, mark the old ADR `Superseded by [ADR-NNNN]` and link back.
-5. Update `CLAUDE.md` to reference the new ADR in the relevant section.
-6. Submit a PR with both the ADR file and any `CLAUDE.md` updates.
+5. Update `AGENTS.md` to reference the new ADR in the relevant section.
+6. Submit a PR with both the ADR file and any `AGENTS.md` updates.
 
 ### Key conventions
 
@@ -137,4 +137,4 @@ e2e/     End-to-end tests
 docs/    Docusaurus narrative docs + ADRs
 ```
 
-See [CLAUDE.md](CLAUDE.md) for full architecture documentation.
+See [CLAUDE.md](AGENTS.md) for full architecture documentation.
