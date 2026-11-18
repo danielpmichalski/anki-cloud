@@ -467,6 +467,47 @@ SYNC_PASS3=$(echo "$body" | python3 -c "import sys,json; print(json.load(sys.std
     || fail "reset returned null password"
 
 # ==========================================================================
+# Section 11b: Review (spaced repetition) — due cards + grading
+# ==========================================================================
+echo ""
+echo "-- Review: due cards and answers --"
+
+pyget() { python3 -c "import sys,json; d=json.load(sys.stdin); print($1)"; }
+
+code=$(api GET "/review/counts?deckId=${DECK_ID}")
+body=$(cat /tmp/smoke_api_body)
+assert_http "GET /review/counts → 200" "200" "$code" "$body"
+NEW_BEFORE=$(echo "$body" | pyget "d['new']")
+[[ "$NEW_BEFORE" -ge 4 ]] && pass "counts.new ≥ 4 (got ${NEW_BEFORE})" || fail "counts.new <4 (got ${NEW_BEFORE})"
+
+code=$(api GET "/review/next?deckId=${DECK_ID}&limit=2")
+body=$(cat /tmp/smoke_api_body)
+assert_http "GET /review/next limit=2 → 200" "200" "$code" "$body"
+assert_eq "next returns exactly 2 cards" "2" "$(echo "$body" | pyget "len(d['cards'])")"
+REVIEW_CARD=$(echo "$body" | pyget "d['cards'][0]['cardId']")
+assert_contains "card has plain-text question" '"question"' "$body"
+assert_contains "card has next intervals" '"nextIntervals"' "$body"
+
+code=$(api GET "/review/next?deckId=${DECK_ID}&limit=21")
+assert_http "limit above max → 400" "400" "$code" "$(cat /tmp/smoke_api_body)"
+
+code=$(api_with_body POST "/review/answer" "{\"cardId\":\"${REVIEW_CARD}\",\"rating\":\"meh\"}")
+assert_http "invalid rating → 400" "400" "$code" "$(cat /tmp/smoke_api_body)"
+
+code=$(api_with_body POST "/review/answer" "{\"cardId\":\"${REVIEW_CARD}\",\"rating\":\"good\",\"millisecondsTaken\":3000}")
+body=$(cat /tmp/smoke_api_body)
+assert_http "POST /review/answer good → 200" "200" "$code" "$body"
+
+code=$(api GET "/review/next?deckId=${DECK_ID}&limit=5")
+body=$(cat /tmp/smoke_api_body)
+FIRST_AFTER=$(echo "$body" | pyget "d['cards'][0]['cardId']")
+[[ "$FIRST_AFTER" != "$REVIEW_CARD" ]] && pass "answered card no longer first in queue" || fail "answered card still first in queue"
+assert_eq "counts.new decreased by 1" "$((NEW_BEFORE - 1))" "$(echo "$body" | pyget "d['counts']['new']")"
+
+code=$(api GET "/review/next?deckId=999999")
+assert_http "review next for unknown deck → 404" "404" "$code" "$(cat /tmp/smoke_api_body)"
+
+# ==========================================================================
 # Section 12: Cleanup — delete note and deck
 # ==========================================================================
 echo ""

@@ -10,6 +10,7 @@ import { decksRouter } from "@/routes/decks";
 import { notesRouter } from "@/routes/notes";
 import { noteTypesRouter } from "@/routes/note-types";
 import { cardsRouter } from "@/routes/cards";
+import { reviewRouter } from "@/routes/review";
 import type { Env } from "@/types";
 
 // Public REST API — spec published at /openapi.json + /docs
@@ -18,6 +19,7 @@ publicApi.route("/v1", decksRouter);
 publicApi.route("/v1", notesRouter);
 publicApi.route("/v1", noteTypesRouter);
 publicApi.route("/v1", cardsRouter);
+publicApi.route("/v1", reviewRouter);
 
 publicApi.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {
   type: "http",

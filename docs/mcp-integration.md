@@ -1,6 +1,6 @@
 # MCP Integration
 
-The anki-cloud MCP server exposes 8 tools to LLMs, enabling seamless LLM-to-Anki workflows.
+The anki-cloud MCP server exposes 11 tools to LLMs, enabling seamless LLM-to-Anki workflows.
 Any MCP-compatible client (Claude Desktop, API clients) can create decks, add flashcards,
 search notes, and more — without the user having Anki open.
 
@@ -315,3 +315,27 @@ Permanently delete a note and all cards generated from it. Cannot be undone.
 
 - Fully quit and relaunch Claude Desktop (menu bar → Quit, not just close window)
 - Check the config file is valid JSON: `cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | python3 -m json.tool`
+
+---
+
+## Review tools (spaced repetition)
+
+These let an LLM quiz you on your **scheduled** cards. Reviews are recorded by the real
+scheduler, so they sync to your other devices like any review done there.
+
+| Tool | Purpose |
+|------|---------|
+| `get_review_counts` | New / learning / review cards due in a deck (`deckId`). No card content. |
+| `get_due_cards` | Next due cards (`deckId`, `limit` 1–20, default 5): `cardId`, plain-text `question` and `answer`, `state`, and the interval each rating would give. Reading does not consume cards. |
+| `answer_card` | Record a grade (`cardId`, `rating`: `again` \| `hard` \| `good` \| `easy`, optional `millisecondsTaken`). Call only after the user confirmed the grade. |
+
+REST equivalents: `GET /v1/review/next`, `GET /v1/review/counts`, `POST /v1/review/answer`.
+
+### Study skill for Claude Desktop
+
+`skills/anki-review/` contains a Claude Skill that runs the whole session: it paraphrases each
+question (so you can't answer from visual memory), compares your answer with the card, proposes a
+grade, and records it only after you press **1** (Again), **2** (Hard), **3** (Good) or **4** (Easy).
+
+Install: upload `skills/anki-review/SKILL.md` (or `skills/anki-review/anki-review.skill`) in Claude Desktop under
+**Settings → Capabilities → Skills**, then say _"Quiz me on my Rust deck"_.
