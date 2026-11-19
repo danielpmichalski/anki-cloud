@@ -272,6 +272,12 @@ npm workspaces: `api`, `db`, `mcp` (see root `package.json`).
 `Dockerfile.sync`, it replaced the pre-built `ghcr.io/danielpmichalski/anki-cloud-sync` image in v2.0.0
 (breaking change for self-hosters: the image is now compiled locally, ~10–20 min first build).
 
+**Naming:** the `sync` image in the release packages (`ghcr.io/danielpmichalski/anki-cloud/sync`) is this crate, not the
+standalone server released by `anki-cloud-sync`. That repo is the library (upstream sync logic, `sync-platform-api` traits,
+storage backends, sidecar API) and also builds a standalone server (`SYNC_USER*` env users, local files, no OAuth). This
+crate links the library at the pinned tag and plugs in the cloud implementations below. The hosted and self-hosted cloud
+stack always runs this image, never the standalone one.
+
 **Implements:**
 
 - `CloudAuthProvider` — bcrypt-verifies against `user_sync_config.sync_password_hash`; upserts
