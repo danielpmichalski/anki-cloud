@@ -113,6 +113,30 @@ export const sidecar = {
   getNoteType: (email: string, id: string) =>
     sidecarRequest<NoteType>(email, `/internal/v1/note-types/${id}`),
 
+  reviewNext: (email: string, deckId: string, limit?: number) => {
+    const params = new URLSearchParams({ deckId });
+    if (limit !== undefined) params.set("limit", limit.toString());
+    return sidecarRequest<{ cards: ReviewCard[]; counts: ReviewCounts }>(
+      email,
+      `/internal/v1/review/next?${params}`
+    );
+  },
+
+  reviewCounts: (email: string, deckId: string) =>
+    sidecarRequest<ReviewCounts>(
+      email,
+      `/internal/v1/review/counts?${new URLSearchParams({ deckId })}`
+    ),
+
+  reviewAnswer: (
+    email: string,
+    body: { cardId: string; rating: ReviewRating; millisecondsTaken?: number | undefined }
+  ) =>
+    sidecarRequest<{ ok: boolean; next: string | null }>(email, "/internal/v1/review/answer", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
   searchNotes: async (email: string, q: string, pagination?: { limit?: number | undefined; cursor?: string | undefined }) => {
     const params = new URLSearchParams({ q });
     if (pagination?.limit !== undefined) params.set("limit", pagination.limit.toString());
@@ -123,6 +147,25 @@ export const sidecar = {
     ).then((d) => ({ ...d, nextCursor: d.nextCursor ?? null }));
   },
 };
+
+export type ReviewRating = "again" | "hard" | "good" | "easy";
+
+export interface ReviewCounts {
+  new: number;
+  learning: number;
+  review: number;
+}
+
+export interface ReviewCard {
+  cardId: string;
+  noteId: string;
+  deck: string;
+  state: "new" | "learning" | "review";
+  tags: string[];
+  question: string;
+  answer: string;
+  nextIntervals: { again: string | null; hard: string | null; good: string | null; easy: string | null };
+}
 
 export interface NoteType {
   id: string;

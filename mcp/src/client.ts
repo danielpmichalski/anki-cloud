@@ -97,3 +97,40 @@ export const updateNote = (
 
 export const deleteNote = (id: string) =>
   apiRequest<{ ok: boolean }>(`/v1/notes/${id}`, { method: "DELETE" });
+
+export type ReviewRating = "again" | "hard" | "good" | "easy";
+
+export interface ReviewCounts {
+  new: number;
+  learning: number;
+  review: number;
+}
+
+export interface ReviewCard {
+  cardId: string;
+  noteId: string;
+  deck: string;
+  state: "new" | "learning" | "review";
+  tags: string[];
+  question: string;
+  answer: string;
+  nextIntervals: { again: string | null; hard: string | null; good: string | null; easy: string | null };
+}
+
+export const getDueCards = (deckId: string, limit?: number) =>
+  apiRequest<{ cards: ReviewCard[]; counts: ReviewCounts }>(
+    `/v1/review/next${buildQs({ deckId, limit })}`
+  );
+
+export const getReviewCounts = (deckId: string) =>
+  apiRequest<ReviewCounts>(`/v1/review/counts${buildQs({ deckId })}`);
+
+export const answerCard = (body: {
+  cardId: string;
+  rating: ReviewRating;
+  millisecondsTaken?: number;
+}) =>
+  apiRequest<{ ok: boolean; next: string | null }>("/v1/review/answer", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });

@@ -3,8 +3,10 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerDeckTools } from "./decks.js";
 import { registerNoteTools } from "./notes.js";
+import { registerReviewTools } from "./review.js";
 
 export function registerTools(server: McpServer): void {
   registerDeckTools(server);
   registerNoteTools(server);
+  registerReviewTools(server);
 }
