@@ -441,7 +441,10 @@ function SyncPasswordSection({
 }) {
     const [copied, setCopied] = useState<"username" | "password" | null>(null);
     const [resetting, setResetting] = useState(false);
-    const syncServerUrl = import.meta.env.VITE_SYNC_SERVER_URL ?? `http://${globalThis.location.hostname}:8080`;
+    const syncServerUrl =
+        window.__CONFIG__?.syncServerUrl ??
+        import.meta.env.VITE_SYNC_SERVER_URL ??
+        `http://${globalThis.location.hostname}:8080`;
 
     const copy = async (text: string, field: "username" | "password") => {
         await navigator.clipboard.writeText(text);

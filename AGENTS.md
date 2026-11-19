@@ -259,6 +259,11 @@ never hand-edited. It is consumed here as Cargo git dependencies, built into a l
 └── .github/workflows/         ← ci.yml, commitlint.yml, release.yml (release-please)
 ```
 
+**Release images:** every `v*` tag publishes `linux/amd64` images to GHCR: `ghcr.io/danielpmichalski/anki-cloud/{api,mcp,web,sync}`,
+tagged `vX.Y.Z`, `X.Y.Z` and `latest`. `sync` is built from `Dockerfile.sync` (the `sync-platform-cloud` binary, not the
+standalone `anki-cloud-sync` image). The `web` image is static nginx; set `SYNC_SERVER_URL` at runtime to the address
+users enter in Anki (written to `/config.js`). Hosted deployments consume these images from `anki-cloud-platform`.
+
 npm workspaces: `api`, `db`, `mcp` (see root `package.json`).
 
 ### 4.6 sync-platform-cloud (Rust sync binary)
