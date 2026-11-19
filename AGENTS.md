@@ -221,7 +221,7 @@ polished auto-generated SDK clients.
 
 The sync server (Anki protocol fork, trait boundary, storage backends) lives in a separate repository:
 **[github.com/danielpmichalski/anki-cloud-sync](https://github.com/danielpmichalski/anki-cloud-sync)**
-(AGPLv3, tagged releases like `v26.09.4-r1`). It has no knowledge of the REST API, MCP or web UI. Its
+(AGPLv3, tagged releases like `v26.09.4-r3`). It has no knowledge of the REST API, MCP or web UI. Its
 `sync-platform-api` crate defines `AuthProvider`, `BackendResolver` and `StorageBackend`; this repo
 implements them in `sync-platform-cloud/`. Verbatim-upstream dirs there (`rslib/`, `ftl/`, `proto/`) are
 never hand-edited. It is consumed here as Cargo git dependencies, built into a local Docker image via
@@ -282,7 +282,7 @@ npm workspaces: `api`, `db`, `mcp` (see root `package.json`).
 
 Token format: `base64url(IV[12] || ciphertext || GCM-tag[16])`; must stay byte-compatible with `db/src/encrypt.ts`.
 
-**Pinned anki-cloud-sync tag:** `v26.09.4-r1` (see `.sync-server-version`). To upgrade:
+**Pinned anki-cloud-sync tag:** `v26.09.4-r3` (see `.sync-server-version`). To upgrade:
 
 1. Update `.sync-server-version`
 2. Update the `tag =` value in `sync-platform-cloud/Cargo.toml` (all 4 git deps)
