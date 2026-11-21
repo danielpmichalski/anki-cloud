@@ -1,15 +1,25 @@
 // Copyright 2026 Archont Soft Daniel Klimuntowski
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 
+import { AsyncLocalStorage } from "node:async_hooks";
+
 const API_URL = process.env["API_URL"] ?? "http://localhost:3000";
-const API_KEY = process.env["API_KEY"] ?? "";
+const ENV_API_KEY = process.env["API_KEY"] ?? "";
+
+// HTTP mode: the caller's bearer key, scoped to the current request.
+// Stdio mode: unset, so the process-wide API_KEY env var is used.
+const requestApiKey = new AsyncLocalStorage<string>();
+
+export function withApiKey<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  return requestApiKey.run(key, fn);
+}
 
 async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${API_KEY}`,
+      Authorization: `Bearer ${requestApiKey.getStore() ?? ENV_API_KEY}`,
       ...((options?.headers as Record<string, string> | undefined) ?? {}),
     },
   });

@@ -14,4 +14,9 @@ RUN bun install --frozen-lockfile
 COPY mcp/src ./mcp/src
 COPY mcp/tsconfig.json ./mcp/
 
+ARG VERSION=dev
+ENV APP_VERSION=$VERSION
+ENV MCP_TRANSPORT=http
+EXPOSE 3001
+
 CMD ["bun", "run", "mcp/src/index.ts"]
