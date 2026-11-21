@@ -49,8 +49,28 @@ tools panel (hammer icon).
 
 ## Environment Variables
 
-| Variable  | Default                 | Description                         |
-|-----------|-------------------------|-------------------------------------|
+| Variable        | Default                 | Description                                                    |
+|-----------------|-------------------------|----------------------------------------------------------------|
+| `API_URL`       | `http://localhost:3000` | Base URL of the anki-cloud REST API                            |
+| `API_KEY`       | _(stdio only)_          | API key with `ak_` prefix; ignored in HTTP mode                |
+| `MCP_TRANSPORT` | `stdio`                 | `stdio` (local) or `http` (remote, Streamable HTTP)            |
+| `MCP_PORT`      | `3001`                  | Listen port in HTTP mode                                       |
+
+## Remote (HTTP) mode
+
+With `MCP_TRANSPORT=http` the server listens on `POST /mcp` (Streamable HTTP, stateless) and `GET /healthz`.
+There is no process-wide key: each request must carry `Authorization: Bearer ak_...`, which is forwarded to the
+REST API, so one server instance serves many users. A missing header returns `401`. An invalid key surfaces as a
+tool error from the REST API. `GET`/`DELETE /mcp` return `405` (no sessions, no server-initiated streams).
+
+```bash
+MCP_TRANSPORT=http API_URL=http://localhost:3000 bun run mcp/src/index.ts
+```
+
+Clients that can send custom headers connect with the URL and the bearer key. The Claude apps' custom connectors
+need OAuth 2.1, which is a separate follow-up.
+
+-----------|-------------------------|-------------------------------------|
 | `API_URL` | `http://localhost:3000` | Base URL of the anki-cloud REST API |
 | `API_KEY` | _(required)_            | API key with `ak_` prefix           |
 
