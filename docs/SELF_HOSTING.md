@@ -112,7 +112,10 @@ Once running:
 2. Click **Continue with Google** or **Continue with GitHub** and complete the OAuth flow.
 3. Once signed in, click **Connect Google Drive** under Storage.
 4. Authorize the Drive access — scope is `drive.file` (only files this app creates).
-5. A `/AnkiCloudSync` folder is created in your Drive. Your deck data will live here.
+5. A `/AnkiCloudSync` folder is created in your Drive (the name can be changed in the web UI). Your deck
+   data will live here: `collection.anki2`, a `collection.media/` folder with your images and audio, and
+   `media.db`, the index the sync server uses to track media changes. Do not edit or delete these in Drive
+   while syncing.
 
 ---
 
@@ -127,7 +130,12 @@ Once running:
     - **Username:** your Google account email
     - **Password:** the sync password from step 1
 
-Your decks will now sync to/from your Google Drive.
+Your decks and media now sync to/from your Google Drive. The sync server keeps no media on its own
+disk: files are uploaded to `collection.media/` during sync and removed locally afterwards.
+
+> **Tip:** before the first sync, run **Tools → Check Media** in Anki and delete unused files. Anki
+> keeps media from notes you deleted long ago, and every file in `collection.media` is uploaded to Drive
+> (about one second per file on the first sync).
 
 ---
 
@@ -164,6 +172,16 @@ Ensure the sync URL in Anki is `http://localhost:8080` (no trailing slash) and t
 
 **Container fails to start with "TOKEN_ENCRYPTION_KEY" error**
 Generate the key with `openssl rand -hex 32` and add it to `.env`.
+
+**Media does not appear on another device**
+Run a sync on both devices (media syncs in its own step after the collection). Check that
+`<sync folder>/collection.media/` in Drive contains the file. If you changed the sync folder in the web UI
+after syncing media, restart the sync container; changing the folder with existing media is not supported yet
+(anki-cloud-sync#37).
+
+**Sync fails with an auth error after about a week**
+If your Google OAuth app is in "Testing" mode, Google expires refresh tokens after 7 days. Reconnect Google
+Drive in the web UI, or publish the OAuth app.
 
 **Data persists across restarts?**
 Yes — the SQLite database and any local-mode deck data are stored in a Docker volume (`app-data`). Google Drive data persists in your Drive regardless.

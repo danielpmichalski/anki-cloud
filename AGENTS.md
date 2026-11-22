@@ -177,7 +177,10 @@ user_sync_state (
 ```
 
 **What is NOT stored:** deck data, card content, review history, media files.
-All of that lives in the user's Google Drive.
+All of that lives in the user's Google Drive: `<sync folder>/collection.anki2`, the media files in
+`<sync folder>/collection.media/` and the media index `<sync folder>/media.db` (default sync folder
+`/AnkiCloudSync`). Media passes through the sync server's disk during a request and is deleted after
+it is pushed to Drive (see `media_bridge.rs` in `anki-cloud-sync`). The server keeps no copy of it.
 
 **Redis (not implemented):** earlier designs planned Redis for sessions, rate limiting and caching.
 Sessions are handled by Better Auth in SQLite, and rate limiting is deferred ([ADR-0013](docs/decisions/0013-defer-pagination-rate-limiting-idempotency-and-bulk-endpoints-to-post-mvp.md)).
@@ -293,7 +296,7 @@ stack always runs this image, never the standalone one.
 
 Token format: `base64url(IV[12] || ciphertext || GCM-tag[16])`; must stay byte-compatible with `db/src/encrypt.ts`.
 
-**Pinned anki-cloud-sync tag:** `v26.09.4-r3` (see `.sync-server-version`). To upgrade:
+**Pinned anki-cloud-sync tag:** `v26.09.4-r4` (see `.sync-server-version`). To upgrade:
 
 1. Update `.sync-server-version`
 2. Update the `tag =` value in `sync-platform-cloud/Cargo.toml` (all 4 git deps)
@@ -480,7 +483,9 @@ ADRs live in `docs/decisions/`. Use `adr-tools` to manage them.
 ## 12. Open Questions (OSS-scoped)
 
 - [ ] **Conflict resolution** — what happens when two devices sync simultaneously?
-- [ ] **Media files** — large audio/image files need special handling in Google Drive (size limits, latency)
+- [x] **Media files** — synced to Google Drive by the sync server (`collection.media/`, batched, retried, evicted
+  from local disk). Remaining work: faster per-batch commits and index refresh for multi-instance
+  (anki-cloud-sync#36, #37); REST/MCP media tools (#108)
 - [ ] **Google Drive API rate limits** — need to understand quotas for sync-heavy users
 - [ ] **AnkiMobile compatibility** — verify custom sync URL works with the iOS app
 
