@@ -38,6 +38,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
       TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-http://localhost:3001}
     volumes:
       - app-data:/data
     depends_on:
@@ -53,6 +54,9 @@ services:
       MCP_TRANSPORT: http
       MCP_PORT: 3001
       API_URL: http://api:3000
+      # OAuth discovery for connectors; the defaults suit local testing with MCP Inspector
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-http://localhost:3001}
+      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://localhost:3000}
     depends_on:
       - api
 

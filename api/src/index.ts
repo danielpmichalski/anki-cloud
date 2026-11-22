@@ -1,6 +1,7 @@
 // Copyright 2026 Archont Soft Daniel Klimuntowski
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { cors } from "hono/cors";
 import { auth } from "@/auth";
 import { authRouter } from "@/routes/auth";
 import { storageRouter } from "@/routes/storage";
@@ -11,6 +12,7 @@ import { notesRouter } from "@/routes/notes";
 import { noteTypesRouter } from "@/routes/note-types";
 import { cardsRouter } from "@/routes/cards";
 import { reviewRouter } from "@/routes/review";
+import { authApiMiddleware } from "@/middleware/auth";
 import type { Env } from "@/types";
 
 // Public REST API — spec published at /openapi.json + /docs
@@ -47,8 +49,25 @@ publicApi.get("/docs", (c) =>
 // Main app — mounts public API + web UI routes (no spec)
 const app = new OpenAPIHono<Env>();
 
+// Browser-based OAuth clients (e.g. MCP Inspector) call discovery, registration and token endpoints directly.
+// No credentials are allowed, so cookies never ride along cross-origin.
+const oauthCors = cors({
+  origin: "*",
+  allowMethods: ["GET", "POST", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization", "MCP-Protocol-Version"],
+  maxAge: 86400,
+});
+app.use("/.well-known/*", oauthCors);
+app.use("/v1/auth/mcp/*", oauthCors);
+app.use("/v1/whoami", oauthCors);
+
 app.get("/health", (c) => c.json({ status: "ok" }));
 app.on(["POST", "GET"], "/v1/auth/*", (c) => auth.handler(c.req.raw));
+// RFC 8414 discovery lives at the issuer's origin root, outside the /v1/auth base path.
+app.get("/.well-known/oauth-authorization-server", async (c) =>
+  c.json(await auth.api.getMcpOAuthConfig({ headers: c.req.raw.headers })));
+// Cheap credential check for the MCP server: 200 for a valid ak_ key or OAuth token, 401 otherwise.
+app.get("/v1/whoami", authApiMiddleware, (c) => c.json(c.get("user")));
 app.route("/", publicApi);
 app.route("/v1", authRouter);
 app.route("/v1", storageRouter);

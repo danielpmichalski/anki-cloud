@@ -1,8 +1,8 @@
 // Copyright 2026 Archont Soft Daniel Klimuntowski
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import {createMiddleware} from "hono/factory";
-import {and, eq, isNull} from "drizzle-orm";
-import {db, user, userApiKey} from "@anki-cloud/db";
+import {and, eq, gt, isNull} from "drizzle-orm";
+import {db, oauthAccessToken, user, userApiKey} from "@anki-cloud/db";
 import {auth} from "@/auth";
 import type {Env} from "@/types";
 
@@ -22,7 +22,18 @@ export const authApiMiddleware = createMiddleware<Env>(async (c, next) => {
     }
     const rawKey = authHeader.slice(7);
     if (!rawKey.startsWith("ak_")) {
-        return c.json({error: "Invalid API key", code: "INVALID_API_KEY"}, 401);
+        // Not an API key: treat it as an OAuth access token issued to a Claude connector.
+        const [tokenRow] = await db
+            .select({userId: user.id, userEmail: user.email, userName: user.name})
+            .from(oauthAccessToken)
+            .innerJoin(user, eq(oauthAccessToken.userId, user.id))
+            .where(and(eq(oauthAccessToken.accessToken, rawKey), gt(oauthAccessToken.accessTokenExpiresAt, new Date())))
+            .limit(1);
+        if (!tokenRow) {
+            return c.json({error: "Invalid or expired access token", code: "INVALID_ACCESS_TOKEN"}, 401);
+        }
+        c.set("user", {id: tokenRow.userId, email: tokenRow.userEmail, name: tokenRow.userName});
+        return next();
     }
 
     const keyHash = Buffer.from(

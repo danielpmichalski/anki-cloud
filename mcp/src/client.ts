@@ -144,3 +144,13 @@ export const answerCard = (body: {
     method: "POST",
     body: JSON.stringify(body),
   });
+
+/** True when the REST API accepts the credential (ak_ key or OAuth access token). */
+export async function isCredentialValid(credential: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/v1/whoami`, { headers: { Authorization: `Bearer ${credential}` } });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
