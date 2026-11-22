@@ -50,8 +50,9 @@ services:
     ports:
       - "3001:3001"
     environment:
+      MCP_TRANSPORT: http
+      MCP_PORT: 3001
       API_URL: http://api:3000
-      API_KEY: ${MCP_API_KEY}
     depends_on:
       - api
 
