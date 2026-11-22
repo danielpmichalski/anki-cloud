@@ -1,0 +1,9 @@
+# Override: build the sync server from the sibling ../anki-cloud-sync checkout.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+services:
+  anki-sync-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.sync.dev
+      additional_contexts:
+        sync: ../anki-cloud-sync

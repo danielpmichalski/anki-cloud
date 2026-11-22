@@ -1,0 +1,38 @@
+# Dev variant of Dockerfile.sync: builds the sync server against a local ../anki-cloud-sync
+# checkout (passed as the `sync` build context) instead of the pinned git tag.
+FROM rust:1.97-slim-bookworm AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    protobuf-compiler \
+    pkg-config \
+    git \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=sync . /anki-cloud-sync
+
+WORKDIR /build
+COPY sync-platform-cloud/ .
+
+# Point the git dependencies at the local checkout.
+RUN mkdir -p .cargo && printf '%s\n' \
+    '[patch."https://github.com/danielpmichalski/anki-cloud-sync"]' \
+    'anki = { path = "/anki-cloud-sync/rslib" }' \
+    'sync-platform-api = { path = "/anki-cloud-sync/sync-platform-api" }' \
+    'sync-storage-backends = { path = "/anki-cloud-sync/sync-storage-backends" }' \
+    'sync-storage-server = { path = "/anki-cloud-sync/sync-storage-server" }' \
+    > .cargo/config.toml
+
+RUN cargo build --release
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /build/target/release/anki-sync-server /usr/local/bin/anki-sync-server
+
+EXPOSE 8080 8081
+
+CMD ["anki-sync-server"]

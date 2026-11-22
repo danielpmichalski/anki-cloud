@@ -56,7 +56,9 @@ To develop against a local checkout of `anki-cloud-sync` (instead of fetching gi
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-`docker-compose.dev.yml` overrides `anki-sync-server` to build directly from `../anki-cloud-sync`.
+`docker-compose.dev.yml` overrides `anki-sync-server` to build from `Dockerfile.sync.dev`, which compiles the
+sync server against the sibling `../anki-cloud-sync` checkout (a cargo `patch` of the git dependencies)
+instead of the pinned tag in `sync-platform-cloud/Cargo.toml`.
 
 ---
 
