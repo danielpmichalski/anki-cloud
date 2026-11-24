@@ -9,10 +9,10 @@ name = "anki-sync-server"
 path = "src/main.rs"
 
 [dependencies]
-anki                  = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r4" }
-sync-platform-api     = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r4" }
-sync-storage-backends = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r4" }
-sync-storage-server   = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r4" }
+anki                  = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r6" }
+sync-platform-api     = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r6" }
+sync-storage-backends = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r6" }
+sync-storage-server   = { git = "https://github.com/danielpmichalski/anki-cloud-sync", tag = "v26.09.4-r6" }
 
 aes-gcm       = "0.10"
 anyhow        = "1.0.98"

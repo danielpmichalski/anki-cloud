@@ -296,7 +296,7 @@ stack always runs this image, never the standalone one.
 
 Token format: `base64url(IV[12] || ciphertext || GCM-tag[16])`; must stay byte-compatible with `db/src/encrypt.ts`.
 
-**Pinned anki-cloud-sync tag:** `v26.09.4-r4` (see `.sync-server-version`). To upgrade:
+**Pinned anki-cloud-sync tag:** `v26.09.4-r6` (see `.sync-server-version`). To upgrade:
 
 1. Update `.sync-server-version`
 2. Update the `tag =` value in `sync-platform-cloud/Cargo.toml` (all 4 git deps)
