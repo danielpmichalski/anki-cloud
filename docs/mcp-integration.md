@@ -77,9 +77,9 @@ Set on the API and the MCP server:
 
 | Variable         | Example                  | Description                                          |
 |------------------|--------------------------|------------------------------------------------------|
-| `MCP_PUBLIC_URL` | `https://mcp.decks.my`   | Public URL of the MCP server (the OAuth resource)    |
-| `OAUTH_ISSUER`   | `https://decks.my`       | Origin of the API, which serves the OAuth endpoints  |
-| `FRONTEND_URL`   | `https://decks.my`       | The web login page users are sent to when signing in |
+| `MCP_PUBLIC_URL` | `https://mcp.example.com`   | Public URL of the MCP server (the OAuth resource)    |
+| `OAUTH_ISSUER`   | `https://example.com`       | Origin of the API, which serves the OAuth endpoints  |
+| `FRONTEND_URL`   | `https://example.com`       | The web login page users are sent to when signing in |
 
 Flow: the client gets `401` with `WWW-Authenticate: Bearer resource_metadata=...`, reads
 `/.well-known/oauth-protected-resource` from the MCP server, then
@@ -87,7 +87,7 @@ Flow: the client gets `401` with `WWW-Authenticate: Bearer resource_metadata=...
 with PKCE. Users sign in through the normal web login. Access tokens last 1 hour and refresh tokens 30 days. The
 issuer's `/.well-known/oauth-authorization-server` must be reachable at the origin root. `ak_` keys keep working.
 
-Add it in Claude: Settings → Connectors → Add custom connector → `https://mcp.decks.my/mcp`.
+Add it in Claude: Settings → Connectors → Add custom connector → `https://mcp.example.com/mcp`.
 
 -----------|-------------------------|-------------------------------------|
 | `API_URL` | `http://localhost:3000` | Base URL of the anki-cloud REST API |

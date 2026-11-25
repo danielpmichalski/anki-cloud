@@ -36,6 +36,13 @@
       "when": 1795257576000,
       "tag": "0004_oauth_provider",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1795344000000,
+      "tag": "0005_media_upload_token",
+      "breakpoints": true
     }
   ]
 }

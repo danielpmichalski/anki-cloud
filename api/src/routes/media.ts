@@ -1,16 +1,16 @@
 // Copyright 2026 Archont Soft Daniel Klimuntowski
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-import type { Context } from "hono";
 import { createMiddleware } from "hono/factory";
 import { authApiMiddleware } from "@/middleware/auth";
-import { htmlSnippet } from "@/lib/media";
+import { sidecarFailure, storeMedia } from "@/lib/media-store";
+import { createRateLimiter } from "@/lib/rate-limit";
 import { sidecar } from "@/lib/sidecar";
+import { createUploadToken } from "@/lib/upload-links";
 import type { Variables } from "@/types";
 
 // Handlers can rely on `email` being set by requireEmail.
 type MediaEnv = { Variables: Variables & { email: string } };
-type Ctx = Context<MediaEnv>;
 
 /** Sidecar calls are keyed by the account email; reject accounts without one. */
 const requireEmail = createMiddleware<MediaEnv>(async (c, next) => {
@@ -61,21 +61,8 @@ const errors = {
 
 const SVG_MAX_BYTES = 200 * 1024;
 
-/** Map a failed sidecar response to our error shape; null when it was ok. */
-async function sidecarFailure(c: Ctx, res: Response): Promise<Response | null> {
-  if (res.ok) return null;
-  const body = (await res.json().catch(() => ({}))) as { error?: string };
-  const status = [400, 404, 413, 415].includes(res.status) ? res.status : 502;
-  return c.json({ error: body.error ?? (status === 502 ? "storage error" : "media error") }, status as never);
-}
-
-async function store(c: Ctx, email: string, name: string, data: Uint8Array) {
-  const res = await sidecar.addMedia(email, name, data);
-  const failure = await sidecarFailure(c, res);
-  if (failure) return failure;
-  const r = (await res.json()) as { name: string; added: boolean; mimeType: string; size: number };
-  return c.json({ ...r, html: htmlSnippet(r.name, r.mimeType) }, res.status === 201 ? 201 : 200);
-}
+// Per user: upload links are cheap to mint, so keep a lid on it.
+const linkLimiter = createRateLimiter(30, 60 * 60 * 1000);
 
 export const mediaRouter = new OpenAPIHono<MediaEnv>();
 
@@ -113,7 +100,7 @@ mediaRouter.openapi(
     if (!(file instanceof File)) return c.json({ error: "missing file" }, 400 as never);
     const name = form.name || file.name;
     if (!name) return c.json({ error: "missing file name" }, 400 as never);
-    return await store(c, email, name, new Uint8Array(await file.arrayBuffer())) as never;
+    return await storeMedia(c, email, name, new Uint8Array(await file.arrayBuffer())) as never;
   }
 );
 
@@ -145,7 +132,37 @@ mediaRouter.openapi(
     if (data.length > SVG_MAX_BYTES) {
       return c.json({ error: "text too large (max 200 KB); use an upload link or multipart upload" }, 413 as never);
     }
-    return await store(c, email, name, data) as never;
+    return await storeMedia(c, email, name, data) as never;
+  }
+);
+
+// POST /media/upload-links
+mediaRouter.openapi(
+  createRoute({
+    method: "post",
+    path: "/media/upload-links",
+    middleware: auth,
+    responses: {
+      201: {
+        content: {
+          "application/json": {
+            schema: z.object({
+              url: z.string().openapi({ description: "Page where the user picks a file to upload. Single use, valid for 5 minutes. Treat it as a secret.", example: "https://example.com/upload/Zk3v..." }),
+              expiresAt: z.string().openapi({ description: "ISO 8601 time after which the link stops working" }),
+            }),
+          },
+        },
+        description: "Link created. Show it to the user; the file they upload lands in their collection.",
+      },
+      401: errors[401],
+      429: { content: { "application/json": { schema: ErrorSchema } }, description: "Too many links requested" },
+    },
+  }),
+  async (c) => {
+    if (!linkLimiter.allow(c.get("user").id)) return c.json({ error: "too many upload links, try again later" }, 429 as never);
+    const { token, expiresAt } = await createUploadToken(c.get("user").id);
+    const base = (process.env.BETTER_AUTH_URL || "http://localhost:3000").replace(/\/+$/, "");
+    return c.json({ url: `${base}/upload/${token}`, expiresAt: expiresAt.toISOString() }, 201);
   }
 );
 

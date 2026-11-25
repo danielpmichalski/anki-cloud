@@ -567,6 +567,46 @@ code=$(api DELETE "/media/smoke.svg")
 assert_http "delete svg → 204" "204" "$code" ""
 code=$(api GET "/media/smoke-pixel.png")
 assert_http "deleted media → 404" "404" "$code" ""
+
+# Upload links: mint (authenticated), page + receiver via the token only
+echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" | base64 -d > "$PNG_FILE"
+code=$(curl -s -o /tmp/smoke_api_body -w "%{http_code}" -X POST "${BASE_URL}/media/upload-links")
+assert_http "upload link without key → 401" "401" "$code" "$(cat /tmp/smoke_api_body)"
+
+code=$(api_with_body POST /media/upload-links '{}')
+body=$(cat /tmp/smoke_api_body)
+assert_http "create upload link → 201" "201" "$code" "$body"
+LINK_URL=$(echo "$body" | pyget "d['url']")
+assert_contains "link points at /upload/" "/upload/" "$LINK_URL"
+
+code=$(curl -s -o /tmp/smoke_api_body -w "%{http_code}" "$LINK_URL")
+assert_http "upload page → 200" "200" "$code" ""
+assert_contains "page has a file input" 'type="file"' "$(cat /tmp/smoke_api_body)"
+
+code=$(curl -s -o /tmp/smoke_api_body -w "%{http_code}" -H "Origin: https://evil.example" -F "file=@${PNG_FILE};filename=link.png" "$LINK_URL")
+assert_http "cross-origin upload → 403" "403" "$code" ""
+
+echo "not an image" > /tmp/smoke_link_bad.txt
+code=$(curl -s -o /tmp/smoke_api_body -w "%{http_code}" -F "file=@/tmp/smoke_link_bad.txt;filename=bad.png" "$LINK_URL")
+assert_http "bad file via link → 415 (link kept)" "415" "$code" "$(cat /tmp/smoke_api_body)"
+
+code=$(curl -s -o /tmp/smoke_api_body -w "%{http_code}" -F "file=@${PNG_FILE};filename=link.png" "$LINK_URL")
+body=$(cat /tmp/smoke_api_body)
+assert_http "upload via link → 201" "201" "$code" "$body"
+assert_eq "stored name" "link.png" "$(echo "$body" | pyget "d['name']")"
+
+code=$(curl -s -o /tmp/smoke_api_body -w "%{http_code}" -F "file=@${PNG_FILE};filename=again.png" "$LINK_URL")
+assert_http "reusing the link → 410" "410" "$code" "$(cat /tmp/smoke_api_body)"
+code=$(curl -s -o /tmp/smoke_api_body -w "%{http_code}" "$LINK_URL")
+assert_http "used link page → 410" "410" "$code" ""
+code=$(curl -s -o /tmp/smoke_api_body -w "%{http_code}" "http://127.0.0.1:${API_PORT}/upload/not-a-token")
+assert_http "unknown link page → 410" "410" "$code" ""
+
+code=$(api GET "/media/link.png")
+assert_http "linked upload is downloadable" "200" "$code" ""
+code=$(api DELETE "/media/link.png")
+assert_http "delete linked upload → 204" "204" "$code" ""
+rm -f /tmp/smoke_link_bad.txt
 rm -f "$PNG_FILE"
 
 # ==========================================================================
