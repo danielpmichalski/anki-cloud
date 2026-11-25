@@ -508,6 +508,68 @@ code=$(api GET "/review/next?deckId=999999")
 assert_http "review next for unknown deck → 404" "404" "$code" "$(cat /tmp/smoke_api_body)"
 
 # ==========================================================================
+# Section 11c: Media (upload, text/SVG, list, metadata, download, delete)
+# ==========================================================================
+echo ""
+echo "-- Media --"
+
+PNG_FILE=$(mktemp /tmp/smoke_pixel.XXXXXX)
+echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" | base64 -d > "$PNG_FILE"
+
+media_upload() {
+    curl -s -o /tmp/smoke_api_body -w "%{http_code}" \
+        -H "Authorization: Bearer ${TEST_API_KEY}" \
+        -F "file=@${PNG_FILE};filename=$1" "${BASE_URL}/media"
+}
+
+code=$(media_upload "Smoke-Pixel.PNG")
+body=$(cat /tmp/smoke_api_body)
+assert_http "upload png → 201" "201" "$code" "$body"
+assert_eq "stored name lowercased" "smoke-pixel.png" "$(echo "$body" | pyget "d['name']")"
+assert_contains "html snippet is an img tag" '<img src=' "$body"
+
+code=$(media_upload "smoke-pixel.png")
+assert_http "identical upload → 200 (deduplicated)" "200" "$code" "$(cat /tmp/smoke_api_body)"
+
+code=$(api_with_body POST /media/svg '{"name":"smoke.svg","content":"<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(1)</script><circle r=\"5\"/></svg>"}')
+assert_http "add svg as text → 201" "201" "$code" "$(cat /tmp/smoke_api_body)"
+
+code=$(api GET "/media/smoke.svg")
+body=$(cat /tmp/smoke_api_body)
+assert_http "download svg → 200" "200" "$code" "$body"
+[[ "$body" != *"<script"* ]] && pass "svg script removed" || fail "svg still contains <script>"
+
+code=$(api GET /media)
+body=$(cat /tmp/smoke_api_body)
+assert_http "list media → 200" "200" "$code" "$body"
+assert_contains "list has the png" "smoke-pixel.png" "$body"
+
+code=$(api GET "/media/smoke-pixel.png/metadata")
+body=$(cat /tmp/smoke_api_body)
+assert_http "metadata → 200" "200" "$code" "$body"
+assert_eq "metadata mimeType" "image/png" "$(echo "$body" | pyget "d['mimeType']")"
+assert_eq "metadata width" "1" "$(echo "$body" | pyget "d['width']")"
+
+code=$(api GET "/media/smoke-pixel.png")
+assert_http "download png → 200" "200" "$code" ""
+cmp -s /tmp/smoke_api_body "$PNG_FILE" && pass "download is byte-identical" || fail "download differs from upload"
+
+echo "not an image" > "$PNG_FILE"
+code=$(media_upload "bad.png")
+assert_http "text file as png → 415" "415" "$code" "$(cat /tmp/smoke_api_body)"
+
+code=$(api GET "/media/nope.png")
+assert_http "unknown media → 404" "404" "$code" ""
+
+code=$(api DELETE "/media/smoke-pixel.png")
+assert_http "delete png → 204" "204" "$code" ""
+code=$(api DELETE "/media/smoke.svg")
+assert_http "delete svg → 204" "204" "$code" ""
+code=$(api GET "/media/smoke-pixel.png")
+assert_http "deleted media → 404" "404" "$code" ""
+rm -f "$PNG_FILE"
+
+# ==========================================================================
 # Section 12: Cleanup — delete note and deck
 # ==========================================================================
 echo ""

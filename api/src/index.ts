@@ -12,6 +12,7 @@ import { notesRouter } from "@/routes/notes";
 import { noteTypesRouter } from "@/routes/note-types";
 import { cardsRouter } from "@/routes/cards";
 import { reviewRouter } from "@/routes/review";
+import { mediaRouter } from "@/routes/media";
 import { authApiMiddleware } from "@/middleware/auth";
 import type { Env } from "@/types";
 
@@ -22,6 +23,7 @@ publicApi.route("/v1", notesRouter);
 publicApi.route("/v1", noteTypesRouter);
 publicApi.route("/v1", cardsRouter);
 publicApi.route("/v1", reviewRouter);
+publicApi.route("/v1", mediaRouter);
 
 publicApi.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {
   type: "http",

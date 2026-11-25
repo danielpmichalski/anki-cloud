@@ -28,6 +28,18 @@ async function sidecarRequest<T>(
   return res.json() as Promise<T>;
 }
 
+/** Raw sidecar call for media: the caller maps status codes itself (413/415/400 must reach the client). */
+async function sidecarMedia(email: string, path: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(`${SIDECAR_URL}${path}`, {
+    ...init,
+    headers: {
+      "X-Internal-Token": SIDECAR_TOKEN,
+      "X-User-Email": email,
+      ...(init.headers as Record<string, string> | undefined),
+    },
+  });
+}
+
 function paginationQs(p?: { limit?: number | undefined; cursor?: string | undefined }): string {
   if (!p) return "";
   const params = new URLSearchParams();
@@ -38,6 +50,25 @@ function paginationQs(p?: { limit?: number | undefined; cursor?: string | undefi
 }
 
 export const sidecar = {
+  addMedia: (email: string, name: string, data: ArrayBuffer | Uint8Array) =>
+    sidecarMedia(email, `/internal/v1/media?${new URLSearchParams({ name })}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: data as unknown as Blob,
+    }),
+
+  listMedia: (email: string, pagination?: { limit?: number | undefined; cursor?: string | undefined }) =>
+    sidecarMedia(email, `/internal/v1/media${paginationQs(pagination)}`),
+
+  getMedia: (email: string, name: string) =>
+    sidecarMedia(email, `/internal/v1/media/${encodeURIComponent(name)}`),
+
+  getMediaMetadata: (email: string, name: string) =>
+    sidecarMedia(email, `/internal/v1/media/${encodeURIComponent(name)}/metadata`),
+
+  deleteMedia: (email: string, name: string) =>
+    sidecarMedia(email, `/internal/v1/media/${encodeURIComponent(name)}`, { method: "DELETE" }),
+
   listDecks: (email: string, pagination?: { limit?: number | undefined; cursor?: string | undefined }) =>
     sidecarRequest<{ decks: { id: string; name: string }[]; nextCursor: string | null }>(
       email,
