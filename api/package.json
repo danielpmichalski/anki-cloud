@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "bun run --env-file ../.env --watch src/index.ts",
     "start": "bun run --env-file ../.env src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@anki-cloud/db": "workspace:*",

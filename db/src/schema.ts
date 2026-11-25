@@ -162,6 +162,24 @@ export const userSyncState = sqliteTable(
     (t) => [index("idx_sync_state_user_id").on(t.userId)]
 );
 
+// Single-use, short-lived tokens behind /upload/<token> pages. Only the SHA-256 of the token is stored.
+export const mediaUploadToken = sqliteTable(
+    "media_upload_token",
+    {
+        id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+        userId: text("user_id")
+            .notNull()
+            .references(() => user.id, {onDelete: "cascade"}),
+        tokenHash: text("token_hash").notNull().unique(),
+        expiresAt: integer("expires_at", {mode: "timestamp_ms"}).notNull(),
+        usedAt: integer("used_at", {mode: "timestamp_ms"}),
+        createdAt: integer("created_at", {mode: "timestamp_ms"})
+            .notNull()
+            .$defaultFn(() => new Date()),
+    },
+    (t) => [index("idx_media_upload_token_user_id").on(t.userId)]
+);
+
 // ── Relations ─────────────────────────────────────────────────────────────────
 
 export const userRelations = relations(user, ({many, one}) => ({
@@ -214,3 +232,4 @@ export type UserApiKey = typeof userApiKey.$inferSelect;
 export type NewUserApiKey = typeof userApiKey.$inferInsert;
 export type UserSyncState = typeof userSyncState.$inferSelect;
 export type NewUserSyncState = typeof userSyncState.$inferInsert;
+export type MediaUploadToken = typeof mediaUploadToken.$inferSelect;

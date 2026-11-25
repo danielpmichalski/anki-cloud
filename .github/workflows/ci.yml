@@ -18,6 +18,7 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - run: cd api && bun run typecheck
+      - run: cd api && bun test
       - run: cd db && bun run typecheck
 
   build-web:

@@ -12,6 +12,8 @@ import { notesRouter } from "@/routes/notes";
 import { noteTypesRouter } from "@/routes/note-types";
 import { cardsRouter } from "@/routes/cards";
 import { reviewRouter } from "@/routes/review";
+import { mediaRouter } from "@/routes/media";
+import { uploadRouter } from "@/routes/upload";
 import { authApiMiddleware } from "@/middleware/auth";
 import type { Env } from "@/types";
 
@@ -22,6 +24,7 @@ publicApi.route("/v1", notesRouter);
 publicApi.route("/v1", noteTypesRouter);
 publicApi.route("/v1", cardsRouter);
 publicApi.route("/v1", reviewRouter);
+publicApi.route("/v1", mediaRouter);
 
 publicApi.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {
   type: "http",
@@ -69,6 +72,7 @@ app.get("/.well-known/oauth-authorization-server", async (c) =>
 // Cheap credential check for the MCP server: 200 for a valid ak_ key or OAuth token, 401 otherwise.
 app.get("/v1/whoami", authApiMiddleware, (c) => c.json(c.get("user")));
 app.route("/", publicApi);
+app.route("/", uploadRouter);
 app.route("/v1", authRouter);
 app.route("/v1", storageRouter);
 app.route("/v1", apiKeysRouter);
