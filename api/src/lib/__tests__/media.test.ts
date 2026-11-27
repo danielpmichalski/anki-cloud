@@ -3,6 +3,7 @@
 import { describe, expect, test } from "bun:test";
 import { htmlSnippet } from "@/lib/media";
 
+// MEDIA-LIMITS: the MIME types below mirror the allowlist in anki-cloud-sync/sync-storage-server/src/media.rs.
 describe("htmlSnippet", () => {
   test.each(["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml"])(
     "%s becomes an img tag",

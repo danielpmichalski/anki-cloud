@@ -32,10 +32,11 @@ uploadRouter.get("/upload/:token", async (c) => {
   return c.body(valid ? uploadPageHtml : expiredPageHtml, valid ? 200 : 410, UPLOAD_PAGE_HEADERS);
 });
 
-// Largest allowed file (10 MB audio) plus multipart overhead; the sidecar enforces the per-type caps.
+// MEDIA-LIMITS: largest allowed file (10 MB audio) plus multipart overhead; the sidecar enforces the
+// per-type caps (anki-cloud-sync/sync-storage-server/src/media.rs). Raise this with MAX_AUDIO_BYTES.
 uploadRouter.post(
   "/upload/:token",
-  bodyLimit({ maxSize: 11 * 1024 * 1024, onError: (c) => c.json({ error: "file too large" }, 413) }),
+  bodyLimit({ maxSize: 11 * 1024 * 1024, onError: (c) => c.json({ error: "file too large (limits: images 5 MB, audio 10 MB, SVG 200 KB)" }, 413) }),
   async (c) => {
     // A browser always sends Origin on cross-site POSTs; refuse any that is not this host.
     const origin = c.req.header("origin");

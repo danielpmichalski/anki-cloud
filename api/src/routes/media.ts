@@ -27,6 +27,7 @@ const ErrorSchema = z.object({ error: z.string() });
 const StoredMediaSchema = z.object({
   name: z.string().openapi({ description: "Stored name. Anki lowercases and may rename (e.g. name-<hash>.png), so always use this one." }),
   added: z.boolean().openapi({ description: "false when an identical file was already stored" }),
+  // MEDIA-LIMITS: the description below lists the type allowlist from anki-cloud-sync/sync-storage-server/src/media.rs.
   mimeType: z.string().openapi({
     description: "Type detected from the file's bytes (the file name and the client's Content-Type are ignored). One of image/png, image/jpeg, image/gif, image/webp, image/svg+xml, audio/mpeg, audio/ogg, audio/wav, audio/mp4, audio/3gpp, audio/amr.",
     example: "image/png",
@@ -59,6 +60,8 @@ const errors = {
   502: { content: { "application/json": { schema: ErrorSchema } }, description: "Storage failed; the file was not stored" },
 };
 
+// MEDIA-LIMITS: must match MAX_SVG_BYTES in anki-cloud-sync/sync-storage-server/src/media.rs; the 413
+// text in the JSON-SVG handler below repeats it.
 const SVG_MAX_BYTES = 200 * 1024;
 
 // Per user: upload links are cheap to mint, so keep a lid on it.

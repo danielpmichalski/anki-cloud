@@ -462,6 +462,12 @@ Storage backend credentials are per-user (their own Google Drive etc.).
 8. **Prove the sync → Google Drive adapter works before building anything else.**
    It's the riskiest assumption. Validate it first.
 9. **AI Agents: Never auto-commit code.** When work is complete, inform the user that changes are ready to commit. Let the user handle git commits themselves. This preserves user agency and prevents accidental commits.
+10. **Media type allowlist and size limits are marked with `MEDIA-LIMITS`.** The allowed file types and size caps
+    are defined in `anki-cloud-sync/sync-storage-server/src/media.rs` (source of truth, with the full list of
+    places at the top of that file). Error messages, the upload page (`accept` + size hint), body limits, the
+    OpenAPI descriptions and the tests repeat them in `api/src/…`. When you change an allowed type or a cap,
+    run `grep -rn MEDIA-LIMITS anki-cloud anki-cloud-sync` and update every place it finds. Add the marker
+    to any new code (e.g. MCP tool descriptions, docs) that repeats these values.
 
 ---
 
