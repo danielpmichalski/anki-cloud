@@ -14,7 +14,7 @@ export function withApiKey<T>(key: string, fn: () => Promise<T>): Promise<T> {
   return requestApiKey.run(key, fn);
 }
 
-async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
+async function rawRequest(path: string, options?: RequestInit): Promise<Response> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
@@ -27,7 +27,11 @@ async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
     const body = await res.json().catch(() => ({ error: "api error" }));
     throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
   }
-  return res.json() as Promise<T>;
+  return res;
+}
+
+async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
+  return (await rawRequest(path, options)).json() as Promise<T>;
 }
 
 export interface Deck {
@@ -144,6 +148,49 @@ export const answerCard = (body: {
     method: "POST",
     body: JSON.stringify(body),
   });
+
+export interface StoredMedia {
+  name: string;
+  added: boolean;
+  mimeType: string;
+  size: number;
+  html: string;
+}
+
+export interface MediaMetadata {
+  name: string;
+  mimeType: string;
+  size: number;
+  width: number | null;
+  height: number | null;
+}
+
+const mediaPath = (name: string) => `/v1/media/${encodeURIComponent(name)}`;
+
+export const createMediaUploadLink = () =>
+  apiRequest<{ url: string; expiresAt: string }>("/v1/media/upload-links", { method: "POST" });
+
+export const addSvgMedia = (name: string, content: string) =>
+  apiRequest<StoredMedia>("/v1/media/svg", { method: "POST", body: JSON.stringify({ name, content }) });
+
+export const listMedia = (opts?: Pagination) =>
+  apiRequest<{ files: { name: string; size: number }[]; nextCursor: string | null }>(
+    `/v1/media${buildQs({ limit: opts?.limit, cursor: opts?.cursor })}`
+  );
+
+export const getMediaMetadata = (name: string) => apiRequest<MediaMetadata>(`${mediaPath(name)}/metadata`);
+
+export async function getMediaBytes(name: string): Promise<{ bytes: Uint8Array; mimeType: string }> {
+  const res = await rawRequest(mediaPath(name));
+  return {
+    bytes: new Uint8Array(await res.arrayBuffer()),
+    mimeType: (res.headers.get("content-type") ?? "application/octet-stream").split(";")[0]!.trim(),
+  };
+}
+
+export async function deleteMedia(name: string): Promise<void> {
+  await rawRequest(mediaPath(name), { method: "DELETE" });
+}
 
 /** True when the REST API accepts the credential (ak_ key or OAuth access token). */
 export async function isCredentialValid(credential: string): Promise<boolean> {
