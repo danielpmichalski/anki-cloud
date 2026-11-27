@@ -89,10 +89,6 @@ issuer's `/.well-known/oauth-authorization-server` must be reachable at the orig
 
 Add it in Claude: Settings → Connectors → Add custom connector → `https://mcp.example.com/mcp`.
 
------------|-------------------------|-------------------------------------|
-| `API_URL` | `http://localhost:3000` | Base URL of the anki-cloud REST API |
-| `API_KEY` | _(required)_            | API key with `ak_` prefix           |
-
 ---
 
 ## Tools Reference
@@ -378,3 +374,67 @@ grade, and records it only after you press **1** (Again), **2** (Hard), **3** (G
 
 Install: upload `skills/anki-review/SKILL.md` (or `skills/anki-review/anki-review.skill`) in Claude Desktop under
 **Settings → Capabilities → Skills**, then say _"Quiz me on my Rust deck"_.
+
+For cards with media, the skill fetches the image, SVG or audio with `get_media` and shows it before it
+asks the question. It never names the file (names can give the answer away). It cannot hear audio: you
+play the clip yourself, and your answer is graded from the card's text.
+
+---
+
+## Media tools (images and audio)
+
+Cards can reference files in your collection's media folder: `<img src="cat.png">` for images and
+`[sound:clip.mp3]` for audio. These tools let an LLM add, find, look at and delete those files.
+Media syncs to your other devices like any other change.
+
+<!-- MEDIA-LIMITS: the types and caps below repeat anki-cloud-sync/sync-storage-server/src/media.rs. Update them together. -->
+**Allowed types:** png, jpg, gif, webp, svg, mp3, ogg, wav, m4a, 3gp, amr. The type is detected from the
+file's bytes, not its name or `Content-Type`.
+**Size limits:** images 5 MB, audio 10 MB, SVG 200 KB.
+
+| Tool | Purpose |
+|------|---------|
+| `request_media_upload` | Returns a one-time link where **you** upload an image or audio file from your device. Single use, valid for 5 minutes, treat it as a secret. |
+| `add_svg_media` | Stores an SVG the LLM writes itself (`name`, `content`). Scripts and external references are stripped. Returns the stored name, which may differ from the requested one. |
+| `list_media` | Lists files with sizes (`limit` 1–1000, `cursor`). |
+| `get_media_info` | Detected type, size and, for raster images, width and height. Does not download the file. |
+| `get_media` | Fetches the file so the LLM can look at it: images as images, SVG as text, audio as audio. Downloads the whole file. |
+| `delete_media` | Deletes a file (removed on your devices at the next sync). Notes that use it show a broken image or no sound. The LLM should confirm first. |
+
+### Why uploads go through a link
+
+MCP tool calls carry text, so an LLM cannot send a PNG or an MP3 through them. The two ways in:
+
+- **SVG:** the LLM writes the markup and calls `add_svg_media`. Nothing else to do.
+- **Everything else:** the LLM calls `request_media_upload` and gives you the link. Open it, choose the file,
+  and tell the LLM when you are done. It then calls `list_media` to find the stored name and puts the
+  snippet in a note field.
+
+**Example prompts**
+> "Draw a diagram of the water cycle as an SVG and add a card to my Science deck that uses it."
+>
+> "I want to add a photo of a heart to my Anatomy deck. Give me an upload link."
+>
+> "What media files do I have? Delete the unused ones."
+
+**Example response** of `add_svg_media`:
+
+```json
+{
+  "name": "water-cycle.svg",
+  "added": true,
+  "mimeType": "image/svg+xml",
+  "size": 2310,
+  "html": "<img src=\"water-cycle.svg\">"
+}
+```
+
+### Limits of the LLM
+
+- It cannot hear audio. It can fetch and relay a clip, but you play it, and it grades from the card text only.
+- A file is typed by its bytes: a text file renamed `.png` is rejected as an unsupported type.
+- Files over the size limits are rejected with a clear message. Over-limit SVGs need a simpler drawing, not an
+  upload link.
+
+REST equivalents: `POST /v1/media` (multipart), `POST /v1/media/svg`, `POST /v1/media/upload-links`,
+`GET /v1/media`, `GET /v1/media/{name}/metadata`, `GET /v1/media/{name}`, `DELETE /v1/media/{name}`.

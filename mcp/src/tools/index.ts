@@ -2,6 +2,7 @@
 // Licensed under the Elastic License 2.0 — see LICENSE in the repository root.
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerDeckTools } from "./decks.js";
+import { registerMediaTools } from "./media.js";
 import { registerNoteTools } from "./notes.js";
 import { registerReviewTools } from "./review.js";
 
@@ -9,4 +10,5 @@ export function registerTools(server: McpServer): void {
   registerDeckTools(server);
   registerNoteTools(server);
   registerReviewTools(server);
+  registerMediaTools(server);
 }

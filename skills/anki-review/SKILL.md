@@ -1,6 +1,6 @@
 ---
 name: anki-review
-description: Quiz the user on their scheduled flashcards (spaced repetition) through the anki-cloud MCP tools. Use when the user wants to review, study, revise, practice, or be tested on their due cards or a deck. Paraphrases each question so it can't be answered from visual memory of the card (without leaking the answer), proposes a grade, and records it only after the user confirms it in an interactive multiple-choice prompt.
+description: Quiz the user on their scheduled flashcards (spaced repetition) through the anki-cloud MCP tools, including cards with images, SVG diagrams and audio. Use when the user wants to review, study, revise, practice, or be tested on their due cards or a deck. Paraphrases each question so it can't be answered from visual memory of the card (without leaking the answer), proposes a grade, and records it only after the user confirms it in an interactive multiple-choice prompt.
 ---
 
 # Spaced-repetition review
@@ -8,7 +8,7 @@ description: Quiz the user on their scheduled flashcards (spaced repetition) thr
 You run a study session over the user's *scheduled* cards. You are the examiner: the goal is
 to test real understanding, not recognition of how a card looks.
 
-Tools (from the anki-cloud MCP server): `list_decks`, `get_review_counts`, `get_due_cards`, `answer_card`.
+Tools (from the anki-cloud MCP server): `list_decks`, `get_review_counts`, `get_due_cards`, `answer_card`, plus the media tools `get_media`, `get_media_info`, `list_media` (see "Media cards").
 
 ## Hard rules
 
@@ -107,10 +107,62 @@ Cloze cards (the question contains `[...]` or a blank): don't present a fill-in-
 Turn the missing part into a direct question about it.
 
 Card state `new`: the user has never seen it. First show the card (question and answer) as a
-short lesson, then ask a paraphrased question about it, and grade that.
+short lesson, then ask a paraphrased question about it, and grade that. For a new card with
+media, show both the question-side and the answer-side media in the lesson.
 
-If the card relies on an image or sound you can't see/hear (only a filename appears), say so,
-skip it, and leave it unanswered (do not call `answer_card`).
+**Media cards.** `get_due_cards` returns plain text, so a card with media shows only a filename
+appended to the question or answer (e.g. `... diagram.svg`, `... photo.png`,
+`[sound:clip.mp3]`). Never skip such a card just because only a filename appears: fetch the
+file with `get_media`, show it to the user, then ask the question. Use `get_media_info` first if
+you only need type, size or pixel dimensions (it does not download). Handle each type like this:
+
+- **SVG**: `get_media` returns the SVG source as text. Render it inline for the user with the
+  visualizer (`show_widget`): wrap it as a nested `<svg>` inside a 680-wide wrapper
+  (`<svg width="100%" viewBox="0 0 680 H" role="img"><title/><desc/><svg x=... width=... viewBox=...>...</svg></svg>`),
+  keeping the original width/height/viewBox. ALWAYS keep or add a solid white background `<rect>`
+  behind the drawing: many SVGs have dark text on a transparent background and become unreadable
+  in dark mode otherwise. Use a neutral `<desc>`; it must not name the answer. Read the source,
+  not just the picture: `<title>`, `<desc>`, comments, `id`/`class` names and `aria-label` can
+  contain the answer, so remove them when you render it.
+- **PNG / JPG / GIF / WEBP**: `get_media` returns the image to you and prints an
+  `[Image source: /tmp/...]` path. Send that path to the user with `SendUserFile`
+  (`display: render`, `status: normal`). Never say "above" or "below". If the user asks to see it
+  again, just send it again.
+- **Audio (mp3, ogg, wav, m4a)**: `get_media` saves the file to a path and you cannot listen to it.
+  Send it with `SendUserFile` (`display: attach`) so the user can play it. `get_media` downloads
+  the whole file (up to 10 MB), so call it only when the card really has a clip. You may run
+  `ffprobe` for duration or format, but you cannot judge or describe the sound. Grade the user's
+  answer against the card's answer text only, and say so if the user asks you what the clip
+  contains. You cannot verify what a clip says, so never paraphrase around it: if the question
+  side is only a clip, ask the card's question near-verbatim, or with no text ask for what the
+  answer side expects ("Listen and answer in <language>"). Never claim what the audio contains.
+
+Rules for media cards:
+
+1. Show the question-side media first, then ask the paraphrased question in the same or next
+   message. Say "the image/diagram/clip" in the question without describing what it depicts,
+   and never name the file: file names often give the answer away (`mars.svg`). Check the name
+   as part of the leak check; if it gives the answer away, still show the file but never
+   mention its name.
+2. Leak check applies to the media itself: look at what you fetched. If the image or SVG
+   contains the answer (a label, a caption, a visible value), do not paraphrase around it: show
+   the card as written or skip it. Also never describe the picture in your question.
+3. Never fetch or show answer-side media before the user has attempted the card. After the
+   attempt, show it only if it helps feedback or the user asks (this includes `c`, which shows
+   answer-side media only once the user has attempted the card).
+4. If the user says they cannot see the image (e.g. dark mode, too small), fix the rendering
+   (add the white background, enlarge) and re-show it before grading; don't penalise them.
+5. Don't create, upload or delete media during a review session. Adding images and audio to
+   cards is a separate task (`add_svg_media`, `request_media_upload`, `create_note`) and only
+   on the user's explicit request.
+
+Only if the media cannot be fetched or shown at all (fetch fails, unsupported type), say so,
+skip it, and leave it unanswered (do not call `answer_card`). Cases:
+
+- `get_media` says the file is not found: the card references a file that isn't in the user's
+  collection. Tell them the card is broken (not their answer) and offer to continue.
+- `show_widget` or `SendUserFile` is unavailable, or `get_media` prints no file path: say you
+  can't display this media here and move on to the next card.
 
 ### 2. Wait for the user's answer
 
@@ -143,10 +195,10 @@ Grading guide (be fair but strict on technical accuracy):
 
 | Grade | When |
 |---|---|
-| **Again** | Wrong, blank, or missed the key point. |
-| **Hard** | Essentially right but incomplete, hesitant, needed a hint, or one notable error. |
-| **Good** | Correct core idea; at most minor omissions. The default for a correct answer. |
-| **Easy** | Complete, precise and effortless; the card is too easy for them. Use sparingly. |
+| **1 Again** | Wrong, blank, or missed the key point. |
+| **2 Hard** | Essentially right but incomplete, hesitant, needed a hint, or one notable error. |
+| **3 Good** | Correct core idea; at most minor omissions. The default for a correct answer. |
+| **4 Easy** | Complete, precise and effortless; the card is too easy for them. Use sparingly. |
 
 ### 4. Confirm the grade
 
@@ -161,7 +213,7 @@ Ask for the grade with your **interactive question tool** (in Claude Code / Clau
 - **Fixed order, same as the Anki app**: Again, Hard, Good, Easy. Never reorder to put your
   suggestion first.
 - Option label: grade name and interval only, e.g. `Good (3d)`. The prompt already numbers the
-  options, so do not write the number yourself. Wrong: `2 Hard (7d)`. Right: `Hard (7d)`. In the grading table, in your descriptions and in the labels, grade names carry no digits. Mark your suggestion by appending
+  options, so do not write the number yourself. Mark your suggestion by appending
   ` ← suggested` to its label and put the one-line reason in its description.
 - If the tool allows fewer options than the card has grades, drop the least useful one rather
   than splitting the question.
@@ -172,6 +224,9 @@ Ask for the grade with your **interactive question tool** (in Claude Code / Clau
 Interpreting the reply:
 
 - A grade option: record exactly that grade.
+- A bare `1`-`4` typed under Other: the grade at that position in the fixed order
+  (1 Again, 2 Hard, 3 Good, 4 Easy). The user's choice always wins over your suggestion or cap
+  (e.g. Easy after you capped at Good): record exactly what they chose.
 - `c` (via Other): show the original card (question and answer), then ask the question again.
   Does not record anything.
 - `s`: skip this card (record nothing), `q`: end the session.
