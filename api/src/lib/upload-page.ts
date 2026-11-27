@@ -36,6 +36,8 @@ ${body}
 </body>
 </html>`;
 
+// MEDIA-LIMITS: the `accept` list and the size hint in this page repeat the type allowlist and caps from
+// anki-cloud-sync/sync-storage-server/src/media.rs. `accept` is only a browser hint, not enforcement.
 export const uploadPageHtml = SHELL(`<h1>Upload to your Anki collection</h1>
 <p>Pick one image or audio file. It is added to your collection and reaches your devices on their next sync.</p>
 <div id="drop">
